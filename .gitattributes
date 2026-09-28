@@ -1,0 +1,44 @@
+# .gitattributes — Fuerza LF en scripts para que funcionen en contenedores Linux
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Scripts: siempre LF (evita "bad interpreter: \r" en Linux)
+*.sh        text eol=lf
+*.bash      text eol=lf
+Makefile    text eol=lf
+
+# PHP y archivos de texto normales
+*.php       text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.env       text eol=lf
+*.env.*     text eol=lf
+*.md        text eol=lf
+*.sql       text eol=lf
+*.conf      text eol=lf
+*.ini       text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+
+# Windows scripts: mantener CRLF
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Binarios: sin conversión
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary

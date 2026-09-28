@@ -1,0 +1,10 @@
+Aquí tienes las credenciales exactas de todos los usuarios de prueba que generamos, empezando por el Admin:
+
+Admin de Sistemas: DNI 00000000 | Password password
+Especialista de RRHH: DNI 11111111 | Password password
+Control de Vigilancia: DNI 22222222 | Password password
+Jefe de Sistemas: DNI 33333333 | Password password
+Practicante: DNI 44444444 | Password password
+Trabajador: DNI 55555555 | Password password
+
+----------------------------------------------------------------

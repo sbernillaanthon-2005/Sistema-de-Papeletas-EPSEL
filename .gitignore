@@ -1,0 +1,55 @@
+# EPSEL Papeletas — .gitignore
+# ─────────────────────────────────────────────
+
+# Entorno
+.env
+.env.backup
+*.env.local
+
+# Laravel
+src/vendor/
+src/node_modules/
+src/public/hot
+src/public/storage
+src/storage/*.key
+src/storage/logs/*
+src/storage/framework/cache/*
+src/storage/framework/sessions/*
+src/storage/framework/views/*
+src/bootstrap/cache/*.php
+!src/storage/logs/.gitkeep
+!src/storage/framework/cache/.gitkeep
+!src/storage/framework/sessions/.gitkeep
+!src/storage/framework/views/.gitkeep
+
+# Uploads / Firmas (archivos privados)
+src/storage/app/private/
+!src/storage/app/private/.gitkeep
+
+# Node
+node_modules/
+
+# Build
+src/public/build/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# Docker
+docker/postgres/data/
+
+# Composer
+src/composer.phar
