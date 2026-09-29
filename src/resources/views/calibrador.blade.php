@@ -29,38 +29,36 @@
     </div>
     <script>
         const fields = {
-            'f-fecha-emision-0': { top: 32, left: 790, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-emision-1': { top: 32, left: 820, text: '8', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-emision-2': { top: 32, left: 850, text: '0', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-emision-3': { top: 32, left: 880, text: '9', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-emision-4': { top: 32, left: 910, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-emision-5': { top: 32, left: 940, text: '6', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-0': { top: 36, left: 897, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-1': { top: 36, left: 924, text: '8', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-2': { top: 36, left: 950, text: '0', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-3': { top: 36, left: 977, text: '9', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-4': { top: 36, left: 1004, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-emision-5': { top: 36, left: 1031, text: '6', styles: 'font-weight: bold; padding: 2px 5px;' },
             
             'f-apellidos': { top: 190, left: 180, text: 'Izasiga Cruz' },
             'f-nombres': { top: 218, left: 180, text: 'Jose Luizinho' },
-            'f-cargo': { top: 218, left: 450, text: 'Practicante Pre Profesional' },
+            'f-cargo': { top: 220, left: 609, text: 'Practicante Pre Profesional' },
             
-            'f-mot-essalud': { top: 330, left: 75, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
-            'f-mot-personal': { top: 405, left: 75, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
-            'f-mot-comision': { top: 480, left: 75, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
-            'f-mot-otros': { top: 560, left: 75, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
+            'f-mot-essalud': { top: 328, left: 89, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
+            'f-mot-personal': { top: 401, left: 89, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
+            'f-mot-comision': { top: 479, left: 91, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
+            'f-mot-otros': { top: 550, left: 93, text: 'X', styles: 'font-size: 20px; font-weight: bold;' },
             
-            'f-detalle': { top: 335, left: 420, text: 'Compra de PC (Detalle del motivo)', styles: 'width: 500px;' },
+            'f-detalle': { top: 288, left: 487, text: 'Compra de PC (Detalle del motivo)', styles: 'width: 550px;' },
             
-            'f-fecha-aut-0': { top: 385, left: 350, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-1': { top: 385, left: 380, text: '8', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-2': { top: 385, left: 410, text: '0', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-3': { top: 385, left: 440, text: '9', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-4': { top: 385, left: 470, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-5': { top: 385, left: 500, text: '0', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-6': { top: 385, left: 530, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-fecha-aut-7': { top: 385, left: 560, text: '6', styles: 'font-weight: bold; padding: 2px 5px;' },
-            'f-hora-desde': { top: 385, left: 790, text: '08:00' },
-            'f-hora-hasta': { top: 385, left: 880, text: '10:00' },
+            'f-fecha-aut-0': { top: 396, left: 498, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-aut-1': { top: 396, left: 525, text: '8', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-aut-2': { top: 396, left: 552, text: '0', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-aut-3': { top: 396, left: 579, text: '9', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-aut-4': { top: 396, left: 606, text: '2', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-fecha-aut-5': { top: 396, left: 633, text: '6', styles: 'font-weight: bold; padding: 2px 5px;' },
+            'f-hora-desde': { top: 390, left: 914, text: '08:00' },
+            'f-hora-hasta': { top: 393, left: 1005, text: '10:00' },
             
-            'f-firma-prac': { top: 500, left: 260, text: '[Imagen Firma Practicante]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
-            'f-firma-jefe': { top: 500, left: 450, text: '[Imagen Firma Jefe]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
-            'f-firma-rrhh': { top: 500, left: 820, text: '[Imagen Firma RRHH]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' }
+            'f-firma-prac': { top: 465, left: 320, text: '[Imagen Firma Practicante]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
+            'f-firma-jefe': { top: 463, left: 530, text: '[Imagen Firma Jefe]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
+            'f-firma-rrhh': { top: 465, left: 925, text: '[Imagen Firma RRHH]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' }
         };
 
         const container = document.getElementById('container');

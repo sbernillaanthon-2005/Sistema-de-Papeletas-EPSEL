@@ -8,3 +8,7 @@ Practicante: DNI 44444444 | Password password
 Trabajador: DNI 55555555 | Password password
 
 ----------------------------------------------------------------
+http://localhost:8000/calibrador
+----------------------------------------
+npm run build
+-------------------------------

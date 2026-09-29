@@ -1,10 +1,11 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -16,8 +17,9 @@ export default function UpdateProfileInformation({
     className?: string;
 }) {
     const user = usePage().props.auth.user;
+    const [isEditing, setIsEditing] = useState(false);
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+    const { data, setData, patch, errors, processing, recentlySuccessful, reset } =
         useForm({
             nombres: user.nombres,
             apellidos: user.apellidos,
@@ -26,19 +28,28 @@ export default function UpdateProfileInformation({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'));
+        patch(route('profile.update'), {
+            onSuccess: () => setIsEditing(false),
+        });
     };
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Información del Perfil
-                </h2>
+            <header className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
+                <div>
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Información del Perfil
+                    </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Actualiza la información personal de tu cuenta.
-                </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Actualiza la información personal de tu cuenta.
+                    </p>
+                </div>
+                {!isEditing && (
+                    <SecondaryButton onClick={() => setIsEditing(true)}>
+                        Actualizar Datos
+                    </SecondaryButton>
+                )}
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
@@ -51,7 +62,8 @@ export default function UpdateProfileInformation({
                         value={data.nombres}
                         onChange={(e) => setData('nombres', e.target.value)}
                         required
-                        isFocused
+                        isFocused={isEditing}
+                        disabled={!isEditing}
                         autoComplete="name"
                     />
 
@@ -67,16 +79,28 @@ export default function UpdateProfileInformation({
                         value={data.apellidos}
                         onChange={(e) => setData('apellidos', e.target.value)}
                         required
+                        disabled={!isEditing}
                         autoComplete="family-name"
                     />
 
                     <InputError className="mt-2" message={errors.apellidos} />
                 </div>
 
-
-
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Guardar</PrimaryButton>
+                    {isEditing && (
+                        <>
+                            <PrimaryButton disabled={processing}>Guardar</PrimaryButton>
+                            <SecondaryButton 
+                                type="button" 
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    reset();
+                                }}
+                            >
+                                Cancelar
+                            </SecondaryButton>
+                        </>
+                    )}
 
                     <Transition
                         show={recentlySuccessful}

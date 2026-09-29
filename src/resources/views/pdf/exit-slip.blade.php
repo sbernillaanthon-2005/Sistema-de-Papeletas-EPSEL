@@ -34,22 +34,20 @@
         .f-fecha-emision-3 { top: 36px; left: 977px; }
         .f-fecha-emision-4 { top: 36px; left: 1004px; }
         .f-fecha-emision-5 { top: 36px; left: 1031px; }
-        .f-apellidos { top: 190px; left: 180px; }
-        .f-nombres { top: 218px; left: 180px; }
-        .f-cargo { top: 220px; left: 609px; }
+        .f-apellidos { top: 179px; left: 158px; }
+        .f-nombres { top: 224px; left: 154px; }
+        .f-cargo { top: 223px; left: 601px; }
         .f-mot-essalud { top: 328px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
         .f-mot-personal { top: 401px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
         .f-mot-comision { top: 479px; left: 91px; font-size: 20px; font-weight: bold; color: #000; }
         .f-mot-otros { top: 550px; left: 93px; font-size: 20px; font-weight: bold; color: #000; }
-        .f-detalle { top: 288px; left: 487px; width: 550px; line-height: 1.5; }
-        .f-fecha-aut-0 { top: 396px; left: 498px; }
-        .f-fecha-aut-1 { top: 396px; left: 521px; }
-        .f-fecha-aut-2 { top: 395px; left: 555px; }
-        .f-fecha-aut-3 { top: 394px; left: 583px; }
-        .f-fecha-aut-4 { top: 394px; left: 609px; }
-        .f-fecha-aut-5 { top: 393px; left: 629px; }
-        .f-fecha-aut-6 { top: 394px; left: 651px; }
-        .f-fecha-aut-7 { top: 395px; left: 673px; }
+        .f-detalle { top: 284px; left: 487px; width: 550px; line-height: 1.5; }
+        .f-fecha-aut-0 { top: 392px; left: 498px; }
+        .f-fecha-aut-1 { top: 393px; left: 527px; }
+        .f-fecha-aut-2 { top: 394px; left: 556px; }
+        .f-fecha-aut-3 { top: 394px; left: 584px; }
+        .f-fecha-aut-4 { top: 394px; left: 612px; }
+        .f-fecha-aut-5 { top: 393px; left: 642px; }
         .f-hora-desde { top: 390px; left: 914px; }
         .f-hora-hasta { top: 393px; left: 1005px; }
         .f-firma-prac { position: absolute; top: 465px; left: 320px; width: 140px; height: 90px; object-fit: contain; }
@@ -76,7 +74,7 @@
         <!-- DATOS SOBREPUESTOS -->
         @php
             $emisionChars = str_split($slip->issueDate->format('dmy')); // 6 dígitos (ej: 280926)
-            $autorizadaChars = str_split($slip->authorizedDate->format('dmY')); // 8 dígitos (ej: 28092026)
+            $autorizadaChars = str_split($slip->authorizedDate->format('dmy')); // 6 dígitos (ej: 280926)
         @endphp
         
         @foreach($emisionChars as $i => $char)

@@ -1,10 +1,11 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
-import { FormEventHandler, useRef } from 'react';
+import { FormEventHandler, useRef, useState } from 'react';
 
 export default function UpdatePasswordForm({
     className = '',
@@ -13,6 +14,8 @@ export default function UpdatePasswordForm({
 }) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    
+    const [isEditing, setIsEditing] = useState(false);
 
     const {
         data,
@@ -33,7 +36,10 @@ export default function UpdatePasswordForm({
 
         put(route('password.update'), {
             preserveScroll: true,
-            onSuccess: () => reset(),
+            onSuccess: () => {
+                reset();
+                setIsEditing(false);
+            },
             onError: (errors) => {
                 if (errors.password) {
                     reset('password', 'password_confirmation');
@@ -50,14 +56,21 @@ export default function UpdatePasswordForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Actualizar Contraseña
-                </h2>
+            <header className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
+                <div>
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Actualizar Contraseña
+                    </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Asegúrate de que tu cuenta esté usando una contraseña larga y aleatoria para mantenerte seguro.
-                </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Asegúrate de que tu cuenta esté usando una contraseña larga y aleatoria para mantenerte seguro.
+                    </p>
+                </div>
+                {!isEditing && (
+                    <SecondaryButton onClick={() => setIsEditing(true)}>
+                        Actualizar Datos
+                    </SecondaryButton>
+                )}
             </header>
 
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
@@ -77,6 +90,8 @@ export default function UpdatePasswordForm({
                         type="password"
                         className="mt-1 block w-full"
                         autoComplete="current-password"
+                        disabled={!isEditing}
+                        isFocused={isEditing}
                     />
 
                     <InputError
@@ -96,6 +111,7 @@ export default function UpdatePasswordForm({
                         type="password"
                         className="mt-1 block w-full"
                         autoComplete="new-password"
+                        disabled={!isEditing}
                     />
 
                     <InputError message={errors.password} className="mt-2" />
@@ -116,6 +132,7 @@ export default function UpdatePasswordForm({
                         type="password"
                         className="mt-1 block w-full"
                         autoComplete="new-password"
+                        disabled={!isEditing}
                     />
 
                     <InputError
@@ -125,7 +142,20 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Guardar</PrimaryButton>
+                    {isEditing && (
+                        <>
+                            <PrimaryButton disabled={processing}>Guardar</PrimaryButton>
+                            <SecondaryButton 
+                                type="button" 
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    reset();
+                                }}
+                            >
+                                Cancelar
+                            </SecondaryButton>
+                        </>
+                    )}
 
                     <Transition
                         show={recentlySuccessful}

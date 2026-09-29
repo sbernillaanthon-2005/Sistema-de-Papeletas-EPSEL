@@ -207,8 +207,14 @@ class ExitSlipController extends Controller
 
         // $this->authorize('generatePdf', \App\Models\ExitSlip::find($id));
 
+        $practitionerSignaturePath = $slip->practitionerSignaturePath;
+        if (!$practitionerSignaturePath && $slip->status->value === 'draft') {
+            $user = \App\Models\User::with('signature')->find($slip->practitionerId);
+            $practitionerSignaturePath = $user?->signature?->ruta_archivo;
+        }
+
         $signatures = [
-            'practicante' => $this->getSignatureBase64($slip->practitionerSignaturePath),
+            'practicante' => $this->getSignatureBase64($practitionerSignaturePath),
             'jefe' => $this->getSignatureBase64($slip->areaHeadSignaturePath),
             'rrhh' => $this->getSignatureBase64($slip->hrSignaturePath),
         ];
@@ -223,11 +229,11 @@ class ExitSlipController extends Controller
 
     private function getSignatureBase64(?string $path): ?string
     {
-        if (!$path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($path)) {
+        if (!$path || !\Illuminate\Support\Facades\Storage::disk('private')->exists($path)) {
             return null;
         }
-        $mime = \Illuminate\Support\Facades\Storage::disk('local')->mimeType($path);
-        $content = base64_encode(\Illuminate\Support\Facades\Storage::disk('local')->get($path));
+        $mime = \Illuminate\Support\Facades\Storage::disk('private')->mimeType($path);
+        $content = base64_encode(\Illuminate\Support\Facades\Storage::disk('private')->get($path));
         return "data:$mime;base64,$content";
     }
 }
