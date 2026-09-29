@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import { PageProps } from '@/types';
 
 interface ExitSlipForm {
@@ -17,6 +17,7 @@ interface ExitSlipForm {
 
 export default function Form({ auth, exitSlip }: PageProps<{ exitSlip?: ExitSlipForm }>) {
     const isEdit = !!exitSlip;
+    const [isEditingSignature, setIsEditingSignature] = useState(false);
 
     const { data, setData, post, put, processing, errors } = useForm({
         tipo_plantilla: exitSlip?.tipo_plantilla || 'practitioner',
@@ -170,39 +171,102 @@ export default function Form({ auth, exitSlip }: PageProps<{ exitSlip?: ExitSlip
 
                                 {/* Información de Firma */}
                                 <div className="mt-8 bg-gray-50 p-4 rounded-md border border-gray-200">
-                                    <h4 className="text-sm font-medium text-gray-900 mb-2">Firma Digital</h4>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center">
-                                            {auth.user.has_signature ? (
-                                                <>
-                                                    <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                    <span className="text-sm text-gray-700">Tu firma está registrada y se adjuntará automáticamente a la papeleta.</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                    <span className="text-sm text-red-700">No tienes una firma registrada.</span>
-                                                </>
-                                            )}
-                                        </div>
-                                        <label className="cursor-pointer text-sm text-indigo-600 hover:text-indigo-900 font-medium">
-                                            {auth.user.has_signature ? 'Actualizar firma' : 'Subir firma aquí'}
-                                            <input 
-                                                type="file" 
-                                                className="hidden" 
-                                                accept="image/png, image/jpeg, image/jpg" 
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        router.post(route('signatures.store'), { signature: file }, { preserveScroll: true, forceFormData: true });
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h4 className="text-sm font-medium text-gray-900">Firma Digital</h4>
+                                        {auth.user.has_signature && !isEditingSignature && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if(confirm('¿Seguro que quieres editar tu firma?')) {
+                                                        setIsEditingSignature(true);
                                                     }
                                                 }}
-                                            />
-                                        </label>
+                                                className="text-sm text-indigo-600 hover:text-indigo-900 font-medium"
+                                            >
+                                                Editar firma
+                                            </button>
+                                        )}
+                                        {isEditingSignature && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsEditingSignature(false)}
+                                                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                                            >
+                                                Cancelar edición
+                                            </button>
+                                        )}
                                     </div>
-                                    {!auth.user.has_signature && (
-                                        <p className="mt-2 text-xs text-red-600">Sube tu firma seleccionando una imagen para poder enviar la papeleta a aprobación.</p>
-                                    )}
+
+                                    <div className="flex flex-col">
+                                        {auth.user.has_signature ? (
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center mb-2">
+                                                    <svg className="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                    <span className="text-sm text-gray-700">Tu firma está registrada y se adjuntará automáticamente a la papeleta.</span>
+                                                </div>
+                                                
+                                                <div className="mt-2 relative inline-block self-start">
+                                                    <div className="p-2 border border-gray-200 rounded-md bg-white inline-block">
+                                                        <img src={`/signatures/${auth.user.signature_id}`} alt="Tu firma digital" className="max-h-24 object-contain" />
+                                                    </div>
+                                                    {isEditingSignature && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if(confirm('¿Seguro que deseas eliminar la imagen actual?')) {
+                                                                    router.delete(route('signatures.destroy'), { preserveScroll: true, onSuccess: () => setIsEditingSignature(false) });
+                                                                }
+                                                            }}
+                                                            className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors z-10"
+                                                            title="Borrar firma"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                
+                                                {isEditingSignature && (
+                                                    <div className="mt-4 border-t border-gray-200 pt-4">
+                                                        <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                                            Subir nueva imagen
+                                                            <input 
+                                                                type="file" 
+                                                                className="hidden" 
+                                                                accept="image/png, image/jpeg, image/jpg" 
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) {
+                                                                        router.post(route('signatures.store'), { signature: file }, { preserveScroll: true, forceFormData: true, onSuccess: () => setIsEditingSignature(false) });
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-start">
+                                                <div className="flex items-center mb-4">
+                                                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                                    <span className="text-sm text-red-700">No tienes una firma registrada. Sube una imagen para poder enviar la papeleta.</span>
+                                                </div>
+                                                <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                                    Subir firma aquí
+                                                    <input 
+                                                        type="file" 
+                                                        className="hidden" 
+                                                        accept="image/png, image/jpeg, image/jpg" 
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                router.post(route('signatures.store'), { signature: file }, { preserveScroll: true, forceFormData: true });
+                                                            }
+                                                        }}
+                                                    />
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-end space-x-4 pt-4 border-t border-gray-200">

@@ -6,10 +6,13 @@ export interface User {
     email_verified_at?: string;
     dni: string;
     rol: string;
+    rol_label: string;
     area_id: string | null;
     cargo_designado: string | null;
     has_signature: boolean;
     signature_id: string | null;
+    profile_photo_path: string | null;
+    profile_photo_url: string;
 }
 
 export type PageProps<

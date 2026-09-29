@@ -35,6 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');
@@ -47,7 +48,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
+    Route::post('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'update'])->name('profile-photo.update');
+    Route::delete('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'destroy'])->name('profile-photo.destroy');
+    
     Route::post('/signatures', [SignatureController::class, 'store'])->name('signatures.store');
+    Route::delete('/signatures', [SignatureController::class, 'destroy'])->name('signatures.destroy');
     Route::get('/signatures/{id}', [SignatureController::class, 'show'])->name('signatures.show');
 });
 

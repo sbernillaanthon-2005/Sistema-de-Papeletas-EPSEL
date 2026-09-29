@@ -1,6 +1,8 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import { Transition } from '@headlessui/react';
 import { useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 import { PageProps } from '@/types';
@@ -13,8 +15,9 @@ export default function UpdateSignatureForm({
     const { auth } = usePage<PageProps>().props;
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const { data, setData, post, processing, errors, recentlySuccessful } = useForm<{
+    const { data, setData, post, processing, errors, recentlySuccessful, reset } = useForm<{
         signature: File | null;
     }>({
         signature: null,
@@ -29,6 +32,7 @@ export default function UpdateSignatureForm({
             onSuccess: () => {
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 setPreview(null);
+                setIsEditing(false);
             },
         });
     };
@@ -46,15 +50,22 @@ export default function UpdateSignatureForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Firma Digital
-                </h2>
+            <header className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
+                <div>
+                    <h2 className="text-lg font-medium text-gray-900">
+                        Firma Digital
+                    </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Actualiza tu firma digital. Esta firma será estampada en las papeletas de salida que generes o apruebes. 
-                    Por favor, sube una imagen con fondo transparente en formato PNG o JPG.
-                </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                        Actualiza tu firma digital. Esta firma será estampada en las papeletas de salida que generes o apruebes. 
+                        Por favor, sube una imagen con fondo transparente en formato PNG o JPG.
+                    </p>
+                </div>
+                {!isEditing && (
+                    <SecondaryButton onClick={() => setIsEditing(true)}>
+                        Actualizar Datos
+                    </SecondaryButton>
+                )}
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
@@ -68,6 +79,7 @@ export default function UpdateSignatureForm({
                         className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                         accept="image/png, image/jpeg, image/jpg"
                         onChange={handleFileChange}
+                        disabled={!isEditing}
                     />
 
                     <InputError message={errors.signature} className="mt-2" />
@@ -93,15 +105,36 @@ export default function UpdateSignatureForm({
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing || !data.signature}>
-                        {auth.user.has_signature ? 'Actualizar Firma' : 'Subir Firma'}
-                    </PrimaryButton>
+                    {isEditing && (
+                        <>
+                            <PrimaryButton disabled={processing || !data.signature}>
+                                Guardar
+                            </PrimaryButton>
+                            <SecondaryButton 
+                                type="button" 
+                                onClick={() => {
+                                    setIsEditing(false);
+                                    reset();
+                                    setPreview(null);
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                            >
+                                Cancelar
+                            </SecondaryButton>
+                        </>
+                    )}
 
-                    {recentlySuccessful && (
+                    <Transition
+                        show={recentlySuccessful}
+                        enter="transition ease-in-out"
+                        enterFrom="opacity-0"
+                        leave="transition ease-in-out"
+                        leaveTo="opacity-0"
+                    >
                         <p className="text-sm text-gray-600">
                             Guardado.
                         </p>
-                    )}
+                    </Transition>
                 </div>
             </form>
         </section>

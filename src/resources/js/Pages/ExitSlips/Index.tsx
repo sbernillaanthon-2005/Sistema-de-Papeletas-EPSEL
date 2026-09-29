@@ -10,6 +10,7 @@ interface ExitSlip {
     motivo_label: string;
     estado: string;
     estado_label: string;
+    apellidos_nombres: string;
 }
 
 export default function Index({ auth, exitSlips }: PageProps<{ exitSlips: ExitSlip[] }>) {
@@ -42,6 +43,7 @@ export default function Index({ auth, exitSlips }: PageProps<{ exitSlips: ExitSl
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solicitante</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motivo</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -53,6 +55,9 @@ export default function Index({ auth, exitSlips }: PageProps<{ exitSlips: ExitSl
                                                 <tr key={slip.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                         {slip.codigo}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {slip.apellidos_nombres}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {slip.fecha_emision}

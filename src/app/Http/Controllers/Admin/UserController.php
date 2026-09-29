@@ -97,4 +97,16 @@ class UserController extends Controller
 
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
+    public function destroy(Request $request, string $id)
+    {
+        $user = User::findOrFail($id);
+        
+        if ($user->id === $request->user()->id) {
+            throw ValidationException::withMessages(['activo' => 'No puedes eliminar tu propia cuenta.']);
+        }
+        
+        $user->delete();
+
+        return back()->with('success', 'Usuario eliminado correctamente.');
+    }
 }

@@ -32,6 +32,7 @@ export default function Show({ auth, exitSlip }: PageProps<{ exitSlip: ExitSlip 
         'draft': 'bg-gray-100 text-gray-800',
         'submitted': 'bg-yellow-100 text-yellow-800',
         'approved_by_area': 'bg-blue-100 text-blue-800',
+        'submitted_to_hr': 'bg-purple-100 text-purple-800',
         'approved_by_hr': 'bg-indigo-100 text-indigo-800',
         'completed': 'bg-green-100 text-green-800',
         'rejected': 'bg-red-100 text-red-800',
@@ -119,8 +120,18 @@ export default function Show({ auth, exitSlip }: PageProps<{ exitSlip: ExitSlip 
                                         </button>
                                     )}
 
+                                    {exitSlip.estado === 'approved_by_area' && auth.user.rol === 'practitioner' && (
+                                        <button
+                                            onClick={() => handleTransition('submit_to_hr')}
+                                            disabled={processing}
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                        >
+                                            Enviar a Recursos Humanos
+                                        </button>
+                                    )}
+
                                     {((exitSlip.estado === 'submitted' && auth.user.rol === 'area_head') || 
-                                      (exitSlip.estado === 'approved_by_area' && auth.user.rol === 'hr')) && (
+                                      (exitSlip.estado === 'submitted_to_hr' && auth.user.rol === 'hr')) && (
                                         <>
                                             <button
                                                 onClick={() => handleTransition('approve')}
@@ -133,8 +144,6 @@ export default function Show({ auth, exitSlip }: PageProps<{ exitSlip: ExitSlip 
                                                 onClick={() => {
                                                     const reason = prompt('Motivo de rechazo:');
                                                     if (reason) {
-                                                        // En una app real usaríamos estado para el modal
-                                                        // Aquí lo simplificamos para el prototipo
                                                         alert('El rechazo requiere un modal para el comentario. (Pendiente)');
                                                     }
                                                 }}

@@ -7,6 +7,7 @@ type Person = {
     nombres: string;
     apellidos: string;
     rol: string;
+    rol_label?: string;
     activo: boolean;
     area_id: string | null;
     jefe_id: string | null;
@@ -185,7 +186,7 @@ export default function Index({
                                     <td className="p-3">
                                         {u.apellidos} {u.nombres}
                                     </td>
-                                    <td className="p-3">{u.rol}</td>
+                                    <td className="p-3">{u.rol_label || u.rol}</td>
                                     <td className="p-3">
                                         <select
                                             aria-label={`Área de ${u.nombres}`}
@@ -237,7 +238,7 @@ export default function Index({
                                                 ))}
                                         </select>
                                     </td>
-                                    <td className="p-3">
+                                    <td className="p-3 flex space-x-2">
                                         <button
                                             className="underline"
                                             onClick={() =>
@@ -247,6 +248,16 @@ export default function Index({
                                             {u.activo
                                                 ? "Desactivar"
                                                 : "Activar"}
+                                        </button>
+                                        <button
+                                            className="underline text-red-600"
+                                            onClick={() => {
+                                                if (confirm(`¿Estás seguro que deseas eliminar a ${u.nombres} ${u.apellidos}? Esta acción no se puede deshacer.`)) {
+                                                    router.delete(route('admin.users.destroy', u.id));
+                                                }
+                                            }}
+                                        >
+                                            Eliminar
                                         </button>
                                     </td>
                                 </tr>

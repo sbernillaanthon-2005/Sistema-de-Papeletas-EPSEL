@@ -46,4 +46,19 @@ class SignatureController extends Controller
 
         return Storage::disk('private')->response($path);
     }
+
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+        $signature = $user->signature;
+
+        if ($signature) {
+            if (Storage::disk('private')->exists($signature->ruta_archivo)) {
+                Storage::disk('private')->delete($signature->ruta_archivo);
+            }
+            $signature->delete();
+        }
+
+        return back()->with('status', 'signature-deleted');
+    }
 }

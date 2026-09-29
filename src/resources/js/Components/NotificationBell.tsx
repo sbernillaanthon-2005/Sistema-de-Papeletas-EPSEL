@@ -74,7 +74,7 @@ export default function NotificationBell() {
                 ".notification.created",
                 () => {
                     reload();
-                    router.reload({ only: ["slips", "counts", "slip", "can"] });
+                    router.reload({ only: ["slips", "counts", "slip", "can", "exitSlips", "exitSlip"] });
                 },
             );
         }

@@ -40,10 +40,13 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'dni' => $request->user()->dni,
                     'rol' => $request->user()->rol?->value,
+                    'rol_label' => $request->user()->rol?->label(),
                     'area_id' => $request->user()->area_id,
                     'cargo_designado' => $request->user()->cargo_designado,
                     'has_signature' => $request->user()->signature()->exists(),
                     'signature_id' => $request->user()->signature()->value('id'),
+                    'profile_photo_path' => $request->user()->profile_photo_path,
+                    'profile_photo_url' => $request->user()->profile_photo_url,
                 ] : null,
             ],
         ];

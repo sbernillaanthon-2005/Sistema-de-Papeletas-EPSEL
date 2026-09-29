@@ -85,9 +85,14 @@ final class ExitSlip
         return $this->status === ExitSlipStatus::SUBMITTED;
     }
 
-    public function canBeApprovedByHR(): bool
+    public function canBeSubmittedToHR(): bool
     {
         return $this->status === ExitSlipStatus::APPROVED_BY_AREA;
+    }
+
+    public function canBeApprovedByHR(): bool
+    {
+        return $this->status === ExitSlipStatus::SUBMITTED_TO_HR;
     }
 
     public function canBeRejected(): bool
@@ -95,6 +100,7 @@ final class ExitSlip
         return in_array($this->status, [
             ExitSlipStatus::SUBMITTED,
             ExitSlipStatus::APPROVED_BY_AREA,
+            ExitSlipStatus::SUBMITTED_TO_HR,
         ], true);
     }
 }

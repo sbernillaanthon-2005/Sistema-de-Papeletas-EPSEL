@@ -82,19 +82,25 @@
         @endforeach
         
         @php
-            // Intentar separar nombres y apellidos asumiendo formato "Nombre1 Nombre2 Apellido1 Apellido2"
-            $nameParts = explode(' ', trim($slip->fullNameSnapshot));
-            $nombresPdf = '';
-            $apellidosPdf = '';
-            if(count($nameParts) >= 4) {
-                $nombresPdf = $nameParts[0] . ' ' . $nameParts[1];
-                $apellidosPdf = $nameParts[2] . ' ' . $nameParts[3];
-            } elseif(count($nameParts) === 3) {
-                $nombresPdf = $nameParts[0];
-                $apellidosPdf = $nameParts[1] . ' ' . $nameParts[2];
+            // Utilizar directamente los datos del usuario si están disponibles
+            if (isset($user) && $user) {
+                $nombresPdf = $user->nombres;
+                $apellidosPdf = $user->apellidos;
             } else {
-                $nombresPdf = $slip->fullNameSnapshot;
+                // Fallback para papeletas antiguas o cuando no hay usuario
+                $nameParts = explode(' ', trim($slip->fullNameSnapshot));
+                $nombresPdf = '';
                 $apellidosPdf = '';
+                if(count($nameParts) >= 4) {
+                    $nombresPdf = $nameParts[0] . ' ' . $nameParts[1];
+                    $apellidosPdf = $nameParts[2] . ' ' . $nameParts[3];
+                } elseif(count($nameParts) === 3) {
+                    $nombresPdf = $nameParts[0];
+                    $apellidosPdf = $nameParts[1] . ' ' . $nameParts[2];
+                } else {
+                    $nombresPdf = $slip->fullNameSnapshot;
+                    $apellidosPdf = '';
+                }
             }
         @endphp
         

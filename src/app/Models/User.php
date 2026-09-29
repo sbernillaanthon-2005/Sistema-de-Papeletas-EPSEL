@@ -27,6 +27,7 @@ class User extends Authenticatable
         'cargo_designado',
         'jefe_id',
         'activo',
+        'profile_photo_path',
     ];
 
     protected $hidden = [
@@ -39,6 +40,29 @@ class User extends Authenticatable
         'rol' => UserRole::class,
         'activo' => 'boolean',
     ];
+
+    protected $appends = [
+        'profile_photo_url',
+        'rol_label',
+    ];
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        if ($this->profile_photo_path) {
+            return asset('storage/' . $this->profile_photo_path);
+        }
+
+        $name = trim(collect(explode(' ', $this->nombres . ' ' . $this->apellidos))->map(function ($segment) {
+            return mb_substr($segment, 0, 1);
+        })->take(2)->join(''));
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&color=7F9CF5&background=EBF4FF';
+    }
+
+    public function getRolLabelAttribute(): ?string
+    {
+        return $this->rol?->label();
+    }
 
     public function area(): BelongsTo
     {

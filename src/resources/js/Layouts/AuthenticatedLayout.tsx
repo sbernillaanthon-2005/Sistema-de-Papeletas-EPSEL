@@ -23,7 +23,17 @@ export default function Authenticated({
                                 Usuarios
                             </Link>
                         )}
-                        <Link href={route("profile.edit")}>Mi perfil</Link>
+                        <Link href={route("profile.edit")} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded-md transition-colors">
+                            <div className="flex flex-col text-right hidden sm:flex mr-1">
+                                <span className="font-semibold text-sm leading-tight text-gray-800">{auth.user.nombres}</span>
+                                <span className="text-xs text-gray-500">{auth.user.rol_label}</span>
+                            </div>
+                            <img 
+                                src={auth.user.profile_photo_url} 
+                                alt={auth.user.nombres} 
+                                className="h-9 w-9 rounded-full object-cover border border-gray-200" 
+                            />
+                        </Link>
                         <NotificationBell />
                         <Link href={route("logout")} method="post" as="button">
                             Salir
