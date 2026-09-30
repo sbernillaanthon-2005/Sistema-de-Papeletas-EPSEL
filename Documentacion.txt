@@ -12,3 +12,5 @@ http://localhost:8000/calibrador
 ----------------------------------------
 npm run build
 -------------------------------
+docker compose exec node npm run build
+--------------------------------------

@@ -1,11 +1,8 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import LoginIcon from "@/Components/LoginIcon";
+import LoginLayout from "@/Layouts/LoginLayout";
+import { Head, Link, useForm } from "@inertiajs/react";
+import { FormEventHandler, useState } from "react";
+import mascot from "../../../images/EPSEL-saludo-transparente.gif";
 
 export default function Login({
     status,
@@ -14,97 +11,193 @@ export default function Login({
     status?: string;
     canResetPassword: boolean;
 }) {
+    const [showPassword, setShowPassword] = useState(false);
+    const [capsLock, setCapsLock] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-        password: '',
+        email: "",
+        password: "",
         remember: false as boolean,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        if (processing) return;
 
-        post(route('login'), {
-            onFinish: () => reset('password'),
+        post(route("login"), {
+            onFinish: () => reset("password"),
         });
     };
 
     return (
-        <GuestLayout>
+        <LoginLayout>
             <Head title="Iniciar Sesión" />
-
+            <div className="login-welcome">
+                <p className="login-eyebrow">PORTAL DEL COLABORADOR</p>
+                <h1>
+                    Bienvenido
+                    <br />
+                    de nuevo.
+                </h1>
+                <img
+                    src={mascot}
+                    alt="Mascota EPSEL"
+                    className="login-mascot transition-transform duration-300 hover:scale-105"
+                    width="210"
+                    height="250"
+                />
+            </div>
+            <p className="login-description">
+                Ingresa a tu espacio de trabajo y gestiona tus papeletas de
+                forma sencilla.
+            </p>
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="login-status" role="status">
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Correo Electrónico o DNI" />
-
-                    <TextInput
-                        id="email"
-                        type="text"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
+            <form
+                id="login-form"
+                className="login-form"
+                onSubmit={submit}
+                aria-busy={processing}
+            >
+                <div className="login-field">
+                    <label htmlFor="email">Correo electrónico o DNI</label>
+                    <div className="login-input-wrap">
+                        <LoginIcon name="user" className="login-input-icon" />
+                        <input
+                            id="email"
+                            type="text"
+                            name="email"
+                            value={data.email}
+                            className="login-input"
+                            placeholder="Tu correo o número de DNI"
+                            autoComplete="username"
+                            autoCapitalize="none"
+                            spellCheck={false}
+                            required
+                            aria-invalid={Boolean(errors.email)}
+                            aria-describedby={
+                                errors.email ? "login-email-error" : undefined
+                            }
+                            onChange={(e) => setData("email", e.target.value)}
+                        />
+                    </div>
+                    {errors.email && (
+                        <p
+                            id="login-email-error"
+                            className="login-error"
+                            role="alert"
+                        >
+                            {errors.email}
+                        </p>
+                    )}
                 </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Contraseña" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
+                <div className="login-field">
+                    <label htmlFor="password">Contraseña</label>
+                    <div className="login-input-wrap">
+                        <LoginIcon name="lock" className="login-input-icon" />
+                        <input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={data.password}
+                            className="login-input login-password"
+                            placeholder="Ingresa tu contraseña"
+                            autoComplete="current-password"
+                            required
+                            aria-invalid={Boolean(errors.password)}
+                            aria-describedby={
+                                [
+                                    errors.password && "login-password-error",
+                                    capsLock && "login-caps",
+                                ]
+                                    .filter(Boolean)
+                                    .join(" ") || undefined
+                            }
+                            onKeyUp={(e) =>
+                                setCapsLock(e.getModifierState("CapsLock"))
+                            }
+                            onKeyDown={(e) =>
+                                setCapsLock(e.getModifierState("CapsLock"))
+                            }
+                            onBlur={() => setCapsLock(false)}
+                            onChange={(e) =>
+                                setData("password", e.target.value)
+                            }
+                        />
+                        <button
+                            className="login-password-toggle"
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={
+                                showPassword
+                                    ? "Ocultar contraseña"
+                                    : "Mostrar contraseña"
+                            }
+                            aria-pressed={showPassword}
+                            aria-controls="password"
+                        >
+                            <LoginIcon
+                                name={showPassword ? "eye-off" : "eye"}
+                            />
+                        </button>
+                    </div>
+                    {capsLock && (
+                        <p id="login-caps" className="login-caps" role="status">
+                            La tecla Bloq Mayús está activada.
+                        </p>
+                    )}
+                    {errors.password && (
+                        <p
+                            id="login-password-error"
+                            className="login-error"
+                            role="alert"
+                        >
+                            {errors.password}
+                        </p>
+                    )}
                 </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
+                <div className="login-options">
+                    <label className="login-remember">
+                        <input
+                            type="checkbox"
+                            className="login-checkbox"
                             name="remember"
                             checked={data.remember}
                             onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
+                                setData("remember", e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-sm text-gray-600">
-                            Recordarme
-                        </span>
+                        <span>Recordarme</span>
                     </label>
                 </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
-                        <Link
-                            href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                        >
-                            ¿Olvidaste tu contraseña?
-                        </Link>
+                <button
+                    type="submit"
+                    className="login-submit"
+                    disabled={processing}
+                >
+                    {processing ? (
+                        <>
+                            <span
+                                className="login-spinner"
+                                aria-hidden="true"
+                            />
+                            Ingresando…
+                        </>
+                    ) : (
+                        <>
+                            Ingresar
+                            <LoginIcon name="arrow" />
+                        </>
                     )}
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Ingresar
-                    </PrimaryButton>
-                </div>
+                </button>
             </form>
-        </GuestLayout>
+            <p className="login-support">
+                ¿Necesitas acceso a la plataforma?
+                <strong>Comunícate con tu administrador.</strong>
+            </p>
+        </LoginLayout>
     );
 }
