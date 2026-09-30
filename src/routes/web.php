@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::get('/reniec/{dni}', [\App\Http\Controllers\Admin\ReniecController::class, 'consult'])->name('reniec.consult');
+        Route::get('/documentation', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])->name('documentation');
     });
 
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');

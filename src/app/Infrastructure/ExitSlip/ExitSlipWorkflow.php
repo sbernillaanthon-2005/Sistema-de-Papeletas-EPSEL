@@ -38,6 +38,9 @@ class ExitSlipWorkflow
                 } elseif ($action === 'submit_to_hr') {
                     $slip->update(['estado' => 'submitted_to_hr']);
                     ExitSlipTransition::create(['exit_slip_id' => $id, 'actor_id' => $actor->id, 'estado_origen' => 'approved_by_area', 'estado_destino' => 'submitted_to_hr']);
+                } elseif ($action === 'submit_to_security') {
+                    $slip->update(['estado' => 'submitted_to_security']);
+                    ExitSlipTransition::create(['exit_slip_id' => $id, 'actor_id' => $actor->id, 'estado_origen' => 'approved_by_hr', 'estado_destino' => 'submitted_to_security']);
                 } elseif ($action === 'approve') {
                     $class = $actor->rol->value === 'area_head' ? ApproveByAreaHead::class : ApproveByHR::class;
                     app($class)->execute($id, $actor->id, $this->signature($actor));
@@ -50,22 +53,14 @@ class ExitSlipWorkflow
                         throw new \DomainException('El control corresponde únicamente a la fecha autorizada.');
                     }
                     $old = $slip->estado->value;
-                    if ($data['movimiento'] === 'salida') {
-                        if ($slip->hora_salida) {
-                            throw new \DomainException('La salida ya fue registrada.');
-                        }
-                        $slip->hora_salida = now('America/Lima')->format('H:i:s');
-                    } else {
-                        if (! $slip->hora_salida || $slip->hora_retorno) {
-                            throw new \DomainException('Registra primero la salida; el retorno no puede duplicarse.');
-                        }
-                        $slip->hora_retorno = now('America/Lima')->format('H:i:s');
-                        $slip->estado = 'completed';
-                    }
+                    $slip->hora_salida = $data['hora_salida'];
+                    $slip->hora_retorno = $data['hora_retorno'];
                     $slip->observaciones = $data['observaciones'] ?? $slip->observaciones;
-                    $slip->supervisor = $actor->apellidos.' '.$actor->nombres;
+                    $slip->supervisor = trim($actor->nombres.' '.$actor->apellidos);
+                    $slip->firma_vigilancia_path = $this->signature($actor);
+                    $slip->estado = 'completed';
                     $slip->save();
-                    ExitSlipTransition::create(['exit_slip_id' => $id, 'actor_id' => $actor->id, 'estado_origen' => $old, 'estado_destino' => $slip->estado->value, 'comentario' => 'Registro de '.$data['movimiento']]);
+                    ExitSlipTransition::create(['exit_slip_id' => $id, 'actor_id' => $actor->id, 'estado_origen' => $old, 'estado_destino' => $slip->estado->value, 'comentario' => 'Registro de control de vigilancia']);
                 }
             } catch (\DomainException $e) {
                 throw ValidationException::withMessages(['workflow' => $e->getMessage()]);

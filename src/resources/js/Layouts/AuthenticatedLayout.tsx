@@ -4,6 +4,7 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
 import PortalIcon, { PortalIconName } from "@/Components/PortalIcon";
 import { Avatar, roleLabels } from "@/Components/PortalUI";
+import mascotGif from "../../images/mascota_epsel_animada.gif";
 import "../../css/portal.css";
 
 export default function Authenticated({
@@ -59,11 +60,21 @@ export default function Authenticated({
             active: url.startsWith("/profile"),
         },
     ];
+
+    if (user.rol === "admin") {
+        nav.push({
+            label: "Documentación Técnica",
+            href: route("admin.documentation"),
+            icon: "file", // Or use a document icon
+            active: url.startsWith("/admin/documentation"),
+        });
+    }
+
     const sidebar = (
         <>
             <Link className="portal-brand" href={route(home)}>
-                <span>
-                    <PortalIcon name="drop" />
+                <span style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                    <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </span>
                 <div>
                     EPSEL<small>SISTEMA DE PAPELETAS</small>

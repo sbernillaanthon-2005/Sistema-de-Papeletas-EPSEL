@@ -38,12 +38,12 @@ class ExitSlipController extends Controller
         match ($user->rol->value) {
             'admin' => null,
             'area_head' => $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere(fn ($q) => $q->where('jefe_asignado_id', $user->id)->where('estado', '!=', 'draft'))),
-            'hr' => $query->whereIn('estado', ['submitted_to_hr', 'approved_by_hr', 'completed', 'rejected']),
-            'security' => $query->whereIn('estado', ['approved_by_hr', 'completed']),
+            'hr' => $query->whereIn('estado', ['submitted_to_hr', 'approved_by_hr', 'submitted_to_security', 'completed', 'rejected']),
+            'security' => $query->whereIn('estado', ['submitted_to_security', 'completed']),
             default => $query->where('user_id', $user->id),
         };
         $counts = (clone $query)->selectRaw('estado, count(*) as total')->groupBy('estado')->pluck('total', 'estado');
-        $inTransit = (clone $query)->where('estado', 'approved_by_hr')->whereNotNull('hora_salida')->whereNull('hora_retorno')->count();
+        $inTransit = (clone $query)->where('estado', 'submitted_to_security')->whereNotNull('hora_salida')->whereNull('hora_retorno')->count();
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
@@ -130,6 +130,7 @@ class ExitSlipController extends Controller
             null,
             null,
             null,
+            null,
             new DateTimeImmutable
         );
 
@@ -156,7 +157,7 @@ class ExitSlipController extends Controller
 
         $model = \App\Models\ExitSlip::findOrFail($id);
         $can = [];
-        foreach (['update', 'submit', 'approve', 'reject', 'revert', 'security', 'submit_to_hr'] as $ability) {
+        foreach (['update', 'submit', 'approve', 'reject', 'revert', 'security', 'submit_to_hr', 'submit_to_security'] as $ability) {
             $can[$ability] = Gate::allows($ability, $model);
         }
 
@@ -260,6 +261,7 @@ class ExitSlipController extends Controller
                 $slip->returnTime,
                 $slip->securityObservations,
                 $slip->supervisor,
+                $slip->firmaVigilanciaPath,
                 $slip->rejectionReason,
                 $slip->finalPdfPath,
                 $slip->createdAt
@@ -273,10 +275,14 @@ class ExitSlipController extends Controller
 
     public function transition(Request $request, string $id, string $action, ExitSlipWorkflow $workflow)
     {
-        abort_unless(in_array($action, ['submit', 'approve', 'submit_to_hr', 'reject', 'revert', 'security'], true), 404);
+        abort_unless(in_array($action, ['submit', 'approve', 'submit_to_hr', 'submit_to_security', 'reject', 'revert', 'security'], true), 404);
         $data = match ($action) {
             'reject' => $request->validate(['comentario' => 'required|string|max:2000']),
-            'security' => $request->validate(['movimiento' => 'required|in:salida,retorno', 'observaciones' => 'nullable|string|max:2000']),
+            'security' => $request->validate([
+                'hora_salida' => 'required|date_format:H:i',
+                'hora_retorno' => 'required|date_format:H:i|after:hora_salida',
+                'observaciones' => 'nullable|string|max:2000'
+            ]),
             default => [],
         };
         $workflow->execute($id, $request->user(), $action, $data);
@@ -303,6 +309,7 @@ class ExitSlipController extends Controller
             'practicante' => $this->getSignatureBase64($practitionerSignaturePath),
             'jefe' => $this->getSignatureBase64($slip->areaHeadSignaturePath),
             'rrhh' => $this->getSignatureBase64($slip->hrSignaturePath),
+            'vigilancia' => $this->getSignatureBase64($slip->firmaVigilanciaPath),
         ];
 
         $pdf = Pdf::loadView('pdf.exit-slip', [

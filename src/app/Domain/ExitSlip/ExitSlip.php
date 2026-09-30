@@ -41,6 +41,7 @@ final class ExitSlip
         public readonly ?string            $returnTime,
         public readonly ?string            $securityObservations,
         public readonly ?string            $supervisor,
+        public readonly ?string            $firmaVigilanciaPath,
         
         public readonly ?string            $rejectionReason,
         public readonly ?string            $finalPdfPath,
@@ -59,15 +60,20 @@ final class ExitSlip
     {
         return in_array($this->status, [
             ExitSlipStatus::APPROVED_BY_AREA,
+            ExitSlipStatus::SUBMITTED_TO_HR,
             ExitSlipStatus::APPROVED_BY_HR,
+            ExitSlipStatus::SUBMITTED_TO_SECURITY,
             ExitSlipStatus::COMPLETED,
         ], true);
     }
 
     public function isFullyApproved(): bool
     {
-        return $this->status === ExitSlipStatus::APPROVED_BY_HR
-            || $this->status === ExitSlipStatus::COMPLETED;
+        return in_array($this->status, [
+            ExitSlipStatus::APPROVED_BY_HR,
+            ExitSlipStatus::SUBMITTED_TO_SECURITY,
+            ExitSlipStatus::COMPLETED,
+        ], true);
     }
 
     public function isRejected(): bool

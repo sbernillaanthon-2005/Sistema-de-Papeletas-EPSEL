@@ -11,6 +11,7 @@ enum ExitSlipStatus: string
     case APPROVED_BY_AREA = 'approved_by_area';
     case SUBMITTED_TO_HR = 'submitted_to_hr';
     case APPROVED_BY_HR = 'approved_by_hr';
+    case SUBMITTED_TO_SECURITY = 'submitted_to_security';
     case COMPLETED = 'completed';
     case REJECTED = 'rejected';
 
@@ -22,6 +23,7 @@ enum ExitSlipStatus: string
             self::APPROVED_BY_AREA => 'Aprobada por Área',
             self::SUBMITTED_TO_HR => 'Enviada a RRHH',
             self::APPROVED_BY_HR => 'Aprobada por RRHH',
+            self::SUBMITTED_TO_SECURITY => 'Enviada a Vigilancia',
             self::COMPLETED => 'Completada',
             self::REJECTED => 'Rechazada',
         };

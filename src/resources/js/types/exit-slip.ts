@@ -4,6 +4,7 @@ export const statuses: Record<string, string> = {
     approved_by_area: "Aprobada por Área",
     submitted_to_hr: "Enviada a RRHH",
     approved_by_hr: "Aprobada por RRHH",
+    submitted_to_security: "Enviada a Vigilancia",
     completed: "Completada",
     rejected: "Rechazada",
 };

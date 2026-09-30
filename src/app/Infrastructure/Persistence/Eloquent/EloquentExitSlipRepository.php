@@ -83,6 +83,7 @@ final class EloquentExitSlipRepository implements ExitSlipRepositoryInterface
             'firma_jefe_path'           => $exitSlip->areaHeadSignaturePath,
             'firma_rrhh_path'           => $exitSlip->hrSignaturePath,
             'firma_gerente_path'        => $exitSlip->lineManagerSignaturePath,
+            'firma_vigilancia_path'     => $exitSlip->firmaVigilanciaPath,
             'hora_salida'               => $exitSlip->exitTime,
             'hora_retorno'              => $exitSlip->returnTime,
             'observaciones'             => $exitSlip->securityObservations,
@@ -116,10 +117,13 @@ final class EloquentExitSlipRepository implements ExitSlipRepositoryInterface
             $model->firma_jefe_path,
             $model->firma_rrhh_path,
             $model->firma_gerente_path,
+            
             $model->hora_salida,
             $model->hora_retorno,
             $model->observaciones,
             $model->supervisor,
+            $model->firma_vigilancia_path,
+            
             $model->estado === ExitSlipStatus::REJECTED ? optional($model->transitions()->latest('id')->first())->comentario : null,
             $model->pdf_final_ruta,
             new DateTimeImmutable($model->created_at->format('Y-m-d H:i:s'))

@@ -1,6 +1,7 @@
 import { PropsWithChildren } from "react";
 import LoginIcon from "@/Components/LoginIcon";
 import background from "../../images/Fondo de login.png";
+import mascotGif from "../../images/mascota_epsel_animada.gif";
 import "../../css/login.css";
 
 export default function LoginLayout({ children }: PropsWithChildren) {
@@ -12,8 +13,8 @@ export default function LoginLayout({ children }: PropsWithChildren) {
             <div className="login-shell">
                 <section className="login-panel" aria-label="Acceso a EPSEL">
                     <header className="login-brand">
-                        <span className="login-brand-symbol">
-                            <LoginIcon name="drop" />
+                        <span className="login-brand-symbol" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                            <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </span>
                         <div>
                             <span className="login-brand-name">

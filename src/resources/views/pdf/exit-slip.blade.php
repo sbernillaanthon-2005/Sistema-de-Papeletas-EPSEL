@@ -19,7 +19,6 @@
         .staff-body p { line-height: 1.6; }
         .staff-body .logo-container { position: absolute; top: 20px; left: 20px; width: 120px; height: 60px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; }
         
-        .watermark { position: absolute; top: 30%; left: 15%; font-size: 80px; color: rgba(255, 0, 0, 0.1); transform: rotate(-30deg); z-index: -1; font-weight: bold; }
         
         /* ESTILOS PARA LA PLANTILLA DE PRACTICANTES (IMAGEN DE FONDO) */
         .bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; }
@@ -34,32 +33,33 @@
         .f-fecha-emision-3 { top: 36px; left: 977px; }
         .f-fecha-emision-4 { top: 36px; left: 1004px; }
         .f-fecha-emision-5 { top: 36px; left: 1031px; }
-        .f-apellidos { top: 179px; left: 158px; }
-        .f-nombres { top: 224px; left: 154px; }
-        .f-cargo { top: 223px; left: 601px; }
+        .f-apellidos { top: 177px; left: 164px; }
+        .f-nombres { top: 222px; left: 153px; }
+        .f-cargo { top: 220px; left: 609px; }
         .f-mot-essalud { top: 328px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
         .f-mot-personal { top: 401px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
-        .f-mot-comision { top: 479px; left: 91px; font-size: 20px; font-weight: bold; color: #000; }
-        .f-mot-otros { top: 550px; left: 93px; font-size: 20px; font-weight: bold; color: #000; }
-        .f-detalle { top: 284px; left: 487px; width: 550px; line-height: 1.5; }
-        .f-fecha-aut-0 { top: 392px; left: 498px; }
-        .f-fecha-aut-1 { top: 393px; left: 527px; }
-        .f-fecha-aut-2 { top: 394px; left: 556px; }
-        .f-fecha-aut-3 { top: 394px; left: 584px; }
-        .f-fecha-aut-4 { top: 394px; left: 612px; }
-        .f-fecha-aut-5 { top: 393px; left: 642px; }
-        .f-hora-desde { top: 390px; left: 914px; }
-        .f-hora-hasta { top: 393px; left: 1005px; }
+        .f-mot-comision { top: 476px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
+        .f-mot-otros { top: 552px; left: 89px; font-size: 20px; font-weight: bold; color: #000; }
+        .f-detalle { top: 288px; left: 487px; width: 550px; line-height: 1.5; }
+        .f-fecha-aut-0 { top: 396px; left: 498px; }
+        .f-fecha-aut-1 { top: 395px; left: 526px; }
+        .f-fecha-aut-2 { top: 395px; left: 555px; }
+        .f-fecha-aut-3 { top: 395px; left: 585px; }
+        .f-fecha-aut-4 { top: 395px; left: 614px; }
+        .f-fecha-aut-5 { top: 394px; left: 642px; }
+        .f-hora-desde { top: 392px; left: 912px; }
+        .f-hora-hasta { top: 391px; left: 1008px; }
         .f-firma-prac { position: absolute; top: 465px; left: 320px; width: 140px; height: 90px; object-fit: contain; }
         .f-firma-jefe { position: absolute; top: 463px; left: 530px; width: 140px; height: 90px; object-fit: contain; }
         .f-firma-rrhh { position: absolute; top: 465px; left: 925px; width: 140px; height: 90px; object-fit: contain; }
+        
+        .f-hora-salida-real { position: absolute; top: 673px; left: 201px; font-size: 12px; }
+        .f-hora-retorno-real { position: absolute; top: 730px; left: 209px; font-size: 12px; }
+        .f-observaciones-vig { position: absolute; top: 675px; left: 415px; font-size: 10px; width: 400px; }
+        .f-firma-vig { position: absolute; top: 634px; left: 924px; width: 140px; height: 90px; object-fit: contain; }
     </style>
 </head>
 <body>
-    @if(!$slip->isFullyApproved())
-        <div class="watermark">BORRADOR / PENDIENTE</div>
-    @endif
-
     @if($slip->templateType->value === 'practitioner')
         <!-- ========== PLANTILLA DE PRACTICANTES CON IMAGEN ========== -->
         @php
@@ -133,6 +133,20 @@
         @endif
         @if($signatures['rrhh'])
             <img class="f-firma-rrhh" src="{{ $signatures['rrhh'] }}">
+        @endif
+        
+        <!-- CONTROL DE VIGILANCIA -->
+        @if($slip->exitTime)
+            <div class="prac-field f-hora-salida-real">{{ substr($slip->exitTime, 0, 5) }}</div>
+        @endif
+        @if($slip->returnTime)
+            <div class="prac-field f-hora-retorno-real">{{ substr($slip->returnTime, 0, 5) }}</div>
+        @endif
+        @if($slip->securityObservations)
+            <div class="prac-field f-observaciones-vig">{{ $slip->securityObservations }}</div>
+        @endif
+        @if(isset($signatures['vigilancia']) && $signatures['vigilancia'])
+            <img class="f-firma-vig" src="{{ $signatures['vigilancia'] }}">
         @endif
 
     @else
@@ -226,6 +240,12 @@
                 <tr>
                     <th>Hora de Salida Real</th>
                     <td>{{ $slip->exitTime ?? 'Pendiente' }}</td>
+                    <th rowspan="4" style="width: 20%; text-align: center; vertical-align: bottom;">
+                        @if(isset($signatures['vigilancia']) && $signatures['vigilancia'])
+                            <img class="signature" src="{{ $signatures['vigilancia'] }}" style="max-height: 80px;"><br>
+                        @endif
+                        Firma Vigilancia
+                    </th>
                 </tr>
                 <tr>
                     <th>Hora de Retorno Real</th>

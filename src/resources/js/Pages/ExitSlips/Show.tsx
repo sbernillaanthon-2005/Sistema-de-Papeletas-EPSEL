@@ -38,6 +38,7 @@ const stages = [
     "approved_by_area",
     "submitted_to_hr",
     "approved_by_hr",
+    "submitted_to_security",
     "completed",
 ];
 const stageLabels = [
@@ -45,7 +46,8 @@ const stageLabels = [
     "Jefatura",
     "Firma del jefe",
     "En RRHH",
-    "Autorizada",
+    "Firma RRHH",
+    "Vigilancia",
     "Finalizada",
 ];
 export default function Show({
@@ -59,7 +61,8 @@ export default function Show({
 }>) {
     const form = useForm({
         comentario: "",
-        movimiento: slip.hora_salida ? "retorno" : "salida",
+        hora_salida: slip.hora_salida || "",
+        hora_retorno: slip.hora_retorno || "",
         observaciones: slip.observaciones || "",
     });
     const [rejectOpen, setRejectOpen] = useState(false);
@@ -230,6 +233,16 @@ export default function Show({
                                             Enviar a RRHH
                                         </button>
                                     )}
+                                    {can.submit_to_security && (
+                                        <button
+                                            disabled={form.processing}
+                                            className="portal-btn portal-btn-primary"
+                                            onClick={() => transition("submit_to_security")}
+                                        >
+                                            <PortalIcon name="send" />
+                                            Enviar a Vigilancia
+                                        </button>
+                                    )}
                                     {can.approve && (
                                         <button
                                             disabled={form.processing}
@@ -275,7 +288,8 @@ export default function Show({
                         </section>
                         {(can.security ||
                             slip.hora_salida ||
-                            slip.estado === "approved_by_hr") && (
+                            slip.estado === "submitted_to_security" ||
+                            slip.estado === "completed") && (
                             <section className="portal-card">
                                 <div className="portal-card-head">
                                     <div>
@@ -315,15 +329,31 @@ export default function Show({
                                             className="mt-6 space-y-4"
                                             onSubmit={(e) => {
                                                 e.preventDefault();
-                                                form.transform((data) => ({
-                                                    ...data,
-                                                    movimiento: slip.hora_salida
-                                                        ? "retorno"
-                                                        : "salida",
-                                                }));
                                                 transition("security");
                                             }}
                                         >
+                                            <div className="flex gap-4">
+                                                <div className="portal-field flex-1">
+                                                    <label htmlFor="hora_salida">Hora de Salida</label>
+                                                    <input
+                                                        type="time"
+                                                        id="hora_salida"
+                                                        required
+                                                        value={form.data.hora_salida}
+                                                        onChange={e => form.setData("hora_salida", e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="portal-field flex-1">
+                                                    <label htmlFor="hora_retorno">Hora de Retorno</label>
+                                                    <input
+                                                        type="time"
+                                                        id="hora_retorno"
+                                                        required
+                                                        value={form.data.hora_retorno}
+                                                        onChange={e => form.setData("hora_retorno", e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
                                             <div className="portal-field">
                                                 <label htmlFor="observaciones">
                                                     Observaciones del movimiento
@@ -352,11 +382,8 @@ export default function Show({
                                                         slip.fecha_autorizada
                                                 }
                                             >
-                                                <PortalIcon name="clock" />
-                                                Registrar{" "}
-                                                {slip.hora_salida
-                                                    ? "retorno"
-                                                    : "salida"}
+                                                <PortalIcon name="check" />
+                                                Finalizar y Firmar Control
                                             </button>
                                             {today !==
                                                 slip.fecha_autorizada && (

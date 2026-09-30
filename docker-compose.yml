@@ -12,6 +12,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./src:/var/www/html
+      - ./openspec:/var/www/html/openspec:ro
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     command: php-fpm
     environment:

@@ -23,7 +23,7 @@ class ExitSlipPolicy
     {
         return $user->activo && ($user->id === $slip->user_id || $user->rol === Role::ADMIN
             || ($slip->estado !== Status::DRAFT && ($user->rol === Role::HR || ($user->rol === Role::AREA_HEAD && $user->id === $slip->jefe_asignado_id)))
-            || ($user->rol === Role::SECURITY && in_array($slip->estado, [Status::APPROVED_BY_HR, Status::COMPLETED], true)));
+            || ($user->rol === Role::SECURITY && in_array($slip->estado, [Status::SUBMITTED_TO_SECURITY, Status::COMPLETED], true)));
     }
 
     public function generatePdf(User $user, ExitSlip $slip): bool
@@ -63,8 +63,13 @@ class ExitSlipPolicy
         return $user->activo && $user->id === $slip->user_id && $slip->estado === Status::APPROVED_BY_AREA;
     }
 
+    public function submit_to_security(User $user, ExitSlip $slip): bool
+    {
+        return $user->activo && $user->id === $slip->user_id && $slip->estado === Status::APPROVED_BY_HR;
+    }
+
     public function security(User $user, ExitSlip $slip): bool
     {
-        return $user->activo && $user->rol === Role::SECURITY && $slip->estado === Status::APPROVED_BY_HR;
+        return $user->activo && $user->rol === Role::SECURITY && $slip->estado === Status::SUBMITTED_TO_SECURITY;
     }
 }

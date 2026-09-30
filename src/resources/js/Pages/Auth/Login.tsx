@@ -14,7 +14,7 @@ export default function Login({
     const [showPassword, setShowPassword] = useState(false);
     const [capsLock, setCapsLock] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: "",
+        dni: "",
         password: "",
         remember: false as boolean,
     });
@@ -63,34 +63,34 @@ export default function Login({
                 aria-busy={processing}
             >
                 <div className="login-field">
-                    <label htmlFor="email">Correo electrónico o DNI</label>
+                    <label htmlFor="dni">DNI</label>
                     <div className="login-input-wrap">
                         <LoginIcon name="user" className="login-input-icon" />
                         <input
-                            id="email"
+                            id="dni"
                             type="text"
-                            name="email"
-                            value={data.email}
+                            name="dni"
+                            value={data.dni}
                             className="login-input"
-                            placeholder="Tu correo o número de DNI"
+                            placeholder="Tu número de DNI"
                             autoComplete="username"
                             autoCapitalize="none"
                             spellCheck={false}
                             required
-                            aria-invalid={Boolean(errors.email)}
+                            aria-invalid={Boolean(errors.dni)}
                             aria-describedby={
-                                errors.email ? "login-email-error" : undefined
+                                errors.dni ? "login-dni-error" : undefined
                             }
-                            onChange={(e) => setData("email", e.target.value)}
+                            onChange={(e) => setData("dni", e.target.value)}
                         />
                     </div>
-                    {errors.email && (
+                    {errors.dni && (
                         <p
-                            id="login-email-error"
+                            id="login-dni-error"
                             className="login-error"
                             role="alert"
                         >
-                            {errors.email}
+                            {errors.dni}
                         </p>
                     )}
                 </div>

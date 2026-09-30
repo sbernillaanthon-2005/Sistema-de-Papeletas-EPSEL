@@ -58,7 +58,12 @@
             
             'f-firma-prac': { top: 465, left: 320, text: '[Imagen Firma Practicante]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
             'f-firma-jefe': { top: 463, left: 530, text: '[Imagen Firma Jefe]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
-            'f-firma-rrhh': { top: 465, left: 925, text: '[Imagen Firma RRHH]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' }
+            'f-firma-rrhh': { top: 465, left: 925, text: '[Imagen Firma RRHH]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' },
+            
+            'f-hora-salida-real': { top: 605, left: 240, text: '16:35', styles: 'font-size: 12px;' },
+            'f-hora-retorno-real': { top: 605, left: 450, text: '18:37', styles: 'font-size: 12px;' },
+            'f-observaciones-vig': { top: 640, left: 240, text: 'Salio a comprar mouse', styles: 'font-size: 10px; width: 400px;' },
+            'f-firma-vig': { top: 590, left: 890, text: '[Imagen Firma Vigilancia]', styles: 'width: 140px; height: 90px; border: 2px solid blue;' }
         };
 
         const container = document.getElementById('container');
