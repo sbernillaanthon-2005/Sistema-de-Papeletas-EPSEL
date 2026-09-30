@@ -1,60 +1,221 @@
 import { Link, usePage } from "@inertiajs/react";
-import { PropsWithChildren, ReactNode } from "react";
+import { PropsWithChildren, ReactNode, useState } from "react";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
+import PortalIcon, { PortalIconName } from "@/Components/PortalIcon";
+import { Avatar, roleLabels } from "@/Components/PortalUI";
+import "../../css/portal.css";
+
 export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { auth, flash } = usePage().props;
-    return (
-        <div className="min-h-screen bg-slate-100 text-slate-900">
-            <nav className="border-b bg-white">
-                <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 p-4">
+    const { url } = usePage();
+    const user = auth.user;
+    const [menuOpen, setMenuOpen] = useState(false);
+    const role = roleLabels[user.rol] || user.rol_label;
+    const isCreator = ["practitioner", "worker", "area_head"].includes(
+        user.rol,
+    );
+    const home = user.rol === "admin" ? "admin.dashboard" : "dashboard";
+    const nav: {
+        label: string;
+        href: string;
+        icon: PortalIconName;
+        active: boolean;
+    }[] = [
+        {
+            label: user.rol === "admin" ? "Usuarios y accesos" : "Mi panel",
+            href: route(home),
+            icon: user.rol === "admin" ? "users" : "grid",
+            active: /\/dashboard(?:\?|$)/.test(url),
+        },
+        {
+            label:
+                user.rol === "security"
+                    ? "Control de papeletas"
+                    : "Bandeja de papeletas",
+            href: route("exit-slips.index"),
+            icon: "file",
+            active:
+                url.startsWith("/exit-slips") &&
+                !url.startsWith("/exit-slips/create"),
+        },
+        ...(isCreator
+            ? [
+                  {
+                      label: "Nueva papeleta",
+                      href: route("exit-slips.create"),
+                      icon: "plus" as const,
+                      active: url.startsWith("/exit-slips/create"),
+                  },
+              ]
+            : []),
+        {
+            label: "Mi perfil y firma",
+            href: route("profile.edit"),
+            icon: "user",
+            active: url.startsWith("/profile"),
+        },
+    ];
+    const sidebar = (
+        <>
+            <Link className="portal-brand" href={route(home)}>
+                <span>
+                    <PortalIcon name="drop" />
+                </span>
+                <div>
+                    EPSEL<small>SISTEMA DE PAPELETAS</small>
+                </div>
+            </Link>
+            <div className="portal-workspace-label">ESPACIO DE TRABAJO</div>
+            <nav
+                className="portal-navigation"
+                aria-label="Navegación principal"
+            >
+                {nav.map((item) => (
                     <Link
-                        href={route("dashboard")}
-                        className="text-xl font-bold text-blue-900"
+                        key={item.label}
+                        href={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        className={item.active ? "active" : ""}
+                        aria-current={item.active ? "page" : undefined}
                     >
-                        EPSEL · Papeletas
+                        <PortalIcon name={item.icon} />
+                        <span>{item.label}</span>
+                        {item.active && <span className="portal-nav-dot" />}
                     </Link>
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <Link href={route("exit-slips.index")}>Bandeja</Link>
-                        {auth.user.rol === "admin" && (
-                            <Link href={route("admin.dashboard")}>
-                                Usuarios
-                            </Link>
-                        )}
-                        <Link href={route("profile.edit")} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded-md transition-colors">
-                            <div className="flex flex-col text-right hidden sm:flex mr-1">
-                                <span className="font-semibold text-sm leading-tight text-gray-800">{auth.user.nombres}</span>
-                                <span className="text-xs text-gray-500">{auth.user.rol_label}</span>
-                            </div>
-                            <img 
-                                src={auth.user.profile_photo_url} 
-                                alt={auth.user.nombres} 
-                                className="h-9 w-9 rounded-full object-cover border border-gray-200" 
+                ))}
+            </nav>
+            <div className="portal-sidebar-help">
+                <span className="portal-help-icon">
+                    <PortalIcon name="shield" />
+                </span>
+                <strong>Tu gestión, más simple.</strong>
+                <p>Solicitudes, firmas y seguimiento en un solo lugar.</p>
+                <Link href={route("profile.edit")}>
+                    Revisar mi perfil
+                    <PortalIcon name="arrow" />
+                </Link>
+            </div>
+            <div className="portal-sidebar-bottom">
+                <Link
+                    className="portal-sidebar-user"
+                    href={route("profile.edit")}
+                >
+                    <Avatar
+                        name={`${user.nombres} ${user.apellidos}`}
+                        photo={user.profile_photo_url}
+                        small
+                    />
+                    <div>
+                        <strong>{user.nombres}</strong>
+                        <span>{role}</span>
+                    </div>
+                </Link>
+                <Link
+                    className="portal-logout"
+                    href={route("logout")}
+                    method="post"
+                    as="button"
+                >
+                    <PortalIcon name="logout" />
+                    Cerrar sesión
+                </Link>
+            </div>
+        </>
+    );
+    return (
+        <div className="portal-app">
+            <a className="portal-skip" href="#portal-content">
+                Ir al contenido
+            </a>
+            <aside className="portal-sidebar">{sidebar}</aside>
+            <Dialog
+                open={menuOpen}
+                onClose={setMenuOpen}
+                className="portal-mobile-dialog"
+            >
+                <div className="portal-backdrop" />
+                <DialogPanel className="portal-mobile-sidebar">
+                    <DialogTitle className="sr-only">
+                        Menú de navegación
+                    </DialogTitle>
+                    <button
+                        type="button"
+                        className="portal-icon-button portal-menu-close"
+                        onClick={() => setMenuOpen(false)}
+                        aria-label="Cerrar menú"
+                    >
+                        <PortalIcon name="close" />
+                    </button>
+                    {sidebar}
+                </DialogPanel>
+            </Dialog>
+            <div className="portal-workspace">
+                <header className="portal-topbar">
+                    <div className="portal-topbar-left">
+                        <button
+                            className="portal-icon-button portal-menu-button"
+                            onClick={() => setMenuOpen(true)}
+                            aria-label="Abrir menú"
+                            aria-expanded={menuOpen}
+                        >
+                            <PortalIcon name="menu" />
+                        </button>
+                        <span className="portal-breadcrumb">
+                            Portal interno
+                            <PortalIcon name="chevron" />
+                            <strong>{role}</strong>
+                        </span>
+                    </div>
+                    <div className="portal-topbar-right">
+                        <span className="portal-date">
+                            {new Intl.DateTimeFormat("es-PE", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                                timeZone: "America/Lima",
+                            }).format(new Date())}
+                        </span>
+                        <NotificationBell />
+                        <Link
+                            className="portal-profile-link"
+                            href={route("profile.edit")}
+                            aria-label="Ir a mi perfil"
+                        >
+                            <Avatar
+                                name={user.nombres}
+                                photo={user.profile_photo_url}
+                                small
                             />
                         </Link>
-                        <NotificationBell />
-                        <Link href={route("logout")} method="post" as="button">
-                            Salir
-                        </Link>
                     </div>
-                </div>
-            </nav>
-            {header && (
-                <header className="bg-white shadow-sm">
-                    <div className="mx-auto max-w-7xl px-4 py-6">{header}</div>
                 </header>
-            )}
-            {flash?.success && (
-                <div
-                    role="status"
-                    className="mx-auto mt-4 max-w-7xl rounded bg-emerald-50 p-4 text-emerald-900"
-                >
-                    {flash.success}
+                <div className="portal-page-heading">
+                    <div>
+                        <p>EPSEL · GESTIÓN DE PERSONAL</p>
+                        {header}
+                    </div>
+                    <span className="portal-role-tag">
+                        <PortalIcon name="shield" />
+                        {role}
+                    </span>
                 </div>
-            )}
-            <main>{children}</main>
+                {flash?.success && (
+                    <div className="portal-flash" role="status">
+                        <PortalIcon name="check" />
+                        {flash.success}
+                    </div>
+                )}
+                <main className="portal-content" id="portal-content">
+                    {children}
+                </main>
+                <footer className="portal-bottom-note">
+                    EPSEL S.A. <span>Conectados para servir mejor.</span>
+                </footer>
+            </div>
         </div>
     );
 }

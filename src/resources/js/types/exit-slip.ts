@@ -2,6 +2,7 @@ export const statuses: Record<string, string> = {
     draft: "Borrador",
     submitted: "Enviada",
     approved_by_area: "Aprobada por Área",
+    submitted_to_hr: "Enviada a RRHH",
     approved_by_hr: "Aprobada por RRHH",
     completed: "Completada",
     rejected: "Rechazada",

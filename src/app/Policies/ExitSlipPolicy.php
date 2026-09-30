@@ -50,12 +50,17 @@ class ExitSlipPolicy
     {
         return $user->activo && $user->id !== $slip->user_id && (
             ($user->rol === Role::AREA_HEAD && $user->id === $slip->jefe_asignado_id && $slip->estado === Status::SUBMITTED)
-            || ($user->rol === Role::HR && $slip->estado === Status::APPROVED_BY_AREA));
+            || ($user->rol === Role::HR && $slip->estado === Status::SUBMITTED_TO_HR));
     }
 
     public function reject(User $user, ExitSlip $slip): bool
     {
         return $this->approve($user, $slip);
+    }
+
+    public function submit_to_hr(User $user, ExitSlip $slip): bool
+    {
+        return $user->activo && $user->id === $slip->user_id && $slip->estado === Status::APPROVED_BY_AREA;
     }
 
     public function security(User $user, ExitSlip $slip): bool

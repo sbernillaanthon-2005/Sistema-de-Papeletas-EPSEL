@@ -3,7 +3,8 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { Transition } from '@headlessui/react';
 import { useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useRef, useState } from 'react';
+import { FormEventHandler, useEffect, useRef, useState } from 'react';
+import { Avatar } from '@/Components/PortalUI';
 import { PageProps } from '@/types';
 import DangerButton from '@/Components/DangerButton';
 
@@ -15,6 +16,7 @@ export default function UpdateProfilePhotoForm({
     const { auth } = usePage<PageProps>().props;
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
     const { data, setData, post, processing, errors, recentlySuccessful, delete: destroy } = useForm<{
         photo: File | null;
@@ -72,11 +74,7 @@ export default function UpdateProfilePhotoForm({
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div className="flex items-center gap-6">
                     <div className="shrink-0">
-                        <img
-                            src={preview || auth.user.profile_photo_url}
-                            alt={auth.user.nombres}
-                            className="h-20 w-20 rounded-full object-cover border border-gray-200"
-                        />
+                        <Avatar name={`${auth.user.nombres} ${auth.user.apellidos}`} photo={preview || auth.user.profile_photo_url} />
                     </div>
                     <div>
                         <input

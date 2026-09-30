@@ -9,15 +9,31 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate(['q' => 'nullable|string|max:120', 'rol' => ['nullable', Rule::enum(UserRole::class)], 'activo' => 'nullable|in:0,1']);
+        $query = User::with(['area', 'jefe'])->orderBy('apellidos')->orderBy('id');
+        if ($request->filled('q')) {
+            $term = '%'.addcslashes(trim($filters['q']), '%_\\').'%';
+            $query->where(fn ($q) => $q->where('nombres', 'ilike', $term)->orWhere('apellidos', 'ilike', $term)->orWhere('dni', 'ilike', $term));
+        }
+        if ($request->filled('rol')) {
+            $query->where('rol', $filters['rol']);
+        }
+        if ($request->filled('activo')) {
+            $query->where('activo', $request->boolean('activo'));
+        }
+
         return Inertia::render('Admin/Users/Index', [
-            'users' => User::with(['area', 'jefe'])->orderBy('apellidos')->paginate(20),
+            'users' => $query->paginate(15)->withQueryString(),
+            'filters' => $filters,
+            'summary' => ['total' => User::count(), 'active' => User::where('activo', true)->count(), 'heads' => User::where('rol', 'area_head')->where('activo', true)->count(), 'areas' => Area::count()],
             'areas' => Area::orderBy('nombre')->get(),
             'heads' => User::where('rol', 'area_head')->where('activo', true)->get(['id', 'nombres', 'apellidos', 'area_id']),
             'roles' => [
@@ -47,7 +63,7 @@ class UserController extends Controller
             'nombres' => $request->nombres,
             'apellidos' => $request->apellidos,
             'dni' => $request->dni,
-            'email' => $request->dni . '@epsel.com.pe',
+            'email' => $request->dni.'@epsel.com.pe',
             'password' => Hash::make($request->password),
             'rol' => $request->rol,
             'area_id' => $request->area_id,
@@ -97,14 +113,15 @@ class UserController extends Controller
 
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
+
     public function destroy(Request $request, string $id)
     {
         $user = User::findOrFail($id);
-        
+
         if ($user->id === $request->user()->id) {
             throw ValidationException::withMessages(['activo' => 'No puedes eliminar tu propia cuenta.']);
         }
-        
+
         $user->delete();
 
         return back()->with('success', 'Usuario eliminado correctamente.');

@@ -33,7 +33,11 @@ class ExitSlipWorkflow
                     if ($slip->fecha_autorizada->toDateString() < now('America/Lima')->toDateString()) {
                         throw new \DomainException('Actualiza la fecha autorizada antes de enviar.');
                     }
+                    $slip->update(['apellidos_nombres' => trim($actor->nombres.' '.$actor->apellidos)]);
                     app(SubmitExitSlip::class)->execute($id, $actor->id, $this->signature($actor));
+                } elseif ($action === 'submit_to_hr') {
+                    $slip->update(['estado' => 'submitted_to_hr']);
+                    ExitSlipTransition::create(['exit_slip_id' => $id, 'actor_id' => $actor->id, 'estado_origen' => 'approved_by_area', 'estado_destino' => 'submitted_to_hr']);
                 } elseif ($action === 'approve') {
                     $class = $actor->rol->value === 'area_head' ? ApproveByAreaHead::class : ApproveByHR::class;
                     app($class)->execute($id, $actor->id, $this->signature($actor));

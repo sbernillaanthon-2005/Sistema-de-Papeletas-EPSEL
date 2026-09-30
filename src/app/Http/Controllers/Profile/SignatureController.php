@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Profile;
 
 use App\Application\User\Actions\UploadSignature;
 use App\Http\Controllers\Controller;
+use App\Models\ExitSlip;
 use App\Models\Signature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SignatureController extends Controller
 {
@@ -40,7 +40,7 @@ class SignatureController extends Controller
         }
 
         $path = $signature->ruta_archivo;
-        if (!Storage::disk('private')->exists($path)) {
+        if (! Storage::disk('private')->exists($path)) {
             abort(404);
         }
 
@@ -53,7 +53,12 @@ class SignatureController extends Controller
         $signature = $user->signature;
 
         if ($signature) {
-            if (Storage::disk('private')->exists($signature->ruta_archivo)) {
+            $isStamped = ExitSlip::query()->where(function ($query) use ($signature) {
+                foreach (['firma_practicante_path', 'firma_jefe_path', 'firma_rrhh_path', 'firma_gerente_path'] as $column) {
+                    $query->orWhere($column, $signature->ruta_archivo);
+                }
+            })->exists();
+            if (! $isStamped && Storage::disk('private')->exists($signature->ruta_archivo)) {
                 Storage::disk('private')->delete($signature->ruta_archivo);
             }
             $signature->delete();

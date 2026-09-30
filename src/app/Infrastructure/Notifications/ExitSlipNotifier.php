@@ -15,7 +15,7 @@ class ExitSlipNotifier
         if ($slip->estado->value === 'submitted') {
             $recipients[] = $slip->jefe_asignado_id;
         }
-        if ($slip->estado->value === 'approved_by_area') {
+        if ($slip->estado->value === 'submitted_to_hr') {
             $recipients = array_merge($recipients, User::where('rol', 'hr')->where('activo', true)->pluck('id')->all());
         }
         foreach (array_unique(array_filter($recipients)) as $id) {

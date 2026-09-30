@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import PortalIcon from "@/Components/PortalIcon";
+import { useEffect, useState, useRef } from "react";
 import { router, usePage } from "@inertiajs/react";
 import axios from "axios";
 import Echo from "laravel-echo";
@@ -17,6 +18,26 @@ export default function NotificationBell() {
         [open, setOpen] = useState(false),
         [failed, setFailed] = useState(false),
         [busy, setBusy] = useState(false);
+    const container = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!open) return;
+        const outside = (event: MouseEvent) => {
+            if (!container.current?.contains(event.target as Node))
+                setOpen(false);
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setOpen(false);
+                container.current?.querySelector("button")?.focus();
+            }
+        };
+        document.addEventListener("mousedown", outside);
+        document.addEventListener("keydown", escape);
+        return () => {
+            document.removeEventListener("mousedown", outside);
+            document.removeEventListener("keydown", escape);
+        };
+    }, [open]);
     const refresh = async () => {
         try {
             const { data } = await axios.get("/notifications");
@@ -74,7 +95,19 @@ export default function NotificationBell() {
                 ".notification.created",
                 () => {
                     reload();
-                    router.reload({ only: ["slips", "counts", "slip", "can", "exitSlips", "exitSlip"] });
+                    router.reload({
+                        only: [
+                            "slips",
+                            "counts",
+                            "inTransit",
+                            "slip",
+                            "can",
+                            "exitSlips",
+                            "exitSlip",
+                            "history",
+                            "pagination",
+                        ],
+                    });
                 },
             );
         }
@@ -102,9 +135,9 @@ export default function NotificationBell() {
         }
     };
     return (
-        <div className="relative">
+        <div className="portal-bell" ref={container}>
             <button
-                className="rounded p-2 text-sm hover:bg-slate-100"
+                className="portal-icon-button"
                 aria-label={`Notificaciones: ${unread} sin leer`}
                 aria-expanded={open}
                 onClick={() => {
@@ -112,13 +145,17 @@ export default function NotificationBell() {
                     void refresh();
                 }}
             >
-                <span aria-hidden="true">&#128276;</span>{" "}
-                <span aria-live="polite">{unread}</span>
+                <PortalIcon name="bell" />
+                {unread > 0 && (
+                    <span className="portal-bell-count" aria-live="polite">
+                        {unread > 99 ? "99+" : unread}
+                    </span>
+                )}
             </button>
             {open && (
                 <section
                     aria-label="Notificaciones"
-                    className="absolute right-0 z-50 mt-2 max-h-96 w-72 overflow-auto rounded-lg border bg-white p-3 shadow-xl"
+                    className="portal-notifications"
                 >
                     <div className="flex justify-between">
                         <strong>Notificaciones</strong>
@@ -153,7 +190,7 @@ export default function NotificationBell() {
                         <button
                             disabled={busy}
                             key={n.id}
-                            className={`my-1 block w-full rounded p-2 text-left text-sm ${n.leida_at ? "bg-white" : "bg-blue-50"}`}
+                            className={`portal-notification ${n.leida_at ? "" : "unread"}`}
                             onClick={() => void read(n.id, n.exit_slip_id)}
                         >
                             <strong>{n.titulo}</strong>

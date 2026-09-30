@@ -1,129 +1,447 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { Pagination } from "@/types/exit-slip";
 import { useState } from "react";
+import { DialogTitle } from "@headlessui/react";
+import Modal from "@/Components/Modal";
+import PortalIcon from "@/Components/PortalIcon";
+import {
+    Avatar,
+    StatCard,
+    StatusBadge,
+    PaginationBar,
+    roleLabels,
+} from "@/Components/PortalUI";
 type Person = {
     id: string;
     nombres: string;
     apellidos: string;
+    dni: string;
     rol: string;
-    rol_label?: string;
     activo: boolean;
     area_id: string | null;
     jefe_id: string | null;
+    area?: { nombre: string };
+    jefe?: { nombres: string; apellidos: string };
+    profile_photo_url?: string;
+};
+type Props = {
+    users: Pagination<Person>;
+    areas: { id: string; nombre: string }[];
+    roles: { value: string; label: string }[];
+    heads: Person[];
+    summary: { total: number; active: number; heads: number; areas: number };
+    filters: { q?: string; rol?: string; activo?: string };
 };
 export default function Index({
     users,
     areas,
     roles,
     heads,
-}: {
-    users: Pagination<Person>;
-    areas: { id: string; nombre: string }[];
-    roles: { value: string; label: string }[];
-    heads: Person[];
-}) {
-    const [updateError, setUpdateError] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const form = useForm({
+    summary,
+    filters,
+}: Props) {
+    const me = usePage().props.auth.user.id;
+    const [creating, setCreating] = useState(false);
+    const [editing, setEditing] = useState<Person | null>(null);
+    const [deleting, setDeleting] = useState<Person | null>(null);
+    const [passwordVisible, setPasswordVisible] = useState(false);
+    const [isFetchingReniec, setIsFetchingReniec] = useState(false);
+    const [query, setQuery] = useState(filters.q || "");
+    const [role, setRole] = useState(filters.rol || "");
+    const [active, setActive] = useState(filters.activo || "");
+    const create = useForm({
         nombres: "",
         apellidos: "",
         dni: "",
         password: "",
-        rol: "area_head",
+        rol: "worker",
         area_id: "",
         cargo_designado: "",
     });
-    const update = (u: Person, data: Record<string, string | boolean | null>) =>
-        router.put(route("admin.users.update", u.id), data, {
-            preserveScroll: true,
-            onStart: () => setUpdateError(""),
-            onError: errors => setUpdateError(Object.values(errors).join(" ")),
-        });
-    return (
-        <AuthenticatedLayout
-            header={
-                <h1 className="text-xl font-semibold">
-                    Administración de usuarios
-                </h1>
+    const edit = useForm({ activo: true, area_id: "", jefe_id: "" });
+    const remove = useForm({});
+
+    const handleDniBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+        const dni = e.target.value;
+        if (dni.length === 8) {
+            setIsFetchingReniec(true);
+            try {
+                const response = await fetch(`/admin/reniec/${dni}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const nombres = result.data.nombres || "";
+                    const apellido_paterno = result.data.apellido_paterno || result.data.apellidoPaterno || "";
+                    const apellido_materno = result.data.apellido_materno || result.data.apellidoMaterno || "";
+                    const apellidos = `${apellido_paterno} ${apellido_materno}`.trim() || result.data.apellidos || "";
+                    
+                    if (nombres) create.setData(data => ({ ...data, nombres }));
+                    if (apellidos) create.setData(data => ({ ...data, apellidos }));
+                }
+            } catch (e) {
+                console.error("Error consultando DNI", e);
+            } finally {
+                setIsFetchingReniec(false);
             }
-        >
-            <Head title="Usuarios" />
-            <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
-                {updateError && <p role="alert" className="rounded bg-red-50 p-4 text-red-700">{updateError}</p>}
+        }
+    };
+    const closeCreate = () => {
+        if (!create.processing) {
+            setCreating(false);
+            create.reset();
+            create.clearErrors();
+            setPasswordVisible(false);
+        }
+    };
+    const openEdit = (person: Person) => {
+        edit.clearErrors();
+        edit.setData({
+            activo: person.activo,
+            area_id: person.area_id || "",
+            jefe_id: person.jefe_id || "",
+        });
+        setEditing(person);
+    };
+    return (
+        <AuthenticatedLayout header={<h1>Usuarios y accesos</h1>}>
+            <Head title="Administración de usuarios" />
+            <div className="portal-stack">
+                <section className="portal-hero">
+                    <div>
+                        <p className="portal-hero-eyebrow">
+                            ADMINISTRACIÓN DEL SISTEMA
+                        </p>
+                        <h2>Un equipo conectado.</h2>
+                        <p>
+                            Organiza los accesos, asigna áreas y vincula al
+                            personal con su jefe responsable.
+                        </p>
+                    </div>
+                    <button
+                        className="portal-btn portal-btn-white"
+                        onClick={() => setCreating(true)}
+                    >
+                        <PortalIcon name="plus" />
+                        Nuevo usuario
+                    </button>
+                </section>
+                <section
+                    className="portal-stats"
+                    aria-label="Resumen de usuarios"
+                >
+                    <StatCard
+                        label="Usuarios registrados"
+                        value={summary.total}
+                        hint="Personal con cuenta en el sistema"
+                        icon="users"
+                        tone="blue"
+                    />
+                    <StatCard
+                        label="Cuentas activas"
+                        value={summary.active}
+                        hint="Con acceso habilitado"
+                        icon="check"
+                        tone="green"
+                    />
+                    <StatCard
+                        label="Jefes de área"
+                        value={summary.heads}
+                        hint="Responsables activos"
+                        icon="shield"
+                    />
+                    <StatCard
+                        label="Áreas registradas"
+                        value={summary.areas}
+                        hint="Estructura de la organización"
+                        icon="grid"
+                        tone="amber"
+                    />
+                </section>
+                <section className="portal-card">
+                    <div className="portal-card-head">
+                        <div>
+                            <h2>Directorio de personal</h2>
+                            <p>
+                                Gestiona el acceso y la asignación de cada
+                                usuario.
+                            </p>
+                        </div>
+                        <span className="portal-badge">
+                            {users.total} usuarios
+                        </span>
+                    </div>
+                    <form
+                        className="portal-toolbar"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            router.get(
+                                route("admin.dashboard"),
+                                { q: query, rol: role, activo: active },
+                                { preserveState: true, preserveScroll: true },
+                            );
+                        }}
+                    >
+                        <div className="portal-search">
+                            <PortalIcon name="search" />
+                            <input
+                                aria-label="Buscar personal"
+                                placeholder="Buscar nombre, apellido o DNI…"
+                                maxLength={120}
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                        </div>
+                        <select
+                            aria-label="Filtrar por rol"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                        >
+                            <option value="">Todos los roles</option>
+                            <option value="admin">Administración</option>
+                            {roles.map((r) => (
+                                <option key={r.value} value={r.value}>
+                                    {r.label}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            aria-label="Filtrar por acceso"
+                            value={active}
+                            onChange={(e) => setActive(e.target.value)}
+                        >
+                            <option value="">Todos los accesos</option>
+                            <option value="1">Activos</option>
+                            <option value="0">Inactivos</option>
+                        </select>
+                        <button className="portal-btn portal-btn-primary">
+                            <PortalIcon name="filter" />
+                            Filtrar
+                        </button>
+                        {(filters.q || filters.rol || filters.activo) && (
+                            <button
+                                type="button"
+                                className="portal-btn portal-btn-light"
+                                onClick={() => {
+                                    setQuery("");
+                                    setRole("");
+                                    setActive("");
+                                    router.get(
+                                        route("admin.dashboard"),
+                                        {},
+                                        { preserveState: true },
+                                    );
+                                }}
+                            >
+                                Limpiar
+                            </button>
+                        )}
+                    </form>
+                    {users.data.length ? (
+                        <div className="portal-table-wrap">
+                            <table className="portal-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Área / responsable</th>
+                                        <th>Acceso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.data.map((person) => (
+                                        <tr key={person.id}>
+                                            <td>
+                                                <div className="portal-person">
+                                                    <Avatar
+                                                        name={`${person.nombres} ${person.apellidos}`}
+                                                        photo={
+                                                            person.profile_photo_url
+                                                        }
+                                                        small
+                                                    />
+                                                    <div>
+                                                        <strong>
+                                                            {person.nombres}{" "}
+                                                            {person.apellidos}
+                                                        </strong>
+                                                        <small>
+                                                            DNI {person.dni}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {roleLabels[person.rol] ||
+                                                    person.rol}
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    {person.area?.nombre ||
+                                                        "Sin área asignada"}
+                                                </div>
+                                                <div className="portal-cell-muted mt-1">
+                                                    {person.jefe
+                                                        ? `${person.jefe.nombres} ${person.jefe.apellidos}`
+                                                        : "Sin jefe asignado"}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <StatusBadge
+                                                    state={
+                                                        person.activo
+                                                            ? "active"
+                                                            : "inactive"
+                                                    }
+                                                    label={
+                                                        person.activo
+                                                            ? "Activo"
+                                                            : "Inactivo"
+                                                    }
+                                                />
+                                            </td>
+                                            <td>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        className="portal-icon-button"
+                                                        aria-label={`Editar acceso de ${person.nombres}`}
+                                                        title="Editar acceso"
+                                                        onClick={() =>
+                                                            openEdit(person)
+                                                        }
+                                                    >
+                                                        <PortalIcon name="edit" />
+                                                    </button>
+                                                    {person.id !== me && (
+                                                        <button
+                                                            className="portal-icon-button"
+                                                            aria-label={`Eliminar a ${person.nombres}`}
+                                                            title="Eliminar usuario"
+                                                            onClick={() => {
+                                                                remove.clearErrors();
+                                                                setDeleting(
+                                                                    person,
+                                                                );
+                                                            }}
+                                                        >
+                                                            <PortalIcon name="close" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="portal-empty">
+                            <PortalIcon name="users" />
+                            <strong>No encontramos usuarios</strong>
+                            <p>
+                                Prueba otro nombre o ajusta los filtros del
+                                directorio.
+                            </p>
+                        </div>
+                    )}
+                    <PaginationBar page={users} />
+                </section>
+                <aside className="portal-tip">
+                    <PortalIcon name="shield" />
+                    <p>
+                        Asigna un jefe activo de la misma área para que el
+                        personal pueda enviar sus papeletas a revisión.
+                    </p>
+                </aside>
+            </div>
+            <Modal show={creating} onClose={closeCreate}>
                 <form
-                    className="space-y-4 rounded-xl bg-white p-6"
+                    className="portal-modal"
                     onSubmit={(e) => {
                         e.preventDefault();
-                        form.post(route("admin.users.store"), {
-                            onSuccess: () => form.reset(),
+                        create.post(route("admin.users.store"), {
+                            preserveScroll: true,
+                            onSuccess: () => {
+                                setCreating(false);
+                                create.reset();
+                                setPasswordVisible(false);
+                            },
                         });
                     }}
                 >
-                    <h2 className="font-semibold">Crear usuario</h2>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="portal-modal-head">
+                        <div>
+                            <DialogTitle>Nuevo usuario</DialogTitle>
+                            <p>
+                                Registra al personal y configura su acceso
+                                inicial.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="Cerrar"
+                            onClick={closeCreate}
+                            disabled={create.processing}
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <div className="portal-form-grid">
                         {(
                             [
                                 "nombres",
                                 "apellidos",
                                 "dni",
-                                "password",
                                 "cargo_designado",
                             ] as const
-                        ).map((k) => (
-                            <label key={k} className="block">
-                                {
+                        ).map((key) => (
+                            <div className="portal-field relative" key={key}>
+                                <label htmlFor={`create-${key}`}>
                                     {
-                                        nombres: "Nombres",
-                                        apellidos: "Apellidos",
-                                        dni: "DNI",
-                                        password: "Contraseña inicial",
-                                        cargo_designado: "Cargo",
-                                    }[k]
-                                }
-                                <div className="relative">
+                                        {
+                                            nombres: "Nombres",
+                                            apellidos: "Apellidos",
+                                            dni: "DNI",
+                                            cargo_designado: "Cargo",
+                                        }[key]
+                                    }
+                                </label>
+                                <div className="relative flex items-center">
                                     <input
+                                        id={`create-${key}`}
                                         required
-                                        type={
-                                            k === "password"
-                                                ? (showPassword ? "text" : "password")
-                                                : "text"
+                                        className="w-full"
+                                        maxLength={key === "dni" ? 8 : 255}
+                                        inputMode={
+                                            key === "dni" ? "numeric" : undefined
                                         }
-                                        className="mt-1 block w-full rounded border-slate-300 pr-16"
-                                        value={form.data[k]}
+                                        pattern={
+                                            key === "dni" ? "[0-9]{8}" : undefined
+                                        }
+                                        value={create.data[key]}
+                                        onBlur={key === "dni" ? handleDniBlur : undefined}
                                         onChange={(e) =>
-                                            form.setData(k, e.target.value)
+                                            create.setData(key, e.target.value)
                                         }
                                     />
-                                    {k === "password" && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700 mt-[2px]"
-                                            title={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                                        >
-                                            {showPassword ? (
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                                </svg>
-                                            ) : (
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            )}
-                                        </button>
+                                    {key === "dni" && isFetchingReniec && (
+                                        <div className="absolute right-3 flex items-center pointer-events-none">
+                                            <svg className="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        </div>
                                     )}
                                 </div>
-                            </label>
+                            </div>
                         ))}
-                        <label>
-                            Rol
+                        <div className="portal-field">
+                            <label htmlFor="create-role">Rol del usuario</label>
                             <select
-                                className="mt-1 block w-full rounded border-slate-300"
-                                value={form.data.rol}
+                                id="create-role"
+                                value={create.data.rol}
                                 onChange={(e) =>
-                                    form.setData("rol", e.target.value)
+                                    create.setData("rol", e.target.value)
                                 }
                             >
                                 {roles.map((r) => (
@@ -132,159 +450,259 @@ export default function Index({
                                     </option>
                                 ))}
                             </select>
-                        </label>
-                        <label>
-                            Área
+                        </div>
+                        <div className="portal-field">
+                            <label htmlFor="create-area">
+                                Área{" "}
+                                {create.data.rol === "area_head"
+                                    ? "(obligatoria)"
+                                    : "(opcional)"}
+                            </label>
                             <select
-                                className="mt-1 block w-full rounded border-slate-300"
-                                value={form.data.area_id}
+                                id="create-area"
+                                required={create.data.rol === "area_head"}
+                                value={create.data.area_id}
                                 onChange={(e) =>
-                                    form.setData("area_id", e.target.value)
+                                    create.setData("area_id", e.target.value)
                                 }
                             >
-                                <option value="">Sin Área</option>
-                                {areas.map((a) => (
-                                    <option key={a.id} value={a.id}>
-                                        {a.nombre}
+                                <option value="">Seleccionar área</option>
+                                {areas.map((area) => (
+                                    <option key={area.id} value={area.id}>
+                                        {area.nombre}
                                     </option>
                                 ))}
                             </select>
+                        </div>
+                        <div className="portal-field portal-data-wide">
+                            <label htmlFor="create-password">
+                                Contraseña inicial
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    id="create-password"
+                                    required
+                                    minLength={8}
+                                    autoComplete="new-password"
+                                    type={passwordVisible ? "text" : "password"}
+                                    value={create.data.password}
+                                    onChange={(e) =>
+                                        create.setData(
+                                            "password",
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                                <button
+                                    type="button"
+                                    className="portal-btn portal-btn-light"
+                                    aria-pressed={passwordVisible}
+                                    onClick={() =>
+                                        setPasswordVisible(!passwordVisible)
+                                    }
+                                >
+                                    {passwordVisible ? "Ocultar" : "Mostrar"}
+                                </button>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-500">
+                                Mínimo 8 caracteres. El usuario podrá cambiarla
+                                en su perfil.
+                            </p>
+                        </div>
+                    </div>
+                    {Object.values(create.errors).length > 0 && (
+                        <div className="portal-error" role="alert">
+                            {Object.values(create.errors).map((error, i) => (
+                                <p key={i}>{error}</p>
+                            ))}
+                        </div>
+                    )}
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            className="portal-btn portal-btn-light"
+                            onClick={closeCreate}
+                            disabled={create.processing}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            className="portal-btn portal-btn-primary"
+                            disabled={create.processing}
+                        >
+                            {create.processing ? "Creando…" : "Crear usuario"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+            <Modal
+                show={!!editing}
+                onClose={() => !edit.processing && setEditing(null)}
+                maxWidth="lg"
+            >
+                <form
+                    className="portal-modal"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        if (editing) {
+                            edit.transform((data) => ({
+                                ...data,
+                                area_id: data.area_id || null,
+                                jefe_id: data.jefe_id || null,
+                            }));
+                            edit.put(route("admin.users.update", editing.id), {
+                                preserveScroll: true,
+                                onSuccess: () => setEditing(null),
+                            });
+                        }
+                    }}
+                >
+                    <div className="portal-modal-head">
+                        <div>
+                            <DialogTitle>Editar acceso</DialogTitle>
+                            <p>
+                                {editing?.nombres} {editing?.apellidos}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="Cerrar"
+                            disabled={edit.processing}
+                            onClick={() => setEditing(null)}
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <div className="space-y-5">
+                        <div className="portal-field">
+                            <label htmlFor="edit-area">Área</label>
+                            <select
+                                id="edit-area"
+                                value={edit.data.area_id}
+                                onChange={(e) =>
+                                    edit.setData({
+                                        ...edit.data,
+                                        area_id: e.target.value,
+                                        jefe_id: "",
+                                    })
+                                }
+                            >
+                                <option value="">Sin área asignada</option>
+                                {areas.map((area) => (
+                                    <option key={area.id} value={area.id}>
+                                        {area.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="portal-field">
+                            <label htmlFor="edit-head">Jefe responsable</label>
+                            <select
+                                id="edit-head"
+                                value={edit.data.jefe_id}
+                                onChange={(e) =>
+                                    edit.setData("jefe_id", e.target.value)
+                                }
+                            >
+                                <option value="">Sin jefe asignado</option>
+                                {heads
+                                    .filter(
+                                        (head) =>
+                                            head.area_id ===
+                                                edit.data.area_id &&
+                                            head.id !== editing?.id,
+                                    )
+                                    .map((head) => (
+                                        <option key={head.id} value={head.id}>
+                                            {head.nombres} {head.apellidos}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
+                        <label className="flex items-center gap-3 text-sm">
+                            <input
+                                type="checkbox"
+                                disabled={editing?.id === me}
+                                checked={edit.data.activo}
+                                onChange={(e) =>
+                                    edit.setData("activo", e.target.checked)
+                                }
+                            />
+                            Cuenta activa
                         </label>
                     </div>
-                    <div role="alert" className="text-red-700">
-                        {Object.entries(form.errors).map(([k, v]) => (
-                            <p key={k}>{v}</p>
-                        ))}
+                    {Object.values(edit.errors).length > 0 && (
+                        <p className="portal-error" role="alert">
+                            {Object.values(edit.errors).join(" ")}
+                        </p>
+                    )}
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            className="portal-btn portal-btn-light"
+                            disabled={edit.processing}
+                            onClick={() => setEditing(null)}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            className="portal-btn portal-btn-primary"
+                            disabled={edit.processing}
+                        >
+                            Guardar cambios
+                        </button>
                     </div>
-                    <button
-                        disabled={form.processing}
-                        className="rounded bg-blue-800 px-4 py-2 text-white"
-                    >
-                        Crear usuario
-                    </button>
                 </form>
-                <div className="overflow-x-auto rounded-xl bg-white">
-                    <table className="w-full text-left text-sm">
-                        <thead>
-                            <tr>
-                                {[
-                                    "Usuario",
-                                    "Rol",
-                                    "Área",
-                                    "Jefe asignado",
-                                    "Acceso",
-                                ].map((h) => (
-                                    <th className="p-3" key={h}>
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.data.map((u) => (
-                                <tr key={u.id} className="border-t">
-                                    <td className="p-3">
-                                        {u.apellidos} {u.nombres}
-                                    </td>
-                                    <td className="p-3">{u.rol_label || u.rol}</td>
-                                    <td className="p-3">
-                                        <select
-                                            aria-label={`Área de ${u.nombres}`}
-                                            className="rounded border-slate-300"
-                                            value={u.area_id || ""}
-                                            onChange={(e) =>
-                                                update(u, {
-                                                    area_id:
-                                                        e.target.value || null,
-                                                    jefe_id: null,
-                                                })
-                                            }
-                                        >
-                                            <option value="">Sin Área</option>
-                                            {areas.map((a) => (
-                                                <option key={a.id} value={a.id}>
-                                                    {a.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                    <td className="p-3">
-                                        <select
-                                            aria-label={`Jefe de ${u.nombres}`}
-                                            className="rounded border-slate-300"
-                                            value={u.jefe_id || ""}
-                                            onChange={(e) =>
-                                                update(u, {
-                                                    jefe_id:
-                                                        e.target.value || null,
-                                                })
-                                            }
-                                        >
-                                            <option value="">Sin jefe</option>
-                                            {heads
-                                                .filter(
-                                                    (h) =>
-                                                        h.id !== u.id &&
-                                                        h.area_id === u.area_id,
-                                                )
-                                                .map((h) => (
-                                                    <option
-                                                        key={h.id}
-                                                        value={h.id}
-                                                    >
-                                                        {h.apellidos}{" "}
-                                                        {h.nombres}
-                                                    </option>
-                                                ))}
-                                        </select>
-                                    </td>
-                                    <td className="p-3 flex space-x-2">
-                                        <button
-                                            className="underline"
-                                            onClick={() =>
-                                                update(u, { activo: !u.activo })
-                                            }
-                                        >
-                                            {u.activo
-                                                ? "Desactivar"
-                                                : "Activar"}
-                                        </button>
-                                        <button
-                                            className="underline text-red-600"
-                                            onClick={() => {
-                                                if (confirm(`¿Estás seguro que deseas eliminar a ${u.nombres} ${u.apellidos}? Esta acción no se puede deshacer.`)) {
-                                                    router.delete(route('admin.users.destroy', u.id));
-                                                }
-                                            }}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="flex gap-4">
-                    <span>
-                        Página {users.current_page} de {users.last_page}
-                    </span>
-                    {users.prev_page_url && (
-                        <button
-                            onClick={() => router.visit(users.prev_page_url!)}
-                        >
-                            Anterior
-                        </button>
+            </Modal>
+            <Modal
+                show={!!deleting}
+                onClose={() => !remove.processing && setDeleting(null)}
+                maxWidth="md"
+            >
+                <div className="portal-modal">
+                    <div className="portal-modal-head">
+                        <DialogTitle>Eliminar usuario</DialogTitle>
+                    </div>
+                    <p className="text-sm leading-7">
+                        Se eliminará la cuenta de{" "}
+                        <strong>
+                            {deleting?.nombres} {deleting?.apellidos}
+                        </strong>
+                        . Si solo necesitas suspender su acceso, puedes
+                        desactivarla desde «Editar acceso».
+                    </p>
+                    {Object.values(remove.errors).length > 0 && (
+                        <p className="portal-error" role="alert">
+                            {Object.values(remove.errors).join(" ")}
+                        </p>
                     )}
-                    {users.next_page_url && (
+                    <div className="mt-6 flex justify-end gap-3">
                         <button
-                            onClick={() => router.visit(users.next_page_url!)}
+                            className="portal-btn portal-btn-light"
+                            disabled={remove.processing}
+                            onClick={() => setDeleting(null)}
                         >
-                            Siguiente
+                            Cancelar
                         </button>
-                    )}
+                        <button
+                            className="portal-btn portal-btn-danger"
+                            disabled={remove.processing}
+                            onClick={() =>
+                                deleting &&
+                                remove.delete(
+                                    route("admin.users.destroy", deleting.id),
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => setDeleting(null),
+                                    },
+                                )
+                            }
+                        >
+                            Eliminar usuario
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
