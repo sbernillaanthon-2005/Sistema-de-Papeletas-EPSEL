@@ -14,6 +14,8 @@ class SignatureController extends Controller
 {
     public function store(Request $request, UploadSignature $uploadSignature)
     {
+        $this->ensureCanManageSignature($request);
+
         $request->validate([
             'signature' => 'required|image|mimes:png,jpg,jpeg|max:10240|dimensions:min_width=100,min_height=50,max_width=6000,max_height=6000',
         ], [
@@ -31,6 +33,8 @@ class SignatureController extends Controller
 
     public function show($id)
     {
+        abort_if(Auth::user()?->rol?->value === 'admin', 403, 'El administrador no utiliza firma digital.');
+
         $signature = Signature::findOrFail($id);
 
         // Security: Only the owner can view their signature directly.
@@ -49,6 +53,7 @@ class SignatureController extends Controller
 
     public function destroy(Request $request)
     {
+        $this->ensureCanManageSignature($request);
         $user = $request->user();
         $signature = $user->signature;
 
@@ -65,5 +70,10 @@ class SignatureController extends Controller
         }
 
         return back()->with('status', 'signature-deleted');
+    }
+
+    private function ensureCanManageSignature(Request $request): void
+    {
+        abort_if($request->user()?->rol?->value === 'admin', 403, 'El administrador no utiliza firma digital.');
     }
 }

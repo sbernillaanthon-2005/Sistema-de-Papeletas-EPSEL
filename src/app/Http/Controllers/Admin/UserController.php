@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domain\ExitSlip\Enums\ExitSlipStatus;
 use App\Domain\User\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Area;
+use App\Models\ExitSlip;
 use App\Models\User;
+use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,10 +33,62 @@ class UserController extends Controller
             $query->where('activo', $request->boolean('activo'));
         }
 
+        $workflowCounts = ExitSlip::query()
+            ->selectRaw('estado, count(*) as total')
+            ->groupBy('estado')
+            ->pluck('total', 'estado');
+        $workflow = collect([
+            ExitSlipStatus::SUBMITTED,
+            ExitSlipStatus::SUBMITTED_TO_HR,
+            ExitSlipStatus::SUBMITTED_TO_SECURITY,
+            ExitSlipStatus::COMPLETED,
+            ExitSlipStatus::REJECTED,
+        ])->map(function (ExitSlipStatus $status) use ($workflowCounts) {
+            return [
+                'key' => $status->value,
+                'label' => $status->label(),
+                'value' => (int) ($workflowCounts[$status->value] ?? 0),
+            ];
+        });
+
+        $firstMonth = now('America/Lima')->subMonths(5)->startOfMonth();
+        $monthCounts = ExitSlip::query()
+            ->where('created_at', '>=', $firstMonth)
+            ->selectRaw("to_char(date_trunc('month', created_at), 'YYYY-MM') as month_key, count(*) as total")
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key');
+        $monthly = collect(range(5, 0))->map(function (int $offset) use ($monthCounts) {
+            $month = now('America/Lima')->subMonths($offset)->startOfMonth();
+
+            return [
+                'label' => ucfirst($month->translatedFormat('M')),
+                'value' => (int) ($monthCounts[$month->format('Y-m')] ?? 0),
+            ];
+        });
+
+        $accessCounts = User::query()
+            ->selectRaw('rol, activo, count(*) as total')
+            ->groupBy('rol', 'activo')
+            ->get()
+            ->groupBy('rol');
+        $accessByRole = collect(UserRole::cases())->map(function (UserRole $role) use ($accessCounts) {
+            $counts = $accessCounts->get($role->value, collect());
+
+            return [
+                'key' => $role->value,
+                'label' => $role->label(),
+                'active' => (int) ($counts->firstWhere('activo', true)?->total ?? 0),
+                'inactive' => (int) ($counts->firstWhere('activo', false)?->total ?? 0),
+            ];
+        });
+
         return Inertia::render('Admin/Users/Index', [
             'users' => $query->paginate(15)->withQueryString(),
             'filters' => $filters,
             'summary' => ['total' => User::count(), 'active' => User::where('activo', true)->count(), 'heads' => User::where('rol', 'area_head')->where('activo', true)->count(), 'areas' => Area::count()],
+            'workflow' => $workflow,
+            'monthly' => $monthly,
+            'accessByRole' => $accessByRole,
             'areas' => Area::orderBy('nombre')->get(),
             'heads' => User::where('rol', 'area_head')->where('activo', true)->get(['id', 'nombres', 'apellidos', 'area_id']),
             'roles' => [
@@ -46,7 +101,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, AuditLogger $audit)
     {
         $request->validate([
             'nombres' => 'required|string|max:255',
@@ -79,10 +134,15 @@ class UserController extends Controller
                 ->update(['jefe_id' => $user->id]);
         }
 
+        $audit->record($request, 'user.created', 'Creó una cuenta de usuario.', User::class, $user->id, [
+            'dni' => $user->dni,
+            'role' => $user->rol->value,
+        ]);
+
         return back()->with('success', 'Usuario creado correctamente.');
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, AuditLogger $audit)
     {
         $user = User::findOrFail($id);
 
@@ -101,7 +161,8 @@ class UserController extends Controller
         if ($user->id === $request->user()->id && $request->has('activo') && ! $request->boolean('activo')) {
             throw ValidationException::withMessages(['activo' => 'No puedes desactivar tu propia cuenta.']);
         }
-        $user->update($request->only('activo', 'area_id', 'jefe_id'));
+        $changes = $request->only('activo', 'area_id', 'jefe_id');
+        $user->update($changes);
 
         // If assigned as head...
         if ($user->rol->value === UserRole::AREA_HEAD->value && $user->area_id) {
@@ -111,10 +172,12 @@ class UserController extends Controller
                 ->update(['jefe_id' => $user->id]);
         }
 
+        $audit->record($request, 'user.updated', 'Actualizó acceso o asignación de un usuario.', User::class, $user->id, $changes);
+
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
 
-    public function destroy(Request $request, string $id)
+    public function destroy(Request $request, string $id, AuditLogger $audit)
     {
         $user = User::findOrFail($id);
 
@@ -122,6 +185,10 @@ class UserController extends Controller
             throw ValidationException::withMessages(['activo' => 'No puedes eliminar tu propia cuenta.']);
         }
 
+        $audit->record($request, 'user.deleted', 'Eliminó una cuenta de usuario.', User::class, $user->id, [
+            'dni' => $user->dni,
+            'role' => $user->rol->value,
+        ]);
         $user->delete();
 
         return back()->with('success', 'Usuario eliminado correctamente.');

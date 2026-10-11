@@ -54,7 +54,7 @@ export default function Authenticated({
               ]
             : []),
         {
-            label: "Mi perfil y firma",
+            label: user.rol === "admin" ? "Mi perfil" : "Mi perfil y firma",
             href: route("profile.edit"),
             icon: "user",
             active: url.startsWith("/profile"),
@@ -65,8 +65,29 @@ export default function Authenticated({
         nav.push({
             label: "Documentación Técnica",
             href: route("admin.documentation"),
-            icon: "file", // Or use a document icon
+            icon: "file",
             active: url.startsWith("/admin/documentation"),
+        });
+        nav.push({
+            label: "Auditoría",
+            href: route("admin.audit.index"),
+            icon: "shield",
+            active: url.startsWith("/admin/audit"),
+        });
+        nav.push({
+            label: "Respaldos",
+            href: route("admin.backups.index"),
+            icon: "download",
+            active: url.startsWith("/admin/backups"),
+        });
+    }
+
+    if (user.rol === "hr") {
+        nav.push({
+            label: "Solicitantes",
+            href: route("hr.solicitantes"),
+            icon: "users",
+            active: url.startsWith("/hr/solicitantes"),
         });
     }
 

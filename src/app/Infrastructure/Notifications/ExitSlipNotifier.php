@@ -18,6 +18,9 @@ class ExitSlipNotifier
         if ($slip->estado->value === 'submitted_to_hr') {
             $recipients = array_merge($recipients, User::where('rol', 'hr')->where('activo', true)->pluck('id')->all());
         }
+        if ($slip->estado->value === 'submitted_to_security') {
+            $recipients = array_merge($recipients, User::where('rol', 'security')->where('activo', true)->pluck('id')->all());
+        }
         foreach (array_unique(array_filter($recipients)) as $id) {
             $notification = Notification::create([
                 'user_id' => $id, 'tipo' => 'STATUS_CHANGED', 'exit_slip_id' => $slip->id,

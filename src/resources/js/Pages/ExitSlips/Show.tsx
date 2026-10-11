@@ -66,6 +66,8 @@ export default function Show({
         observaciones: slip.observaciones || "",
     });
     const [rejectOpen, setRejectOpen] = useState(false);
+    const [noReturn, setNoReturn] = useState(false);
+    
     const transition = (action: string) =>
         form.post(
             route("exit-slips.transition", { exitSlip: slip.id, action }),
@@ -313,8 +315,9 @@ export default function Show({
                                         <div>
                                             <dt>Retorno registrado</dt>
                                             <dd>
-                                                {slip.hora_retorno ||
-                                                    "Pendiente"}
+                                                {slip.hora_retorno 
+                                                    ? slip.hora_retorno 
+                                                    : (slip.estado === 'completed' ? "Sin retorno" : "Pendiente")}
                                             </dd>
                                         </div>
                                         {slip.observaciones && (
@@ -348,10 +351,35 @@ export default function Show({
                                                     <input
                                                         type="time"
                                                         id="hora_retorno"
-                                                        required
+                                                        required={!noReturn}
+                                                        disabled={noReturn}
                                                         value={form.data.hora_retorno}
                                                         onChange={e => form.setData("hora_retorno", e.target.value)}
                                                     />
+                                                    <label 
+                                                        className={`flex items-center justify-between gap-3 mt-3 p-3 rounded-lg border cursor-pointer transition-colors ${noReturn ? 'bg-teal-50 border-teal-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                                                    >
+                                                        <div className="flex flex-col">
+                                                            <span className={`text-sm font-semibold ${noReturn ? 'text-teal-800' : 'text-slate-700'}`}>
+                                                                Sin retorno
+                                                            </span>
+                                                            <span className="text-xs text-slate-500">
+                                                                Marcar si no regresará hoy a la entidad
+                                                            </span>
+                                                        </div>
+                                                        <div className={`relative w-10 h-5 rounded-full transition-colors ${noReturn ? 'bg-teal-600' : 'bg-slate-300'}`}>
+                                                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${noReturn ? 'left-5' : 'left-0.5'}`} />
+                                                        </div>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={noReturn}
+                                                            onChange={(e) => {
+                                                                setNoReturn(e.target.checked);
+                                                                if (e.target.checked) form.setData("hora_retorno", "");
+                                                            }}
+                                                            className="sr-only"
+                                                        />
+                                                    </label>
                                                 </div>
                                             </div>
                                             <div className="portal-field">

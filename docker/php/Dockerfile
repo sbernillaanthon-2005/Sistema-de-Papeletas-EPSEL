@@ -18,6 +18,7 @@ RUN apk add --no-cache \
     freetype-dev \
     libzip-dev \
     icu-dev \
+    postgresql-client \
     postgresql-dev \
     oniguruma-dev \
     libxml2-dev \

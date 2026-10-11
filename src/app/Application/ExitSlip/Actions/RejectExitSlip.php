@@ -64,6 +64,7 @@ final class RejectExitSlip
             returnTime:                $exitSlip->returnTime,
             securityObservations:      $exitSlip->securityObservations,
             supervisor:                $exitSlip->supervisor,
+            firmaVigilanciaPath:       $exitSlip->firmaVigilanciaPath,
             
             rejectionReason:           $reason,
             finalPdfPath:              $exitSlip->finalPdfPath,

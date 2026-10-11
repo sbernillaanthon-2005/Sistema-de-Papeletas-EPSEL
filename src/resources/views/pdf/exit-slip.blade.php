@@ -141,6 +141,8 @@
         @endif
         @if($slip->returnTime)
             <div class="prac-field f-hora-retorno-real">{{ substr($slip->returnTime, 0, 5) }}</div>
+        @elseif($slip->status->value === 'completed')
+            <div class="prac-field f-hora-retorno-real" style="font-size: 9px; font-weight: bold; padding-top: 3px;">SIN RETORNO</div>
         @endif
         @if($slip->securityObservations)
             <div class="prac-field f-observaciones-vig">{{ $slip->securityObservations }}</div>
@@ -249,7 +251,7 @@
                 </tr>
                 <tr>
                     <th>Hora de Retorno Real</th>
-                    <td>{{ $slip->returnTime ?? 'Pendiente' }}</td>
+                    <td>{{ $slip->returnTime ? substr($slip->returnTime, 0, 5) : ($slip->status->value === 'completed' ? 'Sin retorno' : 'Pendiente') }}</td>
                 </tr>
                 <tr>
                     <th>Supervisor</th>

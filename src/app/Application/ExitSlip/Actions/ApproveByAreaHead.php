@@ -59,6 +59,7 @@ final class ApproveByAreaHead
             returnTime:                $exitSlip->returnTime,
             securityObservations:      $exitSlip->securityObservations,
             supervisor:                $exitSlip->supervisor,
+            firmaVigilanciaPath:       $exitSlip->firmaVigilanciaPath,
             
             rejectionReason:           null,
             finalPdfPath:              $exitSlip->finalPdfPath,

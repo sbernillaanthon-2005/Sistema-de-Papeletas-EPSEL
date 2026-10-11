@@ -86,6 +86,15 @@ it('filters the directory without changing global summary totals', function () {
     $person = User::factory()->create(['rol' => 'worker', 'nombres' => 'FiltroUnico', 'activo' => false]);
     User::factory()->create(['rol' => 'worker', 'activo' => true]);
     $this->actingAs($admin)->get('/admin/dashboard?q=FiltroUnico&rol=worker&activo=0')->assertInertia(fn ($page) => $page
-        ->has('users.data', 1)->where('users.data.0.id', $person->id)->where('summary.total', 3)->where('summary.active', 2));
+        ->has('users.data', 1)
+        ->where('users.data.0.id', $person->id)
+        ->where('summary.total', 3)
+        ->where('summary.active', 2)
+        ->has('workflow', 5)
+        ->has('monthly', 6)
+        ->has('accessByRole', 6)
+        ->where('accessByRole.1.key', 'worker')
+        ->where('accessByRole.1.active', 1)
+        ->where('accessByRole.1.inactive', 1));
     $this->getJson('/admin/dashboard?rol=invalid')->assertUnprocessable();
 });

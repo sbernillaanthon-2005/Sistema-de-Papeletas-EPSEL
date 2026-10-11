@@ -12,9 +12,12 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./src:/var/www/html
+      - php_vendor:/var/www/html/vendor
+      - ./src/vendor:/opt/host-vendor:ro
+      - ./docker/php/start-dev.sh:/usr/local/bin/epsel-start-dev:ro
       - ./openspec:/var/www/html/openspec:ro
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
-    command: php-fpm
+    command: ["sh", "/usr/local/bin/epsel-start-dev"]
     environment:
       - APP_ENV=${APP_ENV:-local}
     networks:
@@ -23,7 +26,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "php -r 'echo \"ok\";'"]
+      test: ["CMD", "php", "-r", "exit((int)!@fsockopen('127.0.0.1', 9000));"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -111,6 +114,7 @@ services:
       - "${REVERB_PORT:-8080}:8080"
     volumes:
       - ./src:/var/www/html
+      - php_vendor:/var/www/html/vendor
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     networks:
       - epsel_net
@@ -137,6 +141,7 @@ services:
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
     volumes:
       - ./src:/var/www/html
+      - php_vendor:/var/www/html/vendor
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     networks:
       - epsel_net
@@ -167,5 +172,6 @@ networks:
     driver: bridge
 
 volumes:
+  php_vendor:
   pgdata:
   pgadmin_data:

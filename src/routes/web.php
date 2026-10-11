@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HR\HrSolicitantesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Profile\SignatureController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AuditController;
+use App\Http\Controllers\Admin\BackupController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -15,20 +19,13 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Practitioner dashboard
-    Route::get('/dashboard', function () {
-        return app(\App\Http\Controllers\ExitSlipController::class)->index(request());
-    })->name('dashboard');
+    // Dashboard unificado — métricas y resumen por rol
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
-    // Area Head dashboard
-    Route::get('/head/dashboard', function () {
-        return app(\App\Http\Controllers\ExitSlipController::class)->index(request());
-    })->middleware('role:area_head')->name('head.dashboard');
-
-    // HR dashboard
-    Route::get('/hr/dashboard', function () {
-        return app(\App\Http\Controllers\ExitSlipController::class)->index(request());
-    })->middleware('role:hr')->name('hr.dashboard');
+    // HR — módulo solicitantes
+    Route::get('/hr/solicitantes', [HrSolicitantesController::class, 'index'])
+         ->middleware('role:hr')
+         ->name('hr.solicitantes');
 
     // Admin panel
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
@@ -38,6 +35,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::get('/reniec/{dni}', [\App\Http\Controllers\Admin\ReniecController::class, 'consult'])->name('reniec.consult');
         Route::get('/documentation', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])->name('documentation');
+        Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     });
 
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');

@@ -27,7 +27,7 @@ final class CreateExitSlip
             authorizedTime: new TimeRange($dto->timeFrom, $dto->timeUntil), status: ExitSlipStatus::DRAFT,
             assignedHeadId: null, approvedByHeadId: null, approvedByHeadAt: null, approvedByHrId: null, approvedByHrAt: null,
             practitionerSignaturePath: null, areaHeadSignaturePath: null, hrSignaturePath: null, lineManagerSignaturePath: null,
-            exitTime: null, returnTime: null, securityObservations: null, supervisor: null, rejectionReason: null, finalPdfPath: null, createdAt: $now,
+            exitTime: null, returnTime: null, securityObservations: null, supervisor: null, firmaVigilanciaPath: null, rejectionReason: null, finalPdfPath: null, createdAt: $now,
         ), $dto->practitionerId);
     }
 }

@@ -1,9 +1,9 @@
 import PortalIcon from "@/Components/PortalIcon";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { router, usePage } from "@inertiajs/react";
 import axios from "axios";
-import Echo from "laravel-echo";
-import Pusher from "pusher-js";
+import { subscribeNotifications } from "@/notificationChannel";
+
 type Item = {
     id: number;
     titulo: string;
@@ -11,14 +11,71 @@ type Item = {
     exit_slip_id: string | null;
     leida_at: string | null;
 };
+
+/**
+ * Genera un tono de notificación de forma programática con la Web Audio API.
+ * No requiere ningún archivo de audio externo.
+ * Se ejecuta únicamente ante notificaciones nuevas vía WebSocket (tiempo real).
+ */
+function playNotificationSound() {
+    try {
+        const AudioCtx =
+            window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        // Tonos: do5 → sol5 (intervalo de quinta ascendente, sonido amigable)
+        const notes = [
+            { freq: 523.25, start: 0, dur: 0.12 },
+            { freq: 659.25, start: 0.1, dur: 0.12 },
+            { freq: 783.99, start: 0.2, dur: 0.22 },
+        ];
+
+        notes.forEach(({ freq, start, dur }) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+
+            gain.gain.setValueAtTime(0, ctx.currentTime + start);
+            gain.gain.linearRampToValueAtTime(
+                0.22,
+                ctx.currentTime + start + 0.02,
+            );
+            gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                ctx.currentTime + start + dur,
+            );
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(ctx.currentTime + start);
+            osc.stop(ctx.currentTime + start + dur + 0.01);
+        });
+
+        // Cerrar el contexto después de que terminen los tonos
+        setTimeout(() => ctx.close(), 700);
+    } catch {
+        // La API de audio puede no estar disponible o bloqueada; silenciar silenciosamente
+    }
+}
+
 export default function NotificationBell() {
     const user = usePage().props.auth.user;
-    const [items, setItems] = useState<Item[]>([]),
-        [unread, setUnread] = useState(0),
-        [open, setOpen] = useState(false),
-        [failed, setFailed] = useState(false),
-        [busy, setBusy] = useState(false);
+    const [items, setItems] = useState<Item[]>([]);
+    const [unread, setUnread] = useState(0);
+    const [open, setOpen] = useState(false);
+    const [failed, setFailed] = useState(false);
+    const [busy, setBusy] = useState(false);
+    // Guarda el contador previo para detectar NUEVAS notificaciones
+    const prevUnreadRef = useRef(0);
+    // Rastrear si es la carga inicial (no reproducir sonido al montar)
+    const isFirstLoad = useRef(true);
     const container = useRef<HTMLDivElement>(null);
+
+    // Cerrar al hacer clic fuera o presionar Escape
     useEffect(() => {
         if (!open) return;
         const outside = (event: MouseEvent) => {
@@ -38,87 +95,60 @@ export default function NotificationBell() {
             document.removeEventListener("keydown", escape);
         };
     }, [open]);
-    const refresh = async () => {
+
+    const refresh = useCallback(async () => {
         try {
             const { data } = await axios.get("/notifications");
+            const newUnread: number = data.unread;
+
+            // Reproducir sonido solo si llegaron NUEVAS notificaciones
+            // y no es la carga inicial de la página
+            if (!isFirstLoad.current && newUnread > prevUnreadRef.current) {
+                playNotificationSound();
+            }
+
+            prevUnreadRef.current = newUnread;
+            isFirstLoad.current = false;
             setItems(data.items);
-            setUnread(data.unread);
+            setUnread(newUnread);
             setFailed(false);
         } catch {
             setFailed(true);
         }
-    };
+    }, []);
+
     useEffect(() => {
         let active = true;
         const reload = () => {
             if (active) void refresh();
         };
+
+        // Carga inicial
         reload();
+        // Polling de respaldo cada 60 s (ante pérdida de WebSocket)
         const interval = setInterval(reload, 60000);
-        let echo: Echo<"reverb"> | undefined;
-        if (import.meta.env.VITE_REVERB_APP_KEY) {
-            echo = new Echo({
-                broadcaster: "reverb",
-                client: new Pusher(import.meta.env.VITE_REVERB_APP_KEY, {
-                    cluster: "mt1",
-                    wsHost:
-                        import.meta.env.VITE_REVERB_HOST ||
-                        window.location.hostname,
-                    wsPort: Number(import.meta.env.VITE_REVERB_PORT || 8080),
-                    wssPort: Number(import.meta.env.VITE_REVERB_PORT || 443),
-                    forceTLS: import.meta.env.VITE_REVERB_SCHEME === "https",
-                    enabledTransports: ["ws", "wss"],
-                    channelAuthorization: {
-                        endpoint: "/broadcasting/auth",
-                        transport: "ajax",
-                        customHandler: async (params, callback) => {
-                            try {
-                                const { data } = await axios.post(
-                                    "/broadcasting/auth",
-                                    {
-                                        socket_id: params.socketId,
-                                        channel_name: params.channelName,
-                                    },
-                                );
-                                callback(null, data);
-                            } catch {
-                                callback(
-                                    new Error("No se pudo autenticar el canal"),
-                                    null,
-                                );
-                            }
-                        },
-                    },
-                }),
+
+        // ─── WebSocket (Laravel Reverb) ───
+        const unsubscribe = subscribeNotifications(String(user.id), () => {
+            reload();
+            router.reload({
+                only: [
+                    "slips", "counts", "inTransit", "slip", "can",
+                    "exitSlips", "exitSlip", "history", "pagination",
+                ],
             });
-            echo.private(`App.Models.User.${user.id}`).listen(
-                ".notification.created",
-                () => {
-                    reload();
-                    router.reload({
-                        only: [
-                            "slips",
-                            "counts",
-                            "inTransit",
-                            "slip",
-                            "can",
-                            "exitSlips",
-                            "exitSlip",
-                            "history",
-                            "pagination",
-                        ],
-                    });
-                },
-            );
-        }
+        });
+
+        // Refrescar al volver a la pestaña
         window.addEventListener("focus", reload);
         return () => {
             active = false;
             clearInterval(interval);
             window.removeEventListener("focus", reload);
-            echo?.disconnect();
+            unsubscribe();
         };
-    }, [user.id]);
+    }, [user.id, refresh]);
+
     const read = async (id: number | "all", url?: string | null) => {
         setBusy(true);
         try {
@@ -134,12 +164,14 @@ export default function NotificationBell() {
             setBusy(false);
         }
     };
+
     return (
         <div className="portal-bell" ref={container}>
             <button
-                className="portal-icon-button"
+                className={`portal-icon-button nb-bell-btn ${unread > 0 ? "nb-bell-btn--active" : ""}`}
                 aria-label={`Notificaciones: ${unread} sin leer`}
                 aria-expanded={open}
+                aria-haspopup="true"
                 onClick={() => {
                     setOpen(!open);
                     void refresh();
@@ -147,61 +179,94 @@ export default function NotificationBell() {
             >
                 <PortalIcon name="bell" />
                 {unread > 0 && (
-                    <span className="portal-bell-count" aria-live="polite">
+                    <span
+                        className="portal-bell-count nb-badge-pulse"
+                        aria-live="polite"
+                    >
                         {unread > 99 ? "99+" : unread}
                     </span>
                 )}
             </button>
+
             {open && (
                 <section
                     aria-label="Notificaciones"
-                    className="portal-notifications"
+                    className="portal-notifications nb-panel"
                 >
-                    <div className="flex justify-between">
-                        <strong>Notificaciones</strong>
-                        <button
-                            onClick={() => setOpen(false)}
-                            aria-label="Cerrar notificaciones"
-                        >
-                            &#215;
-                        </button>
-                    </div>
-                    {failed && (
-                        <p role="alert" className="text-red-700">
-                            No se pudo actualizar.{" "}
+                    {/* Cabecera del panel */}
+                    <div className="nb-panel-header">
+                        <div className="nb-panel-title">
+                            <PortalIcon name="bell" />
+                            <strong>Notificaciones</strong>
+                            {unread > 0 && (
+                                <span className="nb-count-tag">{unread} nuevas</span>
+                            )}
+                        </div>
+                        <div className="nb-panel-actions">
+                            {unread > 0 && (
+                                <button
+                                    disabled={busy}
+                                    className="nb-read-all"
+                                    onClick={() => void read("all")}
+                                >
+                                    Marcar todo
+                                </button>
+                            )}
                             <button
-                                className="underline"
-                                onClick={() => void refresh()}
+                                onClick={() => setOpen(false)}
+                                aria-label="Cerrar notificaciones"
+                                className="nb-close"
                             >
-                                Reintentar
+                                <PortalIcon name="close" />
                             </button>
-                        </p>
+                        </div>
+                    </div>
+
+                    {/* Error de conexión */}
+                    {failed && (
+                        <div className="nb-error" role="alert">
+                            <PortalIcon name="alert" />
+                            <span>
+                                No se pudo actualizar.{" "}
+                                <button
+                                    className="nb-retry"
+                                    onClick={() => void refresh()}
+                                >
+                                    Reintentar
+                                </button>
+                            </span>
+                        </div>
                     )}
-                    {unread > 0 && (
-                        <button
-                            disabled={busy}
-                            className="my-2 text-sm text-blue-800 underline"
-                            onClick={() => void read("all")}
-                        >
-                            Marcar todas como leídas
-                        </button>
-                    )}
-                    {items.map((n) => (
-                        <button
-                            disabled={busy}
-                            key={n.id}
-                            className={`portal-notification ${n.leida_at ? "" : "unread"}`}
-                            onClick={() => void read(n.id, n.exit_slip_id)}
-                        >
-                            <strong>{n.titulo}</strong>
-                            <p>{n.mensaje}</p>
-                        </button>
-                    ))}
-                    {!items.length && !failed && (
-                        <p className="p-3 text-sm text-slate-500">
-                            No tienes notificaciones.
-                        </p>
-                    )}
+
+                    {/* Lista de notificaciones */}
+                    <div className="nb-list">
+                        {items.map((n) => (
+                            <button
+                                disabled={busy}
+                                key={n.id}
+                                className={`nb-item ${n.leida_at ? "" : "nb-item--unread"}`}
+                                onClick={() => void read(n.id, n.exit_slip_id)}
+                            >
+                                <span className="nb-item-dot" />
+                                <div className="nb-item-body">
+                                    <strong>{n.titulo}</strong>
+                                    <p>{n.mensaje}</p>
+                                </div>
+                                {n.exit_slip_id && (
+                                    <span className="nb-item-arrow">
+                                        <PortalIcon name="chevron" />
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+
+                        {!items.length && !failed && (
+                            <div className="nb-empty">
+                                <PortalIcon name="bell" />
+                                <p>No tienes notificaciones.</p>
+                            </div>
+                        )}
+                    </div>
                 </section>
             )}
         </div>

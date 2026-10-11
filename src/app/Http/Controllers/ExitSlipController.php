@@ -280,7 +280,7 @@ class ExitSlipController extends Controller
             'reject' => $request->validate(['comentario' => 'required|string|max:2000']),
             'security' => $request->validate([
                 'hora_salida' => 'required|date_format:H:i',
-                'hora_retorno' => 'required|date_format:H:i|after:hora_salida',
+                'hora_retorno' => 'nullable|date_format:H:i|after:hora_salida',
                 'observaciones' => 'nullable|string|max:2000'
             ]),
             default => [],

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { Pagination } from "@/types/exit-slip";
 import { useState } from "react";
 import { DialogTitle } from "@headlessui/react";
@@ -32,7 +32,92 @@ type Props = {
     heads: Person[];
     summary: { total: number; active: number; heads: number; areas: number };
     filters: { q?: string; rol?: string; activo?: string };
+    workflow: { key: string; label: string; value: number }[];
+    monthly: { label: string; value: number }[];
+    accessByRole: { key: string; label: string; active: number; inactive: number }[];
 };
+
+function WorkflowChart({ data }: { data: Props["workflow"] }) {
+    const max = Math.max(...data.map((item) => item.value), 1);
+
+    return (
+        <div className="admin-bar-list" aria-label="Papeletas por etapa">
+            {data.map((item) => (
+                <Link
+                    key={item.key}
+                    className="admin-bar-row"
+                    href={route("exit-slips.index", { estado: item.key })}
+                    title={`Ver ${item.label.toLowerCase()} en la bandeja`}
+                >
+                    <span className="admin-bar-label">{item.label}</span>
+                    <span className="admin-bar-track">
+                        <span
+                            className={`admin-bar-fill admin-bar-fill--${item.key}`}
+                            style={{ width: `${(item.value / max) * 100}%` }}
+                        />
+                    </span>
+                    <strong>{item.value}</strong>
+                </Link>
+            ))}
+        </div>
+    );
+}
+
+function MonthlyChart({ data }: { data: Props["monthly"] }) {
+    const max = Math.max(...data.map((item) => item.value), 1);
+
+    return (
+        <div className="admin-month-chart" aria-label="Solicitudes creadas por mes">
+            {data.map((item) => (
+                <div className="admin-month-column" key={item.label}>
+                    <strong>{item.value}</strong>
+                    <span className="admin-month-track">
+                        <span
+                            className="admin-month-fill"
+                            style={{ height: `${Math.max((item.value / max) * 100, item.value ? 8 : 0)}%` }}
+                            title={`${item.label}: ${item.value} solicitudes`}
+                        />
+                    </span>
+                    <span>{item.label}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+function AccessChart({ data }: { data: Props["accessByRole"] }) {
+    const max = Math.max(...data.map((item) => item.active + item.inactive), 1);
+
+    return (
+        <div className="admin-access-list" aria-label="Cuentas activas e inactivas por rol">
+            {data.map((item) => {
+                const total = item.active + item.inactive;
+                return (
+                    <Link
+                        key={item.key}
+                        className="admin-access-row"
+                        href={route("admin.dashboard", { rol: item.key })}
+                        title={`Filtrar usuarios con rol ${item.label}`}
+                    >
+                        <span className="admin-access-label">{item.label}</span>
+                        <span className="admin-access-track">
+                            <span
+                                className="admin-access-active"
+                                style={{ width: `${(item.active / max) * 100}%` }}
+                            />
+                            <span
+                                className="admin-access-inactive"
+                                style={{ width: `${(item.inactive / max) * 100}%` }}
+                            />
+                        </span>
+                        <strong>{total}</strong>
+                    </Link>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function Index({
     users,
     areas,
@@ -40,6 +125,9 @@ export default function Index({
     heads,
     summary,
     filters,
+    workflow,
+    monthly,
+    accessByRole,
 }: Props) {
     const me = usePage().props.auth.user.id;
     const [creating, setCreating] = useState(false);
@@ -156,6 +244,41 @@ export default function Index({
                         icon="grid"
                         tone="amber"
                     />
+                </section>
+                <section className="admin-insights" aria-label="Indicadores operativos">
+                    <article className="portal-card admin-insight-card admin-insight-card--flow">
+                        <div className="admin-insight-head">
+                            <div>
+                                <p>OPERACIÓN</p>
+                                <h2>Flujo de papeletas</h2>
+                                <span>Identifica dónde se acumulan las solicitudes.</span>
+                            </div>
+                            <Link href={route("exit-slips.index")} className="admin-insight-link">
+                                Ver bandeja <PortalIcon name="arrow" />
+                            </Link>
+                        </div>
+                        <WorkflowChart data={workflow} />
+                    </article>
+                    <article className="portal-card admin-insight-card">
+                        <div className="admin-insight-head">
+                            <div>
+                                <p>DEMANDA</p>
+                                <h2>Solicitudes por mes</h2>
+                                <span>Compara la carga de los últimos seis meses.</span>
+                            </div>
+                        </div>
+                        <MonthlyChart data={monthly} />
+                    </article>
+                    <article className="portal-card admin-insight-card">
+                        <div className="admin-insight-head">
+                            <div>
+                                <p>GOBIERNO DE ACCESOS</p>
+                                <h2>Cobertura por rol</h2>
+                                <span>Verde: activo · Gris: sin acceso.</span>
+                            </div>
+                        </div>
+                        <AccessChart data={accessByRole} />
+                    </article>
                 </section>
                 <section className="portal-card">
                     <div className="portal-card-head">

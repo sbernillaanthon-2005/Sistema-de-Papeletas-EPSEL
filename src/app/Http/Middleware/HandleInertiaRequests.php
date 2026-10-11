@@ -32,23 +32,28 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'flash' => ['success' => fn () => $request->session()->get('success')],
-            'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'nombres' => $request->user()->nombres,
-                    'apellidos' => $request->user()->apellidos,
-                    'email' => $request->user()->email,
-                    'dni' => $request->user()->dni,
-                    'rol' => $request->user()->rol?->value,
-                    'rol_label' => $request->user()->rol?->label(),
-                    'area_id' => $request->user()->area_id,
-                    'cargo_designado' => $request->user()->cargo_designado,
-                    'has_signature' => $request->user()->signature()->exists(),
-                    'signature_id' => $request->user()->signature()->value('id'),
-                    'profile_photo_path' => $request->user()->profile_photo_path,
-                    'profile_photo_url' => $request->user()->profile_photo_url,
-                ] : null,
-            ],
+            'auth' => function () use ($request) {
+                $user = $request->user();
+                $signatureId = $user && $user->rol?->value !== 'admin'
+                    ? $user->signature()->value('id')
+                    : null;
+
+                return ['user' => $user ? [
+                    'id' => $user->id,
+                    'nombres' => $user->nombres,
+                    'apellidos' => $user->apellidos,
+                    'email' => $user->email,
+                    'dni' => $user->dni,
+                    'rol' => $user->rol?->value,
+                    'rol_label' => $user->rol?->label(),
+                    'area_id' => $user->area_id,
+                    'cargo_designado' => $user->cargo_designado,
+                    'has_signature' => $signatureId !== null,
+                    'signature_id' => $signatureId,
+                    'profile_photo_path' => $user->profile_photo_path,
+                    'profile_photo_url' => $user->profile_photo_url,
+                ] : null];
+            },
         ];
     }
 }

@@ -59,6 +59,7 @@ final class RevertToDraft
             returnTime:                $exitSlip->returnTime,
             securityObservations:      $exitSlip->securityObservations,
             supervisor:                $exitSlip->supervisor,
+            firmaVigilanciaPath:       $exitSlip->firmaVigilanciaPath,
             
             rejectionReason:           null, // Clear rejection as it's now a fresh draft
             finalPdfPath:              null,
