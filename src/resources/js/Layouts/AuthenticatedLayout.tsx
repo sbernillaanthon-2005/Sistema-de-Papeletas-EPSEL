@@ -1,6 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
 import { PropsWithChildren, ReactNode, useState } from "react";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
 import PortalIcon, { PortalIconName } from "@/Components/PortalIcon";
 import { Avatar, roleLabels } from "@/Components/PortalUI";
@@ -53,12 +53,6 @@ export default function Authenticated({
                   },
               ]
             : []),
-        {
-            label: user.rol === "admin" ? "Mi perfil" : "Mi perfil y firma",
-            href: route("profile.edit"),
-            icon: "user",
-            active: url.startsWith("/profile"),
-        },
     ];
 
     if (user.rol === "admin") {
@@ -126,16 +120,9 @@ export default function Authenticated({
                 </span>
                 <strong>Tu gestión, más simple.</strong>
                 <p>Solicitudes, firmas y seguimiento en un solo lugar.</p>
-                <Link href={route("profile.edit")}>
-                    Revisar mi perfil
-                    <PortalIcon name="arrow" />
-                </Link>
             </div>
             <div className="portal-sidebar-bottom">
-                <Link
-                    className="portal-sidebar-user"
-                    href={route("profile.edit")}
-                >
+                <div className="portal-sidebar-user">
                     <Avatar
                         name={`${user.nombres} ${user.apellidos}`}
                         photo={user.profile_photo_url}
@@ -145,7 +132,7 @@ export default function Authenticated({
                         <strong>{user.nombres}</strong>
                         <span>{role}</span>
                     </div>
-                </Link>
+                </div>
                 <Link
                     className="portal-logout"
                     href={route("logout")}
@@ -212,17 +199,27 @@ export default function Authenticated({
                             }).format(new Date())}
                         </span>
                         <NotificationBell />
-                        <Link
-                            className="portal-profile-link"
-                            href={route("profile.edit")}
-                            aria-label="Ir a mi perfil"
-                        >
-                            <Avatar
-                                name={user.nombres}
-                                photo={user.profile_photo_url}
-                                small
-                            />
-                        </Link>
+                        <Menu as="div" className="portal-account-menu">
+                            <MenuButton className="portal-profile-link" aria-label="Abrir menú de perfil">
+                                <Avatar name={user.nombres} photo={user.profile_photo_url} small />
+                            </MenuButton>
+                            <MenuItems anchor="bottom end" className="portal-account-popover">
+                                <div className="portal-account-summary">
+                                    <Avatar name={`${user.nombres} ${user.apellidos}`} photo={user.profile_photo_url} small />
+                                    <div><strong>{user.nombres} {user.apellidos}</strong><span>{role}</span></div>
+                                </div>
+                                <MenuItem>
+                                    <Link href={route("profile.edit")} className="portal-account-item">
+                                        <PortalIcon name="user" /> Mi perfil
+                                    </Link>
+                                </MenuItem>
+                                <MenuItem>
+                                    <Link href={route("logout")} method="post" as="button" className="portal-account-item portal-account-logout">
+                                        <PortalIcon name="logout" /> Cerrar sesión
+                                    </Link>
+                                </MenuItem>
+                            </MenuItems>
+                        </Menu>
                     </div>
                 </header>
                 <div className="portal-page-heading">

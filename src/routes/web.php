@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/download', [BackupController::class, 'download'])->name('backups.download');
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::put('/reminder-settings', [UserController::class, 'updateReminderSettings'])->name('reminder-settings.update');
     });
 
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');

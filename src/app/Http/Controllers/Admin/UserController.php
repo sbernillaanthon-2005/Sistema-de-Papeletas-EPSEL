@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Area;
 use App\Models\ExitSlip;
 use App\Models\User;
+use App\Models\SystemSetting;
 use App\Support\AuditLogger;
+use App\Support\PendingExitSlipMonitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,7 +20,7 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PendingExitSlipMonitor $pendingMonitor)
     {
         $filters = $request->validate(['q' => 'nullable|string|max:120', 'rol' => ['nullable', Rule::enum(UserRole::class)], 'activo' => 'nullable|in:0,1']);
         $query = User::with(['area', 'jefe'])->orderBy('apellidos')->orderBy('id');
@@ -81,6 +83,7 @@ class UserController extends Controller
                 'inactive' => (int) ($counts->firstWhere('activo', false)?->total ?? 0),
             ];
         });
+        $pendingWorkflow = $pendingMonitor->pending()->map(fn (array $item) => collect($item)->except('recipient_ids')->all())->values();
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $query->paginate(15)->withQueryString(),
@@ -89,6 +92,8 @@ class UserController extends Controller
             'workflow' => $workflow,
             'monthly' => $monthly,
             'accessByRole' => $accessByRole,
+            'pendingWorkflow' => $pendingWorkflow,
+            'reminderInterval' => SystemSetting::integer('exit_slip_reminder_minutes', 15),
             'areas' => Area::orderBy('nombre')->get(),
             'heads' => User::where('rol', 'area_head')->where('activo', true)->get(['id', 'nombres', 'apellidos', 'area_id']),
             'roles' => [
@@ -99,6 +104,18 @@ class UserController extends Controller
                 ['value' => 'security', 'label' => 'Vigilancia'],
             ],
         ]);
+    }
+
+    public function updateReminderSettings(Request $request, AuditLogger $audit)
+    {
+        $validated = $request->validate(['minutes' => ['required', 'integer', 'min:1', 'max:1440']]);
+        SystemSetting::query()->updateOrCreate(
+            ['key' => 'exit_slip_reminder_minutes'],
+            ['value' => (string) $validated['minutes']],
+        );
+        $audit->record($request, 'exit_slip.reminder_interval_updated', 'Actualizó el intervalo de recordatorios de firma.', SystemSetting::class, null, $validated);
+
+        return back()->with('success', 'Intervalo de recordatorios actualizado.');
     }
 
     public function store(Request $request, AuditLogger $audit)

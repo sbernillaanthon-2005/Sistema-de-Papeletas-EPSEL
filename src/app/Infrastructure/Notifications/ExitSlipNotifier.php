@@ -9,6 +9,18 @@ use App\Models\User;
 
 class ExitSlipNotifier
 {
+    public function sendReminder(ExitSlip $slip, string $recipientId, string $stage): void
+    {
+        $notification = Notification::create([
+            'user_id' => $recipientId,
+            'tipo' => 'SIGNATURE_REMINDER',
+            'exit_slip_id' => $slip->id,
+            'titulo' => $slip->codigo.' · Firma pendiente',
+            'mensaje' => "La papeleta de {$slip->apellidos_nombres} espera tu acción: {$stage}.",
+        ]);
+        NotificationCreated::dispatch($recipientId, $notification->id);
+    }
+
     public function send(ExitSlip $slip): void
     {
         $recipients = [$slip->user_id];

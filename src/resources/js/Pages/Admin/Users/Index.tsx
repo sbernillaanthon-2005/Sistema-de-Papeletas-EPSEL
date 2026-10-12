@@ -35,7 +35,23 @@ type Props = {
     workflow: { key: string; label: string; value: number }[];
     monthly: { label: string; value: number }[];
     accessByRole: { key: string; label: string; active: number; inactive: number }[];
+    pendingWorkflow: { id: string; code: string; requester: string; stage: string; responsible: string; requires_signature: boolean }[];
+    reminderInterval: number;
 };
+
+function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkflow"]; reminderInterval: number }) {
+    const reminder = useForm({ minutes: reminderInterval });
+    const signing = data.filter((item) => item.requires_signature);
+    return <section className="portal-card pending-workflow" aria-label="Seguimiento de firmas pendientes">
+        <div className="pending-workflow-head"><div><p>CONTROL DE PROCESO</p><h2>Papeletas pendientes de completar</h2><span>{signing.length} esperando una firma · {data.length} detenidas en total</span></div>
+            <form className="reminder-control" onSubmit={(event) => { event.preventDefault(); reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true }); }}>
+                <label htmlFor="reminder-minutes">Recordar cada</label><input id="reminder-minutes" type="number" min="1" max="1440" value={reminder.data.minutes} onChange={(event) => reminder.setData("minutes", Number(event.target.value))} /><span>min</span><button className="portal-btn portal-btn-primary" disabled={reminder.processing}>Guardar</button>
+            </form>
+        </div>
+        <div className="pending-legend"><span><i className="pending-dot pending-dot--signature" /> Requiere firma</span><span><i className="pending-dot" /> Requiere derivación</span><span>Los recordatorios llegan por la campana en tiempo real.</span></div>
+        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("exit-slips.show", item.id)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span><span className={item.requires_signature ? "pending-chip pending-chip--signature" : "pending-chip"}>{item.requires_signature ? "Firma pendiente" : "Pendiente"}</span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
+    </section>;
+}
 
 function WorkflowChart({ data }: { data: Props["workflow"] }) {
     const max = Math.max(...data.map((item) => item.value), 1);
@@ -128,6 +144,8 @@ export default function Index({
     workflow,
     monthly,
     accessByRole,
+    pendingWorkflow,
+    reminderInterval,
 }: Props) {
     const me = usePage().props.auth.user.id;
     const [creating, setCreating] = useState(false);
@@ -245,6 +263,7 @@ export default function Index({
                         tone="amber"
                     />
                 </section>
+                <PendingWorkflow data={pendingWorkflow} reminderInterval={reminderInterval} />
                 <section className="admin-insights" aria-label="Indicadores operativos">
                     <article className="portal-card admin-insight-card admin-insight-card--flow">
                         <div className="admin-insight-head">
@@ -742,17 +761,26 @@ export default function Index({
                                     ))}
                             </select>
                         </div>
-                        <label className="flex items-center gap-3 text-sm">
-                            <input
-                                type="checkbox"
-                                disabled={editing?.id === me}
-                                checked={edit.data.activo}
-                                onChange={(e) =>
-                                    edit.setData("activo", e.target.checked)
-                                }
-                            />
-                            Cuenta activa
-                        </label>
+                        <div className={`account-status-control ${edit.data.activo ? "is-active" : "is-inactive"}`}>
+                            <div className="account-status-copy">
+                                <span className="account-status-eyebrow">ESTADO DE ACCESO</span>
+                                <strong>{edit.data.activo ? "Cuenta activa" : "Cuenta desactivada"}</strong>
+                                <p>{edit.data.activo
+                                    ? "Puede iniciar sesión y recibir notificaciones del sistema."
+                                    : "No podrá iniciar sesión ni recibir nuevas notificaciones hasta volver a activarla."}</p>
+                            </div>
+                            <label className="account-status-switch">
+                                <input
+                                    type="checkbox"
+                                    disabled={editing?.id === me}
+                                    checked={edit.data.activo}
+                                    onChange={(e) => edit.setData("activo", e.target.checked)}
+                                />
+                                <span aria-hidden="true" />
+                                <em>{edit.data.activo ? "Activa" : "Desactivada"}</em>
+                            </label>
+                            {editing?.id === me && <small>Tu propia cuenta no puede desactivarse.</small>}
+                        </div>
                     </div>
                     {Object.values(edit.errors).length > 0 && (
                         <p className="portal-error" role="alert">

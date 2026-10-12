@@ -149,6 +149,26 @@ services:
       app:
         condition: service_healthy
 
+  # Laravel Scheduler: activa recordatorios y tareas programadas cada minuto
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: development
+    container_name: epsel_scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    volumes:
+      - ./src:/var/www/html
+      - php_vendor:/var/www/html/vendor
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    networks:
+      - epsel_net
+    depends_on:
+      app:
+        condition: service_healthy
+
   # ─────────────────────────────────────────────
   #  Node / Vite (desarrollo frontend)
   # ─────────────────────────────────────────────
