@@ -1,5 +1,5 @@
 import { Link, usePage } from "@inertiajs/react";
-import { PropsWithChildren, ReactNode, useState } from "react";
+import { PropsWithChildren, ReactNode, useEffect, useState } from "react";
 import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
 import VoiceAssistant from "@/Components/VoiceAssistant";
@@ -16,11 +16,31 @@ export default function Authenticated({
     const { url } = usePage();
     const user = auth.user;
     const [menuOpen, setMenuOpen] = useState(false);
+    const [theme, setTheme] = useState<"light" | "dark">(() => {
+        if (typeof window === "undefined") return "light";
+
+        const savedTheme = window.localStorage.getItem("epsel-theme");
+        if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+    });
     const role = roleLabels[user.rol] || user.rol_label;
     const isCreator = ["practitioner", "worker", "area_head"].includes(
         user.rol,
     );
     const home = user.rol === "admin" ? "admin.dashboard" : "dashboard";
+
+    useEffect(() => {
+        window.localStorage.setItem("epsel-theme", theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme((currentTheme) =>
+            currentTheme === "dark" ? "light" : "dark",
+        );
+    };
     const nav: {
         label: string;
         href: string;
@@ -147,7 +167,10 @@ export default function Authenticated({
         </>
     );
     return (
-        <div className="portal-app">
+        <div
+            className="portal-app portal-tailwind-shell selection:bg-epsel-600 selection:text-white"
+            data-theme={theme}
+        >
             <a className="portal-skip" href="#portal-content">
                 Ir al contenido
             </a>
@@ -199,6 +222,26 @@ export default function Authenticated({
                                 timeZone: "America/Lima",
                             }).format(new Date())}
                         </span>
+                        <button
+                            type="button"
+                            className="portal-icon-button portal-theme-toggle"
+                            onClick={toggleTheme}
+                            aria-label={
+                                theme === "dark"
+                                    ? "Activar modo claro"
+                                    : "Activar modo oscuro"
+                            }
+                            aria-pressed={theme === "dark"}
+                            title={
+                                theme === "dark"
+                                    ? "Activar modo claro"
+                                    : "Activar modo oscuro"
+                            }
+                        >
+                            <PortalIcon
+                                name={theme === "dark" ? "sun" : "moon"}
+                            />
+                        </button>
                         <VoiceAssistant />
                         <NotificationBell />
                         <Menu as="div" className="portal-account-menu">

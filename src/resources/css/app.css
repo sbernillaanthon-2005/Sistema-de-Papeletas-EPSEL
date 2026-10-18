@@ -1,3 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tokens shared by Tailwind utilities and the EPSEL portal. */
+@theme {
+    --color-epsel-50: #effcff;
+    --color-epsel-100: #d5f7fb;
+    --color-epsel-500: #0b8ba4;
+    --color-epsel-600: #08728b;
+    --color-epsel-700: #075c72;
+    --color-epsel-950: #082f42;
+    --font-sans: "Figtree", "Segoe UI", sans-serif;
+}
+
+@layer base {
+    html {
+        font-family: var(--font-sans);
+        text-rendering: optimizeLegibility;
+    }
+
+    ::selection {
+        color: #fff;
+        background: #087e97;
+    }
+}

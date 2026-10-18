@@ -49,6 +49,8 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                         decoding="async"
                         fetchPriority="high"
                     />
+                    <div className="login-visual-orbit login-visual-orbit-one" aria-hidden="true" />
+                    <div className="login-visual-orbit login-visual-orbit-two" aria-hidden="true" />
                     <div className="login-visual-shade" />
                     <div className="login-visual-top">
                         <span className="login-visual-tag">
@@ -57,6 +59,16 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                         <span className="login-visual-location">
                             Lambayeque, Perú
                         </span>
+                    </div>
+                    <div className="login-visual-console">
+                        <span className="login-visual-console-icon">
+                            <LoginIcon name="shield" />
+                        </span>
+                        <div>
+                            <small>ESTADO DEL PORTAL</small>
+                            <strong>Listo para operar</strong>
+                        </div>
+                        <span className="login-visual-console-status"><i /> En línea</span>
                     </div>
                     <div className="login-visual-copy">
                         <span className="login-visual-eyebrow">
@@ -72,6 +84,10 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                             <br />
                             Tus papeletas y aprobaciones, en un solo lugar.
                         </p>
+                        <div className="login-visual-assurance">
+                            <LoginIcon name="shield" />
+                            <span>Gestión de salidas con trazabilidad por etapas.</span>
+                        </div>
                         <div
                             className="login-steps"
                             aria-label="Proceso de una papeleta"

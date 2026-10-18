@@ -67,6 +67,13 @@ export default function Login({
                 Ingresa a tu espacio de trabajo y gestiona tus papeletas de
                 forma sencilla.
             </p>
+            <div className="login-access-note">
+                <span><LoginIcon name="shield" /></span>
+                <div>
+                    <strong>Acceso institucional</strong>
+                    <small>Usa tu DNI y contraseña asignada.</small>
+                </div>
+            </div>
             {status && (
                 <div className="login-status" role="status">
                     {status}
@@ -79,7 +86,7 @@ export default function Login({
                 onSubmit={submit}
                 aria-busy={processing}
             >
-                <div className="login-field">
+                <div className={"login-field " + (data.dni ? "is-filled" : "")}>
                     <label htmlFor="dni">DNI</label>
                     <div className="login-input-wrap">
                         <LoginIcon name="user" className="login-input-icon" />
@@ -91,6 +98,9 @@ export default function Login({
                             className="login-input"
                             placeholder="Tu número de DNI"
                             autoComplete="username"
+                            inputMode="numeric"
+                            maxLength={8}
+                            pattern="[0-9]{8}"
                             autoCapitalize="none"
                             spellCheck={false}
                             required
@@ -98,9 +108,22 @@ export default function Login({
                             aria-describedby={
                                 errors.dni ? "login-dni-error" : undefined
                             }
-                            onChange={(e) => setData("dni", e.target.value)}
+                            onChange={(e) =>
+                                setData(
+                                    "dni",
+                                    e.target.value.replace(/\D/g, "").slice(0, 8),
+                                )
+                            }
                         />
+                        {data.dni.length === 8 && (
+                            <span className="login-field-ready" aria-label="DNI completo">
+                                <LoginIcon name="check" />
+                            </span>
+                        )}
                     </div>
+                    <span className="login-field-hint">
+                        {data.dni ? data.dni.length + " de 8 dígitos" : "Ingresa los 8 dígitos de tu documento"}
+                    </span>
                     {errors.dni && (
                         <p
                             id="login-dni-error"
@@ -111,7 +134,7 @@ export default function Login({
                         </p>
                     )}
                 </div>
-                <div className="login-field">
+                <div className={"login-field " + (data.password ? "is-filled" : "")}>
                     <label htmlFor="password">Contraseña</label>
                     <div className="login-input-wrap">
                         <LoginIcon name="lock" className="login-input-icon" />
@@ -189,6 +212,9 @@ export default function Login({
                         />
                         <span>Recordarme</span>
                     </label>
+                    <span className="login-options-state">
+                        <LoginIcon name="shield" /> Sesión protegida
+                    </span>
                 </div>
                 <button
                     type="submit"

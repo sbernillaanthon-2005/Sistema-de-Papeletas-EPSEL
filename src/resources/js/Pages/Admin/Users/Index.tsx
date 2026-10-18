@@ -42,7 +42,7 @@ type Props = {
 function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkflow"]; reminderInterval: number }) {
     const reminder = useForm({ minutes: reminderInterval });
     const signing = data.filter((item) => item.requires_signature);
-    return <section className="portal-card pending-workflow" aria-label="Seguimiento de firmas pendientes">
+    return <section className="portal-card pending-workflow admin-priority-panel" aria-label="Seguimiento de firmas pendientes">
         <div className="pending-workflow-head"><div><p>CONTROL DE PROCESO</p><h2>Papeletas pendientes de completar</h2><span>{signing.length} esperando una firma · {data.length} detenidas en total</span></div>
             <form className="reminder-control" onSubmit={(event) => { event.preventDefault(); reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true }); }}>
                 <label htmlFor="reminder-minutes">Recordar cada</label><input id="reminder-minutes" type="number" min="1" max="1440" value={reminder.data.minutes} onChange={(event) => reminder.setData("minutes", Number(event.target.value))} /><span>min</span><button className="portal-btn portal-btn-primary" disabled={reminder.processing}>Guardar</button>
@@ -55,9 +55,18 @@ function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkf
 
 function WorkflowChart({ data }: { data: Props["workflow"] }) {
     const max = Math.max(...data.map((item) => item.value), 1);
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const peak = data.reduce((current, item) =>
+        item.value > current.value ? item : current,
+    data[0]);
 
     return (
-        <div className="admin-bar-list" aria-label="Papeletas por etapa">
+        <div className="admin-chart-content">
+            <div className="admin-chart-summary">
+                <div><strong>{total}</strong><span>papeletas en proceso</span></div>
+                <span className="admin-chart-peak">{peak?.value ? "Mayor carga: " + peak.label : "Sin acumulaciones"}</span>
+            </div>
+            <div className="admin-bar-list" aria-label={"Papeletas por etapa. " + total + " papeletas en total."}>
             {data.map((item) => (
                 <Link
                     key={item.key}
@@ -65,27 +74,37 @@ function WorkflowChart({ data }: { data: Props["workflow"] }) {
                     href={route("exit-slips.index", { estado: item.key })}
                     title={`Ver ${item.label.toLowerCase()} en la bandeja`}
                 >
-                    <span className="admin-bar-label">{item.label}</span>
+                    <span className="admin-bar-label"><i className={"admin-bar-dot admin-bar-dot--" + item.key} />{item.label}</span>
                     <span className="admin-bar-track">
                         <span
                             className={`admin-bar-fill admin-bar-fill--${item.key}`}
                             style={{ width: `${(item.value / max) * 100}%` }}
                         />
                     </span>
-                    <strong>{item.value}</strong>
+                    <strong>{item.value}<small>{total ? Math.round((item.value / total) * 100) + "%" : "0%"}</small></strong>
                 </Link>
             ))}
+            </div>
         </div>
     );
 }
 
 function MonthlyChart({ data }: { data: Props["monthly"] }) {
     const max = Math.max(...data.map((item) => item.value), 1);
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const peak = data.reduce((current, item) =>
+        item.value > current.value ? item : current,
+    data[0]);
 
     return (
-        <div className="admin-month-chart" aria-label="Solicitudes creadas por mes">
+        <div className="admin-chart-content">
+            <div className="admin-chart-summary">
+                <div><strong>{total}</strong><span>solicitudes en 6 meses</span></div>
+                <span className="admin-chart-peak">{peak?.value ? peak.label + ": " + peak.value + " registradas" : "Sin solicitudes registradas"}</span>
+            </div>
+            <div className="admin-month-chart" aria-label={"Solicitudes creadas por mes. " + total + " solicitudes durante los últimos seis meses."}>
             {data.map((item) => (
-                <div className="admin-month-column" key={item.label}>
+                <div className={"admin-month-column " + (item.value === max && item.value > 0 ? "is-peak" : "")} key={item.label} aria-label={item.label + ": " + item.value + " solicitudes"}>
                     <strong>{item.value}</strong>
                     <span className="admin-month-track">
                         <span
@@ -97,17 +116,33 @@ function MonthlyChart({ data }: { data: Props["monthly"] }) {
                     <span>{item.label}</span>
                 </div>
             ))}
+            </div>
         </div>
     );
 }
 
 function AccessChart({ data }: { data: Props["accessByRole"] }) {
-    const max = Math.max(...data.map((item) => item.active + item.inactive), 1);
+    const activeTotal = data.reduce((sum, item) => sum + item.active, 0);
+    const accountTotal = data.reduce(
+        (sum, item) => sum + item.active + item.inactive,
+        0,
+    );
+    const coverage = accountTotal
+        ? Math.round((activeTotal / accountTotal) * 100)
+        : 0;
 
     return (
-        <div className="admin-access-list" aria-label="Cuentas activas e inactivas por rol">
+        <div className="admin-chart-content">
+            <div className="admin-chart-summary">
+                <div><strong>{coverage}%</strong><span>cobertura de acceso</span></div>
+                <span className="admin-chart-peak">{activeTotal} activas de {accountTotal || 0} cuentas</span>
+            </div>
+            <div className="admin-access-list" aria-label={"Cobertura por rol. " + activeTotal + " cuentas activas de " + (accountTotal || 0) + "."}>
             {data.map((item) => {
                 const total = item.active + item.inactive;
+                const percentage = total
+                    ? Math.round((item.active / total) * 100)
+                    : 0;
                 return (
                     <Link
                         key={item.key}
@@ -115,21 +150,22 @@ function AccessChart({ data }: { data: Props["accessByRole"] }) {
                         href={route("admin.dashboard", { rol: item.key })}
                         title={`Filtrar usuarios con rol ${item.label}`}
                     >
-                        <span className="admin-access-label">{item.label}</span>
+                        <span className="admin-access-label">{item.label}<small>{percentage}% activo</small></span>
                         <span className="admin-access-track">
                             <span
                                 className="admin-access-active"
-                                style={{ width: `${(item.active / max) * 100}%` }}
+                                style={{ width: percentage + "%" }}
                             />
                             <span
                                 className="admin-access-inactive"
-                                style={{ width: `${(item.inactive / max) * 100}%` }}
+                                style={{ width: 100 - percentage + "%" }}
                             />
                         </span>
-                        <strong>{total}</strong>
+                        <strong>{item.active}<small>/{total}</small></strong>
                     </Link>
                 );
             })}
+            </div>
         </div>
     );
 }
@@ -211,9 +247,9 @@ export default function Index({
     return (
         <AuthenticatedLayout header={<h1>Usuarios y accesos</h1>}>
             <Head title="Administración de usuarios" />
-            <div className="portal-stack">
-                <section className="portal-hero">
-                    <div>
+            <div className="portal-stack admin-dashboard admin-dashboard-v2">
+                <section className="portal-hero admin-dashboard-hero">
+                    <div className="admin-dashboard-hero-copy">
                         <p className="portal-hero-eyebrow">
                             ADMINISTRACIÓN DEL SISTEMA
                         </p>
@@ -222,17 +258,47 @@ export default function Index({
                             Organiza los accesos, asigna áreas y vincula al
                             personal con su jefe responsable.
                         </p>
+                        <div className="admin-dashboard-hero-signals" aria-label="Resumen operativo">
+                            <span><i className="admin-live-dot" /> {summary.active} cuentas con acceso</span>
+                            <span><PortalIcon name="clock" /> {pendingWorkflow.length} papeletas por atender</span>
+                        </div>
                     </div>
-                    <button
-                        className="portal-btn portal-btn-white"
-                        onClick={() => setCreating(true)}
-                    >
-                        <PortalIcon name="plus" />
-                        Nuevo usuario
+                    <div className="admin-dashboard-hero-actions">
+                        <Link href={route("exit-slips.index")} className="admin-dashboard-hero-link">
+                            Ver papeletas <PortalIcon name="arrow" />
+                        </Link>
+                        <button
+                            className="portal-btn portal-btn-white"
+                            onClick={() => setCreating(true)}
+                        >
+                            <PortalIcon name="plus" />
+                            Nuevo usuario
+                        </button>
+                    </div>
+                </section>
+                <section className="admin-command-deck" aria-label="Accesos rápidos de administración">
+                    <button type="button" className="admin-command-card admin-command-card--primary" onClick={() => setCreating(true)}>
+                        <span className="admin-command-icon"><PortalIcon name="plus" /></span>
+                        <span><small>ACCIÓN PRINCIPAL</small><strong>Registrar usuario</strong><em>Crear una cuenta y definir sus permisos.</em></span>
                     </button>
+                    <Link href={route("exit-slips.index")} className="admin-command-card">
+                        <span className="admin-command-icon"><PortalIcon name="file" /></span>
+                        <span><small>OPERACIÓN</small><strong>Revisar bandeja</strong><em>{pendingWorkflow.length} papeletas necesitan seguimiento.</em></span>
+                        <PortalIcon name="arrow" />
+                    </Link>
+                    <Link href={route("admin.audit.index")} className="admin-command-card">
+                        <span className="admin-command-icon"><PortalIcon name="shield" /></span>
+                        <span><small>CONTROL</small><strong>Ver auditoría</strong><em>Consulta las acciones registradas del sistema.</em></span>
+                        <PortalIcon name="arrow" />
+                    </Link>
+                    <Link href={route("admin.backups.index")} className="admin-command-card">
+                        <span className="admin-command-icon"><PortalIcon name="download" /></span>
+                        <span><small>RESGUARDO</small><strong>Gestionar respaldos</strong><em>Descarga una copia segura de la base de datos.</em></span>
+                        <PortalIcon name="arrow" />
+                    </Link>
                 </section>
                 <section
-                    className="portal-stats"
+                    className="portal-stats admin-dashboard-kpis"
                     aria-label="Resumen de usuarios"
                 >
                     <StatCard
@@ -264,7 +330,15 @@ export default function Index({
                     />
                 </section>
                 <PendingWorkflow data={pendingWorkflow} reminderInterval={reminderInterval} />
-                <section className="admin-insights" aria-label="Indicadores operativos">
+                <section className="admin-analytics-section" aria-label="Indicadores operativos">
+                    <div className="admin-section-heading">
+                        <div>
+                            <p>VISTA DE DECISIÓN</p>
+                            <h2>Operación en una mirada</h2>
+                        </div>
+                        <span>Selecciona una fila para profundizar.</span>
+                    </div>
+                    <div className="admin-insights">
                     <article className="portal-card admin-insight-card admin-insight-card--flow">
                         <div className="admin-insight-head">
                             <div>
@@ -298,19 +372,24 @@ export default function Index({
                         </div>
                         <AccessChart data={accessByRole} />
                     </article>
+                    </div>
                 </section>
-                <section className="portal-card">
-                    <div className="portal-card-head">
+                <section className="portal-card admin-directory">
+                    <div className="portal-card-head admin-directory-head">
                         <div>
+                            <p className="admin-directory-eyebrow">DIRECTORIO Y GOBIERNO</p>
                             <h2>Directorio de personal</h2>
                             <p>
                                 Gestiona el acceso y la asignación de cada
                                 usuario.
                             </p>
                         </div>
-                        <span className="portal-badge">
-                            {users.total} usuarios
-                        </span>
+                        <div className="admin-directory-summary">
+                            <span>{summary.active} activas</span>
+                            <span className="portal-badge">
+                                {users.total} usuarios
+                            </span>
+                        </div>
                     </div>
                     <form
                         className="portal-toolbar"

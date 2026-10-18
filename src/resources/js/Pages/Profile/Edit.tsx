@@ -71,21 +71,34 @@ export default function Edit({
     return (
         <AuthenticatedLayout header={<h1>{isAdmin ? "Mi perfil" : "Mi perfil y firma"}</h1>}>
             <Head title="Mi perfil" />
-            <div className="portal-stack">
+            <div className="portal-stack pp-page">
 
                 {/* ── Hero ── */}
-                <section className="portal-hero pp-hero">
+                <section className="portal-hero pp-hero pp-hero--premium">
+                    <div className="pp-hero-glow" aria-hidden="true" />
                     <div className="pp-hero-inner">
-                        <Avatar name={fullName} photo={user.profile_photo_url} />
+                        <div className="pp-avatar-frame">
+                            <Avatar name={fullName} photo={user.profile_photo_url} />
+                            <span className="pp-avatar-status" aria-label="Cuenta activa">
+                                <IconCheck />
+                            </span>
+                        </div>
                         <div className="pp-hero-text">
                             <p className="portal-hero-eyebrow">
                                 {roleLabels[user.rol]?.toUpperCase()}
                             </p>
                             <h2>{fullName}</h2>
                             <p>{user.cargo_designado || "Portal de personal EPSEL"}</p>
+                            <div className="pp-hero-meta">
+                                <span><IconShield /> Cuenta institucional</span>
+                                <span>{isAdmin ? "Administración del sistema" : "Perfil operativo"}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="pp-hero-badges">
+                        <span className="pp-badge pp-badge--ok">
+                            <IconCheck /> Cuenta activa
+                        </span>
                         {!isAdmin && (
                             <span className={`pp-badge ${user.has_signature ? "pp-badge--ok" : "pp-badge--warn"}`}>
                                 {user.has_signature
@@ -124,6 +137,17 @@ export default function Edit({
 
                 {/* ── Panel: Información personal ── */}
                 <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" hidden={tab !== "profile"}>
+                    <div className="pp-profile-intro">
+                        <div>
+                            <span>IDENTIDAD Y PREFERENCIAS</span>
+                            <h2>Tu espacio personal</h2>
+                            <p>Gestiona la imagen e información con la que te identifica el portal EPSEL.</p>
+                        </div>
+                        <div className="pp-completion-card">
+                            <span className="pp-completion-ring"><IconCheck /></span>
+                            <div><strong>Perfil preparado</strong><small>Actualiza tus datos cuando lo necesites.</small></div>
+                        </div>
+                    </div>
                     <div className="portal-profile-grid">
                         <section className="portal-card">
                             <div className="pp-section-header">
