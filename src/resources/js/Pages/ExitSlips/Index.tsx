@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { PageProps } from "@/types";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import PortalIcon from "@/Components/PortalIcon";
 import {
     Avatar,
@@ -79,23 +79,33 @@ export default function Index({
     inTransit = 0,
     filters = {},
     canCreate,
+    folders = [],
+    selectedFolder = null,
 }: PageProps<{
     exitSlips: Slip[];
     pagination: Page;
     counts: Record<string, number>;
     inTransit: number;
-    filters: { q?: string; estado?: string; fecha?: string };
+    filters: { q?: string; estado?: string; fecha?: string; solicitante?: string };
     canCreate: boolean;
+    folders?: { id: string; name: string; dni: string; total: number; pending: number }[];
+    selectedFolder?: string | null;
 }>) {
     const config = content[auth.user.rol] || content.worker;
     const [query, setQuery] = useState(filters.q || "");
     const [date, setDate] = useState(filters.fecha || "");
     const [state, setState] = useState(filters.estado || "");
+    const [folder, setFolder] = useState(selectedFolder || "");
+    const [folderSearch, setFolderSearch] = useState("");
     const [busy, setBusy] = useState(false);
-    const apply = (estado = state, q = query, fecha = date) =>
+
+    // Ref para controlar el debounce del buscador principal
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const apply = (estado = state, q = query, fecha = date, solicitante = folder) =>
         router.get(
             route("exit-slips.index"),
-            { q, estado, fecha },
+            { q, estado, fecha, solicitante },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -103,9 +113,32 @@ export default function Index({
                 onFinish: () => setBusy(false),
             },
         );
+
+    // Dispara la búsqueda automáticamente 350ms después de que el usuario
+    // deje de escribir en el campo de texto principal (debounce).
+    // isMounted evita una petición extra redundante en el primer render.
+    const isMounted = useRef(false);
+    useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            apply(state, query, date, folder);
+        }, 350);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [query]);
+
     const total = Object.values(counts).reduce(
         (sum, value) => sum + Number(value),
         0,
+    );
+    const visibleFolders = folders.filter((item) =>
+        `${item.name} ${item.dni}`.toLocaleLowerCase("es-PE").includes(folderSearch.toLocaleLowerCase("es-PE")),
     );
     return (
         <AuthenticatedLayout header={<h1>{config.title}</h1>}>
@@ -175,6 +208,92 @@ export default function Index({
                         icon="shield"
                     />
                 </section>
+                {auth.user.rol === "hr" && (
+                    <section className="portal-card hr-folder-browser" aria-label="Expedientes por solicitante">
+                        <div className="hr-folder-head">
+                            <div>
+                                <p>ORGANIZACIÓN DE EXPEDIENTES</p>
+                                <h2>Papeletas por solicitante</h2>
+                                <span>Abre una carpeta para revisar el historial visible de cada persona.</span>
+                            </div>
+
+                            {/* Buscador mejorado con contador y botón limpiar */}
+                            <div className="hr-folder-search-wrap">
+                                {folderSearch ? (
+                                    <span className="hr-folder-search-count">
+                                        <strong>{visibleFolders.length}</strong> de {folders.length} carpeta{folders.length !== 1 ? "s" : ""}
+                                    </span>
+                                ) : (
+                                    <span className="hr-folder-search-count">
+                                        {folders.length} solicitante{folders.length !== 1 ? "s" : ""}
+                                    </span>
+                                )}
+                                <div className="hr-folder-search">
+                                    <PortalIcon name="search" />
+                                    <input
+                                        id="hr-folder-search-input"
+                                        value={folderSearch}
+                                        onChange={(event) => setFolderSearch(event.target.value)}
+                                        placeholder="Buscar persona o DNI…"
+                                        aria-label="Buscar carpeta de solicitante"
+                                    />
+                                    {folderSearch && (
+                                        <button
+                                            type="button"
+                                            className="hr-folder-search-clear"
+                                            aria-label="Limpiar búsqueda"
+                                            onClick={() => setFolderSearch("")}
+                                        >
+                                            <PortalIcon name="close" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="hr-folder-grid">
+                            {/* Carpeta comodín: todas las papeletas */}
+                            <button
+                                className={`hr-folder-card hr-folder-card--all ${!folder ? "is-selected" : ""}`}
+                                onClick={() => { setFolder(""); apply(state, query, date, ""); }}
+                            >
+                                <span className="hr-folder-icon"><PortalIcon name="folder" /></span>
+                                <span className="hr-folder-copy">
+                                    <strong>Todas las papeletas</strong>
+                                    <small>{folders.length} solicitante{folders.length !== 1 ? "s" : ""} · {total} registro{total !== 1 ? "s" : ""}</small>
+                                </span>
+                            </button>
+
+                            {/* Carpetas individuales filtradas por búsqueda */}
+                            {visibleFolders.map((item) => (
+                                <button
+                                    key={item.id}
+                                    className={`hr-folder-card ${folder === item.id ? "is-selected" : ""}`}
+                                    onClick={() => { setFolder(item.id); apply(state, query, date, item.id); }}
+                                >
+                                    <span className="hr-folder-icon"><PortalIcon name="folder" /></span>
+                                    <span className="hr-folder-copy">
+                                        <strong>{item.name}</strong>
+                                        <small>DNI {item.dni} · {item.total} papeleta{item.total !== 1 ? "s" : ""}</small>
+                                    </span>
+                                    {item.pending > 0 && (
+                                        <em>{item.pending} pendiente{item.pending !== 1 ? "s" : ""}</em>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Estado vacío mejorado con botón para limpiar */}
+                        {folderSearch && visibleFolders.length === 0 && (
+                            <div className="hr-folder-empty">
+                                <PortalIcon name="search" />
+                                <strong>Sin resultados para "{folderSearch}"</strong>
+                                <span>Intenta con otro nombre o número de DNI.</span>
+                                <button type="button" onClick={() => setFolderSearch("")}>Limpiar búsqueda</button>
+                            </div>
+                        )}
+                    </section>
+                )}
                 <section className="portal-card" aria-busy={busy}>
                     <div className="portal-card-head">
                         <div>
@@ -185,9 +304,23 @@ export default function Index({
                             </h2>
                             <p>Información actualizada para tu rol.</p>
                         </div>
-                        <span className="portal-badge">
-                            {pagination.total} registros
-                        </span>
+                        <div className="portal-card-actions">
+                            <a
+                                className="portal-btn portal-btn-light portal-export-btn"
+                                href={route("exit-slips.export", {
+                                    q: query || undefined,
+                                    estado: state || undefined,
+                                    fecha: date || undefined,
+                                    solicitante: folder || undefined,
+                                })}
+                            >
+                                <PortalIcon name="download" />
+                                Exportar Excel
+                            </a>
+                            <span className="portal-badge">
+                                {pagination.total} registros
+                            </span>
+                        </div>
                     </div>
                     <div
                         className="portal-tabs"
@@ -253,7 +386,7 @@ export default function Index({
                             <PortalIcon name="filter" />
                             Filtrar
                         </button>
-                        {(filters.q || filters.estado || filters.fecha) && (
+                        {(filters.q || filters.estado || filters.fecha || folder) && (
                             <button
                                 type="button"
                                 className="portal-btn portal-btn-light"
@@ -261,7 +394,8 @@ export default function Index({
                                     setQuery("");
                                     setDate("");
                                     setState("");
-                                    apply("", "", "");
+                                    setFolder("");
+                                    apply("", "", "", "");
                                 }}
                             >
                                 Limpiar

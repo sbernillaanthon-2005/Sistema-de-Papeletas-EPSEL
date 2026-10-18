@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
+import VoiceAssistant from "@/Components/VoiceAssistant";
 import PortalIcon, { PortalIconName } from "@/Components/PortalIcon";
 import { Avatar, roleLabels } from "@/Components/PortalUI";
 import mascotGif from "../../images/mascota_epsel_animada.gif";
@@ -198,6 +199,7 @@ export default function Authenticated({
                                 timeZone: "America/Lima",
                             }).format(new Date())}
                         </span>
+                        <VoiceAssistant />
                         <NotificationBell />
                         <Menu as="div" className="portal-account-menu">
                             <MenuButton className="portal-profile-link" aria-label="Abrir menú de perfil">

@@ -3,6 +3,7 @@ import { ReactNode, SVGProps } from "react";
 export type PortalIconName =
     | "grid"
     | "file"
+    | "folder"
     | "plus"
     | "users"
     | "user"
@@ -21,7 +22,8 @@ export type PortalIconName =
     | "chevron"
     | "drop"
     | "send"
-    | "alert";
+    | "alert"
+    | "mic";
 export default function PortalIcon({
     name,
     ...props
@@ -41,6 +43,7 @@ export default function PortalIcon({
                 <path d="M14 3v6h6M8 13h8M8 17h5" />
             </>
         ),
+        folder: <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />,
         plus: <path d="M12 5v14M5 12h14" />,
         users: (
             <>
@@ -119,6 +122,7 @@ export default function PortalIcon({
                 <path d="M12 17h.01" />
             </>
         ),
+        mic: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" /></>,
     };
     return (
         <svg

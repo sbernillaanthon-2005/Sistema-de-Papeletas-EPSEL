@@ -88,6 +88,7 @@ class DashboardController extends Controller
             ->map(fn ($s) => [
                 'id'               => $s->id,
                 'codigo'           => $s->codigo,
+                'solicitante'      => $s->apellidos_nombres,
                 'estado'           => $s->estado->value,
                 'estado_label'     => $s->estado->label(),
                 'fecha_autorizada' => $s->fecha_autorizada->toDateString(),

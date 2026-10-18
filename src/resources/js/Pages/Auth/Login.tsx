@@ -1,8 +1,25 @@
 import LoginIcon from "@/Components/LoginIcon";
 import LoginLayout from "@/Layouts/LoginLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
-import { FormEventHandler, useState } from "react";
+import { CSSProperties, FormEventHandler, useState } from "react";
 import mascot from "../../../images/EPSEL-saludo-transparente.gif";
+
+function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
+    return (
+        <span className="login-drop-text" aria-label={text}>
+            {Array.from(text).map((letter, index) => (
+                <span
+                    aria-hidden="true"
+                    className="login-drop-letter"
+                    key={`${letter}-${index}`}
+                    style={{ "--login-letter-delay": `${delay + index * 28}ms` } as CSSProperties}
+                >
+                    {letter === " " ? "\u00a0" : letter}
+                </span>
+            ))}
+        </span>
+    );
+}
 
 export default function Login({
     status,
@@ -33,10 +50,10 @@ export default function Login({
             <Head title="Iniciar Sesión" />
             <div className="login-welcome">
                 <p className="login-eyebrow">PORTAL DEL COLABORADOR</p>
-                <h1>
-                    Bienvenido
+                <h1 aria-label="Bienvenido de nuevo.">
+                    <DropLetters text="Bienvenido" />
                     <br />
-                    de nuevo.
+                    <DropLetters text="de nuevo." delay={220} />
                 </h1>
                 <img
                     src={mascot}

@@ -177,11 +177,12 @@ services:
     container_name: epsel_node
     restart: unless-stopped
     working_dir: /var/www/html
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -c "test -x node_modules/.bin/vite || npm ci; npm run dev -- --host 0.0.0.0"
     ports:
       - "${VITE_PORT:-5173}:5173"
     volumes:
       - ./src:/var/www/html
+      - node_modules:/var/www/html/node_modules
     networks:
       - epsel_net
     depends_on:
@@ -193,5 +194,6 @@ networks:
 
 volumes:
   php_vendor:
+  node_modules:
   pgdata:
   pgadmin_data:

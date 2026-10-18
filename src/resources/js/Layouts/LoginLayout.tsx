@@ -1,8 +1,14 @@
-import { PropsWithChildren } from "react";
+import { CSSProperties, PropsWithChildren } from "react";
 import LoginIcon from "@/Components/LoginIcon";
 import background from "../../images/Fondo de login.png";
 import mascotGif from "../../images/mascota_epsel_animada.gif";
 import "../../css/login.css";
+
+function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
+    return <span className="login-drop-text" aria-label={text}>{Array.from(text).map((letter, index) => (
+        <span aria-hidden="true" className="login-drop-letter" key={`${letter}-${index}`} style={{ "--login-letter-delay": `${delay + index * 24}ms` } as CSSProperties}>{letter === " " ? "\u00a0" : letter}</span>
+    ))}</span>;
+}
 
 export default function LoginLayout({ children }: PropsWithChildren) {
     return (
@@ -40,6 +46,8 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                         className="login-visual-photo"
                         src={background}
                         alt="Instalaciones de agua potable de EPSEL"
+                        decoding="async"
+                        fetchPriority="high"
                     />
                     <div className="login-visual-shade" />
                     <div className="login-visual-top">
@@ -54,10 +62,10 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                         <span className="login-visual-eyebrow">
                             CONECTADOS PARA SERVIR MEJOR
                         </span>
-                        <h2>
-                            Tu tiempo
+                        <h2 aria-label="Tu tiempo cuenta.">
+                            <DropLetters text="Tu tiempo" delay={120} />
                             <br />
-                            <span>cuenta.</span>
+                            <span><DropLetters text="cuenta." delay={340} /></span>
                         </h2>
                         <p>
                             Menos trámites. Más tranquilidad.

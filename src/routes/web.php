@@ -41,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/reminder-settings', [UserController::class, 'updateReminderSettings'])->name('reminder-settings.update');
     });
 
+    Route::get('/exit-slips/export', [\App\Http\Controllers\ExitSlipController::class, 'export'])->name('exit-slips.export');
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');
     Route::post('/exit-slips/{exitSlip}/actions/{action}', [\App\Http\Controllers\ExitSlipController::class, 'transition'])->name('exit-slips.transition');
     Route::get('/exit-slips/{exitSlip}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('exit-slips.pdf');

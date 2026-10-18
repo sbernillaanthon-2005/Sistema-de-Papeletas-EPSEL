@@ -17,6 +17,7 @@ interface WeekPoint { label: string; value: number; }
 interface RecentSlip {
     id: string;
     codigo: string;
+    solicitante: string;
     estado: string;
     estado_label: string;
     fecha_autorizada: string;
@@ -89,21 +90,31 @@ const pendingLabel: Record<string, string> = {
 /* ── Mini bar chart ── */
 function WeekChart({ data }: { data: WeekPoint[] }) {
     const max = Math.max(...data.map((d) => d.value), 1);
+    const total = data.reduce((sum, point) => sum + point.value, 0);
+    const peak = data.reduce((current, point) => point.value > current.value ? point : current, data[0]);
     return (
-        <div className="ds-chart">
-            {data.map((d) => (
-                <div key={d.label} className="ds-chart-col">
-                    <span className="ds-chart-val">{d.value}</span>
-                    <div className="ds-chart-bar-wrap">
+        <div className="ds-chart-analytics">
+            <div className="ds-chart-summary">
+                <div><span>REGISTRADAS</span><strong>{total}</strong><small>en las últimas 4 semanas</small></div>
+                <p className={total ? "ds-chart-peak" : "ds-chart-peak is-empty"}>{total ? <>Semana con más actividad: <b>{peak.label}</b> · {peak.value}</> : "Sin actividad registrada"}</p>
+            </div>
+            <div className="ds-chart" aria-label={`${total} papeletas registradas en las últimas cuatro semanas`}>
+                {data.map((d) => (
+                    <div key={d.label} className={`ds-chart-col ${d.value === 0 ? "is-empty" : ""}`}>
+                        <span className="ds-chart-val">{d.value}</span>
+                        <div className="ds-chart-bar-wrap" title={`${d.label}: ${d.value} papeleta${d.value !== 1 ? "s" : ""}`}>
                         <div
                             className="ds-chart-bar"
-                            style={{ height: `${Math.round((d.value / max) * 100)}%` }}
-                            title={`${d.label}: ${d.value}`}
+                            style={{
+                                height: d.value ? `${Math.max(Math.round((d.value / max) * 100), 12)}%` : "0%",
+                                minHeight: d.value ? "10px" : "0px",
+                            }}
                         />
+                        </div>
+                        <span className="ds-chart-label">{d.label}</span>
                     </div>
-                    <span className="ds-chart-label">{d.label}</span>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }
@@ -255,8 +266,8 @@ export default function Dashboard({
                                         className="ds-slip-row"
                                     >
                                         <div className="ds-slip-info">
-                                            <strong>{slip.codigo}</strong>
-                                            <span>{slip.motivo_label} · {slip.fecha_autorizada}</span>
+                                            <strong>{slip.solicitante}</strong>
+                                            <span>{slip.codigo} · {slip.motivo_label} · {slip.fecha_autorizada}</span>
                                         </div>
                                         <span className={`ds-status-badge ${STATUS_COLORS[slip.estado] ?? ""}`}>
                                             {slip.estado_label}
@@ -268,17 +279,6 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                </div>
-
-                {/* ── Acceso rápido a la bandeja ── */}
-                <div className="portal-card ds-action-bar">
-                    <div className="ds-action-bar-text">
-                        <h3>Bandeja de papeletas</h3>
-                        <p>Filtra, busca y gestiona todas las papeletas de tu ámbito de trabajo.</p>
-                    </div>
-                    <Link href={route("exit-slips.index")} className="portal-btn portal-btn-primary">
-                        Ir a la bandeja <IconArrow />
-                    </Link>
                 </div>
 
             </div>

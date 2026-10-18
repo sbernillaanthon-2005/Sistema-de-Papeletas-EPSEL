@@ -95,6 +95,13 @@
     line-height: 1.12;
     letter-spacing: -1.8px;
 }
+.login-drop-text { display: inline-block; }
+.login-drop-letter {
+    animation: login-letter-drop 620ms cubic-bezier(.18, .8, .28, 1.18) both;
+    animation-delay: var(--login-letter-delay, 0ms);
+    display: inline-block;
+    will-change: opacity, transform;
+}
 .login-mascot {
     position: absolute;
     top: -70px;
@@ -460,6 +467,11 @@
     to {
         transform: rotate(360deg);
     }
+}
+@keyframes login-letter-drop {
+    0% { opacity: 0; transform: translateY(-34px) rotate(-4deg); }
+    65% { opacity: 1; transform: translateY(3px) rotate(.5deg); }
+    100% { opacity: 1; transform: translateY(0) rotate(0); }
 }
 @media (min-width: 1600px) {
     .login-content {

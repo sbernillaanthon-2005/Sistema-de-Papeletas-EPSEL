@@ -32,6 +32,7 @@ class ExitSlipController extends Controller
             'q' => 'nullable|string|max:120',
             'estado' => ['nullable', Rule::enum(ExitSlipStatus::class)],
             'fecha' => 'nullable|date_format:Y-m-d',
+            'solicitante' => 'nullable|uuid',
         ]);
         $user = $request->user();
         $query = \App\Models\ExitSlip::query();
@@ -44,11 +45,28 @@ class ExitSlipController extends Controller
         };
         $counts = (clone $query)->selectRaw('estado, count(*) as total')->groupBy('estado')->pluck('total', 'estado');
         $inTransit = (clone $query)->where('estado', 'submitted_to_security')->whereNotNull('hora_salida')->whereNull('hora_retorno')->count();
+        $folders = $user->rol->value === 'hr'
+            ? (clone $query)->join('users', 'users.id', '=', 'exit_slips.user_id')
+                ->selectRaw("exit_slips.user_id, users.nombres, users.apellidos, users.dni, count(*) as total, count(*) filter (where exit_slips.estado = 'submitted_to_hr') as pending")
+                ->groupBy('exit_slips.user_id', 'users.nombres', 'users.apellidos', 'users.dni')
+                ->orderByRaw("count(*) filter (where exit_slips.estado = 'submitted_to_hr') desc")
+                ->orderBy('users.apellidos')->orderBy('users.nombres')->get()
+                ->map(fn ($folder) => [
+                    'id' => $folder->user_id,
+                    'name' => trim($folder->nombres.' '.$folder->apellidos),
+                    'dni' => $folder->dni,
+                    'total' => (int) $folder->total,
+                    'pending' => (int) $folder->pending,
+                ])->values()
+            : collect();
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
         if ($request->filled('fecha')) {
             $query->whereDate('fecha_autorizada', $request->fecha);
+        }
+        if ($request->filled('solicitante')) {
+            $query->where('user_id', $request->solicitante);
         }
         if ($request->filled('q')) {
             $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $request->q).'%';
@@ -73,7 +91,95 @@ class ExitSlipController extends Controller
             'exitSlips' => $items,
             'pagination' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(), 'prev_page_url' => $page->previousPageUrl(), 'next_page_url' => $page->nextPageUrl()],
             'counts' => $counts, 'inTransit' => $inTransit, 'filters' => $request->only('q', 'estado', 'fecha'),
+            'folders' => $folders,
+            'selectedFolder' => $request->input('solicitante'),
             'canCreate' => Gate::allows('create', \App\Models\ExitSlip::class),
+        ]);
+    }
+
+    /**
+     * Descarga en formato compatible con Microsoft Excel únicamente los registros
+     * que la cuenta actual puede consultar. Los filtros son los mismos de la bandeja.
+     */
+    public function export(Request $request)
+    {
+        $request->validate([
+            'q' => 'nullable|string|max:120',
+            'estado' => ['nullable', Rule::enum(ExitSlipStatus::class)],
+            'fecha' => 'nullable|date_format:Y-m-d',
+            'solicitante' => 'nullable|uuid',
+        ]);
+
+        $user = $request->user();
+        $query = \App\Models\ExitSlip::query();
+
+        match ($user->rol->value) {
+            'admin' => null,
+            'area_head' => $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere(fn ($q) => $q->where('jefe_asignado_id', $user->id)->where('estado', '!=', 'draft'))),
+            'hr' => $query->whereIn('estado', ['submitted_to_hr', 'approved_by_hr', 'submitted_to_security', 'completed', 'rejected']),
+            'security' => $query->whereIn('estado', ['submitted_to_security', 'completed']),
+            default => $query->where('user_id', $user->id),
+        };
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+        if ($request->filled('fecha')) {
+            $query->whereDate('fecha_autorizada', $request->fecha);
+        }
+        if ($request->filled('solicitante')) {
+            $query->where('user_id', $request->solicitante);
+        }
+        if ($request->filled('q')) {
+            $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $request->q).'%';
+            $query->where(fn ($q) => $q->where('codigo', 'ilike', $term)->orWhere('apellidos_nombres', 'ilike', $term));
+        }
+
+        $slips = $query->with('user:id,nombres,apellidos,dni')->latest()->orderBy('id')->get();
+        $filename = 'papeletas-'.now('America/Lima')->format('Ymd-His').'.xls';
+        $escape = static fn ($value) => htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+
+        return response()->streamDownload(function () use ($slips, $escape) {
+            echo '<?xml version="1.0" encoding="UTF-8"?>';
+            echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+            echo '<Styles><Style ss:ID="Header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#007F99" ss:Pattern="Solid"/></Style><Style ss:ID="Date"><NumberFormat ss:Format="dd/mm/yyyy"/></Style></Styles>';
+            echo '<Worksheet ss:Name="Papeletas"><Table>';
+
+            $headers = ['Código', 'Solicitante', 'DNI', 'Fecha autorizada', 'Hora desde', 'Hora hasta', 'Motivo', 'Detalle', 'Estado', 'Salida', 'Retorno'];
+            echo '<Row>';
+            foreach ($headers as $header) {
+                echo '<Cell ss:StyleID="Header"><Data ss:Type="String">'.$escape($header).'</Data></Cell>';
+            }
+            echo '</Row>';
+
+            foreach ($slips as $slip) {
+                $name = in_array($slip->estado->value, ['draft', 'submitted']) && $slip->user
+                    ? trim($slip->user->nombres.' '.$slip->user->apellidos)
+                    : $slip->apellidos_nombres;
+                $values = [
+                    $slip->codigo,
+                    $name,
+                    $slip->user?->dni ?? '',
+                    $slip->fecha_autorizada?->format('d/m/Y'),
+                    $slip->hora_desde ?? '',
+                    $slip->hora_hasta ?? '',
+                    $slip->motivo_salida->label(),
+                    $slip->motivo_detalle,
+                    $slip->estado->label(),
+                    $slip->hora_salida ?? '',
+                    $slip->hora_retorno ?? '',
+                ];
+                echo '<Row>';
+                foreach ($values as $value) {
+                    echo '<Cell><Data ss:Type="String">'.$escape($value).'</Data></Cell>';
+                }
+                echo '</Row>';
+            }
+
+            echo '</Table></Worksheet></Workbook>';
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 
