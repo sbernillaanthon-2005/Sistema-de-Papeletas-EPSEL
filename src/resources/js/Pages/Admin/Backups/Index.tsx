@@ -5,7 +5,18 @@ import { Head, Link, usePage } from "@inertiajs/react";
 import axios from "axios";
 import { FormEvent, useState } from "react";
 
-export default function Index() {
+type AutomaticBackup = {
+    id: number;
+    filename: string;
+    size_bytes: number;
+    created_at: string | null;
+};
+
+const backupSize = (bytes: number) => bytes < 1024 * 1024
+    ? `${Math.max(1, Math.ceil(bytes / 1024))} KB`
+    : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+export default function Index({ automaticBackups = [] }: { automaticBackups?: AutomaticBackup[] }) {
     const errors = usePage().props.errors as { backup?: string };
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
     
@@ -292,6 +303,25 @@ export default function Index() {
                         </div>
                     </aside>
                 </div>
+
+                <section className="portal-card automatic-backups-card">
+                    <div className="backup-card-header">
+                        <div className="backup-icon"><PortalIcon name="clock" /></div>
+                        <div>
+                            <span className="backup-eyebrow">RESPALDO PROGRAMADO</span>
+                            <h2>Copias automáticas cada 12 horas</h2>
+                        </div>
+                        <span className="automatic-backups-schedule">00:00 y 12:00 · Lima</span>
+                    </div>
+                    <p className="backup-description">Las copias se guardan de forma privada en el servidor. Se conservan las 30 versiones más recientes para recuperación.</p>
+                    {automaticBackups.length ? <div className="automatic-backups-list">
+                        {automaticBackups.map((backup) => <article key={backup.id} className="automatic-backup-row">
+                            <span className="automatic-backup-icon"><PortalIcon name="file" /></span>
+                            <div><strong>{backup.filename}</strong><small>{backup.created_at ? new Intl.DateTimeFormat("es-PE", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Lima" }).format(new Date(backup.created_at)) : "Fecha no disponible"} · {backupSize(backup.size_bytes)}</small></div>
+                            <a className="portal-btn portal-btn-light" href={route("admin.backups.automatic.download", backup.id)}><PortalIcon name="download" /> Descargar</a>
+                        </article>)}
+                    </div> : <div className="automatic-backups-empty"><PortalIcon name="clock" /><div><strong>Aún no se ha generado un respaldo automático.</strong><p>La primera copia se almacenará en la próxima ejecución programada.</p></div></div>}
+                </section>
             </div>
         </AuthenticatedLayout>
     );

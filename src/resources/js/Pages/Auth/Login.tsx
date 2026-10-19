@@ -57,7 +57,7 @@ export default function Login({
                 </h1>
                 <img
                     src={mascot}
-                    alt="Mascota EPSEL"
+                    alt="Mascota EPSEL saludando"
                     className="login-mascot transition-transform duration-300 hover:scale-105"
                     width="210"
                     height="250"

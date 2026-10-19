@@ -10,3 +10,9 @@ Artisan::command('inspire', function () {
 
 // Se evalúa cada minuto; el comando respeta el intervalo configurado por Administración.
 Schedule::command('exit-slips:send-reminders')->everyMinute()->withoutOverlapping();
+
+// Respaldo persistente a las 00:00 y 12:00, hora oficial de Lima.
+Schedule::command('backups:run-automatic')
+    ->twiceDaily(0, 12)
+    ->timezone('America/Lima')
+    ->withoutOverlapping();

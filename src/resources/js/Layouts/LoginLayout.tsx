@@ -1,7 +1,7 @@
-import { CSSProperties, PropsWithChildren } from "react";
+import { CSSProperties, PropsWithChildren, useEffect, useState } from "react";
 import LoginIcon from "@/Components/LoginIcon";
+import PortalIcon from "@/Components/PortalIcon";
 import background from "../../images/Fondo de login.png";
-import mascotGif from "../../images/mascota_epsel_animada.gif";
 import "../../css/login.css";
 
 function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -11,17 +11,29 @@ function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
 }
 
 export default function LoginLayout({ children }: PropsWithChildren) {
+    const [theme, setTheme] = useState<"light" | "dark">(() => {
+        if (typeof window === "undefined") return "light";
+
+        const savedTheme = window.localStorage.getItem("epsel-theme");
+        if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+    });
+
+    useEffect(() => {
+        window.localStorage.setItem("epsel-theme", theme);
+    }, [theme]);
+
     return (
-        <div className="login-page">
+        <div className="login-page" data-theme={theme}>
             <a href="#login-form" className="login-skip">
                 Ir al formulario de acceso
             </a>
             <div className="login-shell">
                 <section className="login-panel" aria-label="Acceso a EPSEL">
                     <header className="login-brand">
-                        <span className="login-brand-symbol" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
-                            <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        </span>
                         <div>
                             <span className="login-brand-name">
                                 EPSEL<span> S.A.</span>
@@ -30,6 +42,16 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                                 SISTEMA DE PAPELETAS
                             </span>
                         </div>
+                        <button
+                            type="button"
+                            className="login-theme-toggle"
+                            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+                            aria-label={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
+                            aria-pressed={theme === "dark"}
+                            title={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
+                        >
+                            <PortalIcon name={theme === "dark" ? "sun" : "moon"} />
+                        </button>
                     </header>
                     <main className="login-content">{children}</main>
                     <footer className="login-footer">

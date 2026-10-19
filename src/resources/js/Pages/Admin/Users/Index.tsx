@@ -189,6 +189,7 @@ export default function Index({
     const [deleting, setDeleting] = useState<Person | null>(null);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [isFetchingReniec, setIsFetchingReniec] = useState(false);
+    const [dniLookupState, setDniLookupState] = useState<"idle" | "success" | "manual">("idle");
     const [query, setQuery] = useState(filters.q || "");
     const [role, setRole] = useState(filters.rol || "");
     const [active, setActive] = useState(filters.activo || "");
@@ -204,28 +205,35 @@ export default function Index({
     const edit = useForm({ activo: true, area_id: "", jefe_id: "" });
     const remove = useForm({});
 
-    const handleDniBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-        const dni = e.target.value;
-        if (dni.length === 8) {
-            setIsFetchingReniec(true);
-            try {
-                const response = await fetch(`/admin/reniec/${dni}`);
-                const result = await response.json();
-                if (result.success && result.data) {
-                    const nombres = result.data.nombres || "";
-                    const apellido_paterno = result.data.apellido_paterno || result.data.apellidoPaterno || "";
-                    const apellido_materno = result.data.apellido_materno || result.data.apellidoMaterno || "";
-                    const apellidos = `${apellido_paterno} ${apellido_materno}`.trim() || result.data.apellidos || "";
-                    
-                    if (nombres) create.setData(data => ({ ...data, nombres }));
-                    if (apellidos) create.setData(data => ({ ...data, apellidos }));
-                }
-            } catch (e) {
-                console.error("Error consultando DNI", e);
-            } finally {
-                setIsFetchingReniec(false);
-            }
+    const lookupDni = async () => {
+        const dni = create.data.dni.trim();
+        if (!/^\d{8}$/.test(dni)) {
+            setDniLookupState("manual");
+            return;
         }
+
+        setIsFetchingReniec(true);
+        setDniLookupState("idle");
+        try {
+            const response = await fetch(`/admin/reniec/${dni}`);
+            const result = await response.json();
+            const nombres = result?.data?.nombres || "";
+            const apellidoPaterno = result?.data?.apellido_paterno || result?.data?.apellidoPaterno || "";
+            const apellidoMaterno = result?.data?.apellido_materno || result?.data?.apellidoMaterno || "";
+            const apellidos = `${apellidoPaterno} ${apellidoMaterno}`.trim() || result?.data?.apellidos || "";
+
+            if (response.ok && result?.success && (nombres || apellidos)) {
+                create.setData((data) => ({ ...data, nombres, apellidos }));
+                setDniLookupState("success");
+                return;
+            }
+        } catch (error) {
+            console.warn("No se pudo consultar el DNI", error);
+        } finally {
+            setIsFetchingReniec(false);
+        }
+
+        setDniLookupState("manual");
     };
     const closeCreate = () => {
         if (!create.processing) {
@@ -233,6 +241,7 @@ export default function Index({
             create.reset();
             create.clearErrors();
             setPasswordVisible(false);
+            setDniLookupState("idle");
         }
     };
     const openEdit = (person: Person) => {
@@ -608,14 +617,7 @@ export default function Index({
                         </button>
                     </div>
                     <div className="portal-form-grid">
-                        {(
-                            [
-                                "nombres",
-                                "apellidos",
-                                "dni",
-                                "cargo_designado",
-                            ] as const
-                        ).map((key) => (
+                        {(["nombres", "apellidos", "dni", "cargo_designado"] as const).map((key) => (
                             <div className="portal-field relative" key={key}>
                                 <label htmlFor={`create-${key}`}>
                                     {
@@ -627,7 +629,7 @@ export default function Index({
                                         }[key]
                                     }
                                 </label>
-                                <div className="relative flex items-center">
+                                <div className={key === "dni" ? "portal-dni-control" : "relative flex items-center"}>
                                     <input
                                         id={`create-${key}`}
                                         required
@@ -640,20 +642,30 @@ export default function Index({
                                             key === "dni" ? "[0-9]{8}" : undefined
                                         }
                                         value={create.data[key]}
-                                        onBlur={key === "dni" ? handleDniBlur : undefined}
-                                        onChange={(e) =>
-                                            create.setData(key, e.target.value)
-                                        }
+                                        onChange={(e) => {
+                                            const value = key === "dni"
+                                                ? e.target.value.replace(/\D/g, "").slice(0, 8)
+                                                : e.target.value;
+                                            create.setData(key, value);
+                                            if (key === "dni") setDniLookupState("idle");
+                                        }}
                                     />
-                                    {key === "dni" && isFetchingReniec && (
-                                        <div className="absolute right-3 flex items-center pointer-events-none">
-                                            <svg className="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        </div>
+                                    {key === "dni" && (
+                                        <button
+                                            type="button"
+                                            className="portal-dni-lookup"
+                                            disabled={isFetchingReniec || create.data.dni.length !== 8}
+                                            onClick={lookupDni}
+                                        >
+                                            {isFetchingReniec ? <><span className="portal-dni-spinner" /> Consultando</> : <><PortalIcon name="search" /> Consultar DNI</>}
+                                        </button>
                                     )}
                                 </div>
+                                {key === "dni" && <p className={`portal-dni-feedback ${dniLookupState}`} aria-live="polite">
+                                    {dniLookupState === "success" && "Datos encontrados. Verifica los campos antes de crear la cuenta."}
+                                    {dniLookupState === "manual" && "No se encontraron datos para este DNI. Completa Nombres y Apellidos manualmente."}
+                                    {dniLookupState === "idle" && "Ingresa los 8 dígitos y selecciona Consultar DNI."}
+                                </p>}
                             </div>
                         ))}
                         <div className="portal-field">

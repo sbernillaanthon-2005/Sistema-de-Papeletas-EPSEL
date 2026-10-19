@@ -16,6 +16,9 @@ export default function Authenticated({
     const { url } = usePage();
     const user = auth.user;
     const [menuOpen, setMenuOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+        typeof window !== "undefined" && window.localStorage.getItem("epsel-sidebar") === "collapsed",
+    );
     const [theme, setTheme] = useState<"light" | "dark">(() => {
         if (typeof window === "undefined") return "light";
 
@@ -35,6 +38,13 @@ export default function Authenticated({
     useEffect(() => {
         window.localStorage.setItem("epsel-theme", theme);
     }, [theme]);
+
+    useEffect(() => {
+        window.localStorage.setItem(
+            "epsel-sidebar",
+            sidebarCollapsed ? "collapsed" : "expanded",
+        );
+    }, [sidebarCollapsed]);
 
     const toggleTheme = () => {
         setTheme((currentTheme) =>
@@ -95,6 +105,12 @@ export default function Authenticated({
             icon: "download",
             active: url.startsWith("/admin/backups"),
         });
+        nav.push({
+            label: "Formatos de papeleta",
+            href: route("admin.exit-slip-formats.index"),
+            icon: "file",
+            active: url.startsWith("/admin/exit-slip-formats"),
+        });
     }
 
     if (user.rol === "hr") {
@@ -108,14 +124,26 @@ export default function Authenticated({
 
     const sidebar = (
         <>
-            <Link className="portal-brand" href={route(home)}>
-                <span style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
-                    <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </span>
-                <div>
-                    EPSEL<small>SISTEMA DE PAPELETAS</small>
-                </div>
-            </Link>
+            <div className="portal-sidebar-brand-row">
+                <Link className="portal-brand" href={route(home)}>
+                    <span style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                        <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </span>
+                    <div>
+                        EPSEL<small>SISTEMA DE PAPELETAS</small>
+                    </div>
+                </Link>
+                <button
+                    type="button"
+                    className="portal-sidebar-collapse"
+                    onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+                    aria-label={sidebarCollapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+                    aria-expanded={!sidebarCollapsed}
+                    title={sidebarCollapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+                >
+                    <PortalIcon name="menu" />
+                </button>
+            </div>
             <div className="portal-workspace-label">ESPACIO DE TRABAJO</div>
             <nav
                 className="portal-navigation"
@@ -128,6 +156,7 @@ export default function Authenticated({
                         onClick={() => setMenuOpen(false)}
                         className={item.active ? "active" : ""}
                         aria-current={item.active ? "page" : undefined}
+                        title={item.label}
                     >
                         <PortalIcon name={item.icon} />
                         <span>{item.label}</span>
@@ -161,7 +190,7 @@ export default function Authenticated({
                     as="button"
                 >
                     <PortalIcon name="logout" />
-                    Cerrar sesión
+                    <span>Cerrar sesión</span>
                 </Link>
             </div>
         </>
@@ -170,6 +199,7 @@ export default function Authenticated({
         <div
             className="portal-app portal-tailwind-shell selection:bg-epsel-600 selection:text-white"
             data-theme={theme}
+            data-sidebar={sidebarCollapsed ? "collapsed" : "expanded"}
         >
             <a className="portal-skip" href="#portal-content">
                 Ir al contenido

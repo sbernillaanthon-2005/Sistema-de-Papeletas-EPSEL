@@ -48,7 +48,8 @@ const MOTIVOS = [
 export default function Form({
     auth,
     exitSlip,
-}: PageProps<{ exitSlip?: SlipForm }>) {
+    formatAvailable = true,
+}: PageProps<{ exitSlip?: SlipForm; formatAvailable?: boolean }>) {
     const today = new Intl.DateTimeFormat("en-CA", {
         timeZone: "America/Lima",
         year: "numeric",
@@ -96,6 +97,18 @@ export default function Form({
                         <p className="portal-hero-eyebrow">SOLICITUD DE AUTORIZACIÓN</p>
                         <h2>{isEdit ? "Edita tu borrador" : "Nueva papeleta de salida"}</h2>
                         <p>Completa los datos y guarda el borrador para enviarlo a tu jefe.</p>
+                        {formatAvailable ? <a
+                            className="pf-format-preview"
+                            href={route("exit-slip-formats.current")}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Ver formato de papeleta vigente
+                            <IconArrow />
+                        </a> : <div className="pf-format-updating" role="status">
+                            <IconInfo />
+                            <span><strong>Formato en actualización</strong>Actualmente el administrador está actualizando la nueva versión de papeleta. Ponte en contacto con él.</span>
+                        </div>}
                     </div>
                     {/* Stepper compacto dentro del hero */}
                     <div className="pf-hero-steps">

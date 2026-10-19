@@ -7,6 +7,8 @@ use App\Http\Controllers\Profile\SignatureController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\ExitSlipFormatController;
+use App\Http\Controllers\ExitSlipFormatPreviewController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -37,11 +39,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/documentation', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])->name('documentation');
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::get('/backups/automatic/{scheduledDatabaseBackup}/download', [BackupController::class, 'downloadAutomatic'])->name('backups.automatic.download');
+        Route::get('/exit-slip-formats', [ExitSlipFormatController::class, 'index'])->name('exit-slip-formats.index');
+        Route::post('/exit-slip-formats', [ExitSlipFormatController::class, 'store'])->name('exit-slip-formats.store');
+        Route::put('/exit-slip-formats/{exitSlipFormat}', [ExitSlipFormatController::class, 'update'])->name('exit-slip-formats.update');
+        Route::put('/exit-slip-formats/{exitSlipFormat}/activate', [ExitSlipFormatController::class, 'activate'])->name('exit-slip-formats.activate');
+        Route::delete('/exit-slip-formats/base', [ExitSlipFormatController::class, 'destroyBase'])->name('exit-slip-formats.destroy-base');
+        Route::delete('/exit-slip-formats/{exitSlipFormat}', [ExitSlipFormatController::class, 'destroy'])->name('exit-slip-formats.destroy');
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
         Route::put('/reminder-settings', [UserController::class, 'updateReminderSettings'])->name('reminder-settings.update');
     });
 
     Route::get('/exit-slips/export', [\App\Http\Controllers\ExitSlipController::class, 'export'])->name('exit-slips.export');
+    Route::get('/exit-slip-format/current', [ExitSlipFormatPreviewController::class, 'show'])->name('exit-slip-formats.current');
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');
     Route::post('/exit-slips/{exitSlip}/actions/{action}', [\App\Http\Controllers\ExitSlipController::class, 'transition'])->name('exit-slips.transition');
     Route::get('/exit-slips/{exitSlip}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('exit-slips.pdf');

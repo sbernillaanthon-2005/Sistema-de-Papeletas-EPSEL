@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use App\Support\DatabaseBackup;
+use App\Models\ScheduledDatabaseBackup;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
@@ -14,7 +16,14 @@ class BackupController extends Controller
 {
     public function index()
     {
-        return inertia('Admin/Backups/Index');
+        return inertia('Admin/Backups/Index', [
+            'automaticBackups' => ScheduledDatabaseBackup::query()->latest()->limit(12)->get()->map(fn (ScheduledDatabaseBackup $backup) => [
+                'id' => $backup->id,
+                'filename' => $backup->filename,
+                'size_bytes' => $backup->size_bytes,
+                'created_at' => $backup->created_at?->toDateTimeString(),
+            ]),
+        ]);
     }
 
     public function download(Request $request, DatabaseBackup $backup, AuditLogger $audit): BinaryFileResponse|RedirectResponse
@@ -39,5 +48,19 @@ class BackupController extends Controller
         return response()->download($export['path'], $export['filename'], [
             'Content-Type' => 'application/octet-stream',
         ])->deleteFileAfterSend(true);
+    }
+
+    public function downloadAutomatic(ScheduledDatabaseBackup $scheduledDatabaseBackup): BinaryFileResponse|RedirectResponse
+    {
+        $path = storage_path('app/private/'.$scheduledDatabaseBackup->file_path);
+
+        if (! Storage::disk('private')->exists($scheduledDatabaseBackup->file_path)) {
+            $scheduledDatabaseBackup->delete();
+            return back()->withErrors(['backup' => 'El archivo de respaldo ya no está disponible.']);
+        }
+
+        return response()->download($path, $scheduledDatabaseBackup->filename, [
+            'Content-Type' => 'application/octet-stream',
+        ]);
     }
 }

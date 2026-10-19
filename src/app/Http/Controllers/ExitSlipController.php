@@ -187,7 +187,9 @@ class ExitSlipController extends Controller
     {
         Gate::authorize('create', \App\Models\ExitSlip::class);
 
-        return Inertia::render('ExitSlips/Form');
+        return Inertia::render('ExitSlips/Form', [
+            'formatAvailable' => $this->hasAvailableExitSlipFormat(),
+        ]);
     }
 
     public function store(Request $request)
@@ -302,6 +304,7 @@ class ExitSlipController extends Controller
         Gate::authorize('update', \App\Models\ExitSlip::findOrFail($id));
 
         return Inertia::render('ExitSlips/Form', [
+            'formatAvailable' => $this->hasAvailableExitSlipFormat(),
             'exitSlip' => [
                 'id' => $slip->id,
                 'tipo_plantilla' => $slip->templateType->value,
@@ -314,6 +317,12 @@ class ExitSlipController extends Controller
                 'hora_hasta' => $slip->authorizedTime?->until,
             ],
         ]);
+    }
+
+    private function hasAvailableExitSlipFormat(): bool
+    {
+        return \App\Models\ExitSlipFormat::query()->where('is_active', true)->exists()
+            || \App\Models\ExitSlipFormatSetting::current()->base_available;
     }
 
     public function update(Request $request, string $id)
