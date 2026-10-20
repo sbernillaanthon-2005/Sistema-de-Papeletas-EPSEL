@@ -63,4 +63,28 @@ class BackupController extends Controller
             'Content-Type' => 'application/octet-stream',
         ]);
     }
+
+    public function destroyAutomatic(Request $request, ScheduledDatabaseBackup $scheduledDatabaseBackup, AuditLogger $audit): \Illuminate\Http\JsonResponse
+    {
+        // Eliminar el archivo físico si aún existe en disco
+        if (Storage::disk('private')->exists($scheduledDatabaseBackup->file_path)) {
+            Storage::disk('private')->delete($scheduledDatabaseBackup->file_path);
+        }
+
+        $filename = $scheduledDatabaseBackup->filename;
+
+        // Eliminar el registro de base de datos
+        $scheduledDatabaseBackup->delete();
+
+        $audit->record(
+            $request,
+            'backup.deleted',
+            "Eliminó el respaldo automático: {$filename}",
+            'database',
+            config('database.connections.'.config('database.default').'.database'),
+            ['filename' => $filename],
+        );
+
+        return response()->json(['message' => 'Respaldo eliminado correctamente.']);
+    }
 }

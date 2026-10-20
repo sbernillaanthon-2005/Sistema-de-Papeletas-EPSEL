@@ -1,7 +1,9 @@
-import { CSSProperties, PropsWithChildren, useEffect, useState } from "react";
+import { CSSProperties, PropsWithChildren, useCallback, useEffect, useState } from "react";
 import LoginIcon from "@/Components/LoginIcon";
 import PortalIcon from "@/Components/PortalIcon";
 import background from "../../images/Fondo de login.png";
+import mascotaValvula from "../../images/Mascota EPSEL junto a la válvula de agua.png";
+import plantaCostera from "../../images/Planta de agua costera al amanecer.png";
 import "../../css/login.css";
 
 function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -10,7 +12,29 @@ function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
     ))}</span>;
 }
 
+const CAROUSEL_SLIDES = [
+    {
+        src: background,
+        alt: "Instalaciones de agua potable de EPSEL",
+        position: "77% center",
+    },
+    {
+        src: mascotaValvula,
+        alt: "Mascota EPSEL junto a la válvula de agua",
+        position: "center center",
+    },
+    {
+        src: plantaCostera,
+        alt: "Planta de agua costera al amanecer",
+        position: "center center",
+    },
+] as const;
+
+const CAROUSEL_INTERVAL_MS = 5000;
+
 export default function LoginLayout({ children }: PropsWithChildren) {
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
     const [theme, setTheme] = useState<"light" | "dark">(() => {
         if (typeof window === "undefined") return "light";
 
@@ -25,6 +49,18 @@ export default function LoginLayout({ children }: PropsWithChildren) {
     useEffect(() => {
         window.localStorage.setItem("epsel-theme", theme);
     }, [theme]);
+
+    const goToSlide = useCallback((index: number) => {
+        setActiveSlide(index);
+    }, []);
+
+    useEffect(() => {
+        if (isPaused) return;
+        const timer = setInterval(() => {
+            setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
+        }, CAROUSEL_INTERVAL_MS);
+        return () => clearInterval(timer);
+    }, [isPaused]);
 
     return (
         <div className="login-page" data-theme={theme}>
@@ -63,14 +99,30 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                 <aside
                     className="login-visual"
                     aria-label="Sistema de gestión de papeletas"
+                    onMouseEnter={() => setIsPaused(true)}
+                    onMouseLeave={() => setIsPaused(false)}
                 >
-                    <img
-                        className="login-visual-photo"
-                        src={background}
-                        alt="Instalaciones de agua potable de EPSEL"
-                        decoding="async"
-                        fetchPriority="high"
-                    />
+                    {/* Carrusel de fondo — crossfade entre 3 imágenes */}
+                    <div
+                        className="login-carousel"
+                        aria-label="Galería de instalaciones EPSEL"
+                        role="region"
+                    >
+                        {CAROUSEL_SLIDES.map((slide, index) => (
+                            <img
+                                key={slide.alt}
+                                className={`login-visual-photo login-carousel-slide${
+                                    index === activeSlide ? " is-active" : ""
+                                }`}
+                                src={slide.src}
+                                alt={slide.alt}
+                                decoding="async"
+                                fetchPriority={index === 0 ? "high" : "low"}
+                                style={{ objectPosition: slide.position }}
+                                aria-hidden={index !== activeSlide}
+                            />
+                        ))}
+                    </div>
                     <div className="login-visual-orbit login-visual-orbit-one" aria-hidden="true" />
                     <div className="login-visual-orbit login-visual-orbit-two" aria-hidden="true" />
                     <div className="login-visual-shade" />
@@ -124,6 +176,26 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                                     </div>
                                 ),
                             )}
+                        </div>
+                        {/* Dots de navegación del carrusel */}
+                        <div
+                            className="login-carousel-dots"
+                            role="tablist"
+                            aria-label="Seleccionar imagen del carrusel"
+                        >
+                            {CAROUSEL_SLIDES.map((slide, index) => (
+                                <button
+                                    key={slide.alt}
+                                    type="button"
+                                    role="tab"
+                                    className={`login-carousel-dot${
+                                        index === activeSlide ? " is-active" : ""
+                                    }`}
+                                    aria-label={`Imagen ${index + 1}: ${slide.alt}`}
+                                    aria-selected={index === activeSlide}
+                                    onClick={() => goToSlide(index)}
+                                />
+                            ))}
                         </div>
                     </div>
                 </aside>

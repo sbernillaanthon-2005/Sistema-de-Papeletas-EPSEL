@@ -25,6 +25,9 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
     const [downloadError, setDownloadError] = useState("");
     const [copiedCmd, setCopiedCmd] = useState(false);
     const [downloadSuccess, setDownloadSuccess] = useState(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deleteError, setDeleteError] = useState("");
+    const [backups, setBackups] = useState<AutomaticBackup[]>(automaticBackups);
 
     const restoreCommand = 'pg_restore --clean --if-exists --no-owner --dbname=DESTINO_DB epsel-papeletas.dump';
 
@@ -73,6 +76,24 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
         } finally {
             setDownloading(false);
             setDownloadStep("");
+        }
+    };
+
+    const handleDelete = async (backup: AutomaticBackup) => {
+        if (!window.confirm(`¿Eliminar el respaldo "${backup.filename}"?\nEsta acción no se puede deshacer.`)) return;
+
+        setDeletingId(backup.id);
+        setDeleteError("");
+
+        try {
+            await axios.delete(route("admin.backups.automatic.destroy", backup.id), {
+                headers: { "X-CSRF-TOKEN": csrf },
+            });
+            setBackups((prev) => prev.filter((b) => b.id !== backup.id));
+        } catch {
+            setDeleteError(`No se pudo eliminar el respaldo "${backup.filename}". Inténtalo nuevamente.`);
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -314,11 +335,43 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
                         <span className="automatic-backups-schedule">00:00 y 12:00 · Lima</span>
                     </div>
                     <p className="backup-description">Las copias se guardan de forma privada en el servidor. Se conservan las 30 versiones más recientes para recuperación.</p>
-                    {automaticBackups.length ? <div className="automatic-backups-list">
-                        {automaticBackups.map((backup) => <article key={backup.id} className="automatic-backup-row">
+
+                    {deleteError && (
+                        <div className="backup-alert backup-alert-error" role="alert" style={{ marginTop: "14px" }}>
+                            <PortalIcon name="alert" />
+                            <div>
+                                <strong>Error al eliminar</strong>
+                                <p>{deleteError}</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="backup-alert-close"
+                                onClick={() => setDeleteError("")}
+                                aria-label="Cerrar mensaje"
+                            >
+                                <PortalIcon name="close" />
+                            </button>
+                        </div>
+                    )}
+
+                    {backups.length ? <div className="automatic-backups-list">
+                        {backups.map((backup) => <article key={backup.id} className="automatic-backup-row">
                             <span className="automatic-backup-icon"><PortalIcon name="file" /></span>
                             <div><strong>{backup.filename}</strong><small>{backup.created_at ? new Intl.DateTimeFormat("es-PE", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Lima" }).format(new Date(backup.created_at)) : "Fecha no disponible"} · {backupSize(backup.size_bytes)}</small></div>
                             <a className="portal-btn portal-btn-light" href={route("admin.backups.automatic.download", backup.id)}><PortalIcon name="download" /> Descargar</a>
+                            <button
+                                type="button"
+                                className="portal-btn backup-delete-btn"
+                                onClick={() => handleDelete(backup)}
+                                disabled={deletingId === backup.id}
+                                aria-label={`Eliminar respaldo ${backup.filename}`}
+                                title="Eliminar respaldo"
+                            >
+                                {deletingId === backup.id
+                                    ? <span className="backup-btn-spinner" aria-hidden="true" />
+                                    : <PortalIcon name="trash" />
+                                }
+                            </button>
                         </article>)}
                     </div> : <div className="automatic-backups-empty"><PortalIcon name="clock" /><div><strong>Aún no se ha generado un respaldo automático.</strong><p>La primera copia se almacenará en la próxima ejecución programada.</p></div></div>}
                 </section>

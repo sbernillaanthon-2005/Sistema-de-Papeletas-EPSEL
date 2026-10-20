@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/download', [BackupController::class, 'download'])->name('backups.download');
         Route::get('/backups/automatic/{scheduledDatabaseBackup}/download', [BackupController::class, 'downloadAutomatic'])->name('backups.automatic.download');
+        Route::delete('/backups/automatic/{scheduledDatabaseBackup}', [BackupController::class, 'destroyAutomatic'])->name('backups.automatic.destroy');
         Route::get('/exit-slip-formats', [ExitSlipFormatController::class, 'index'])->name('exit-slip-formats.index');
         Route::post('/exit-slip-formats', [ExitSlipFormatController::class, 'store'])->name('exit-slip-formats.store');
         Route::put('/exit-slip-formats/{exitSlipFormat}', [ExitSlipFormatController::class, 'update'])->name('exit-slip-formats.update');
