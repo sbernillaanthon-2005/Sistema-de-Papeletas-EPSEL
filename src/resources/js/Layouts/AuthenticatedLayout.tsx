@@ -126,7 +126,7 @@ export default function Authenticated({
         <>
             <div className="portal-sidebar-brand-row">
                 <Link className="portal-brand" href={route(home)}>
-                    <span style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                    <span style={{ padding: 0, overflow: 'hidden', background: 'transparent', border: 0, borderRadius: 0 }}>
                         <img src={mascotGif} alt="EPSEL" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </span>
                     <div>

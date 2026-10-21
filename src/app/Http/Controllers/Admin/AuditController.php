@@ -16,7 +16,7 @@ class AuditController extends Controller
             'date' => 'nullable|date_format:Y-m-d',
         ]);
 
-        $query = AuditLog::query()->with('actor:id,nombres,apellidos,dni')->latest('id');
+        $query = AuditLog::query()->with('actor:id,nombres,apellidos,dni,rol')->latest('id');
         if ($request->filled('q')) {
             $term = '%'.addcslashes(trim((string) $filters['q']), '%_\\').'%';
             $query->where(function ($builder) use ($term) {
@@ -43,10 +43,12 @@ class AuditController extends Controller
             'subject_id' => $log->subject_id,
             'metadata' => $log->metadata,
             'ip_address' => $log->ip_address,
+            'user_agent' => $log->user_agent,
             'created_at' => $log->created_at->toIso8601String(),
             'actor' => $log->actor ? [
                 'name' => trim($log->actor->nombres.' '.$log->actor->apellidos),
                 'dni' => $log->actor->dni,
+                    'role' => $log->actor->rol?->label() ?? 'Sin rol',
             ] : null,
         ]);
 
@@ -57,7 +59,9 @@ class AuditController extends Controller
             'summary' => [
                 'total' => AuditLog::count(),
                 'today' => AuditLog::whereDate('created_at', today('America/Lima'))->count(),
-                'backups' => AuditLog::where('action', 'backup.downloaded')->count(),
+                'backups' => AuditLog::whereIn('action', ['backup.downloaded', 'backup.deleted'])->count(),
+                'backupDownloads' => AuditLog::where('action', 'backup.downloaded')->count(),
+                'backupDeletes' => AuditLog::where('action', 'backup.deleted')->count(),
             ],
         ]);
     }

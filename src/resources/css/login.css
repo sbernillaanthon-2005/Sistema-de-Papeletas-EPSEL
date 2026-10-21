@@ -105,7 +105,7 @@
 .login-mascot {
     position: absolute;
     top: -10px;
-    right: -10px;
+    right: -30px;
     width: 200px;
     height: 238px;
     object-fit: contain;
@@ -113,7 +113,7 @@
 }
 .login-description {
     margin: 18px 0 30px;
-    max-width: 330px;
+    max-width: 285px;
     color: var(--login-muted);
     font-size: 15px;
     line-height: 1.65;

@@ -158,6 +158,14 @@ export default function Edit({
                                 </div>
                             </div>
                             <div className="pp-section-body">
+                                <div className="pp-identity-summary">
+                                    <Avatar name={fullName} photo={user.profile_photo_url} />
+                                    <div>
+                                        <strong>{fullName}</strong>
+                                        <span>{roleLabels[user.rol] || user.rol}</span>
+                                        <small>Cuenta verificada en el portal EPSEL</small>
+                                    </div>
+                                </div>
                                 <UpdateProfilePhotoForm />
                             </div>
                         </section>
@@ -170,6 +178,10 @@ export default function Edit({
                                 </div>
                             </div>
                             <div className="pp-section-body">
+                                <div className="pp-account-facts">
+                                    <div><span>Correo institucional</span><strong>{user.email}</strong></div>
+                                    <div><span>Estado de cuenta</span><strong className="pp-fact-status"><IconCheck /> Activa</strong></div>
+                                </div>
                                 <UpdateProfileInformationForm
                                     mustVerifyEmail={mustVerifyEmail}
                                     status={status}
