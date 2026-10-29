@@ -30,7 +30,7 @@ class ExitSlipController extends Controller
     {
         $request->validate([
             'q' => 'nullable|string|max:120',
-            'estado' => ['nullable', Rule::enum(ExitSlipStatus::class)],
+            'estado' => ['nullable', Rule::in(array_merge(['pending'], array_column(ExitSlipStatus::cases(), 'value')))],
             'fecha' => 'nullable|date_format:Y-m-d',
             'solicitante' => 'nullable|uuid',
         ]);
@@ -60,7 +60,9 @@ class ExitSlipController extends Controller
                 ])->values()
             : collect();
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $request->estado === 'pending'
+                ? $query->whereNotIn('estado', ['completed', 'rejected'])
+                : $query->where('estado', $request->estado);
         }
         if ($request->filled('fecha')) {
             $query->whereDate('fecha_autorizada', $request->fecha);
@@ -105,7 +107,7 @@ class ExitSlipController extends Controller
     {
         $request->validate([
             'q' => 'nullable|string|max:120',
-            'estado' => ['nullable', Rule::enum(ExitSlipStatus::class)],
+            'estado' => ['nullable', Rule::in(array_merge(['pending'], array_column(ExitSlipStatus::cases(), 'value')))],
             'fecha' => 'nullable|date_format:Y-m-d',
             'solicitante' => 'nullable|uuid',
         ]);
@@ -122,7 +124,9 @@ class ExitSlipController extends Controller
         };
 
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $request->estado === 'pending'
+                ? $query->whereNotIn('estado', ['completed', 'rejected'])
+                : $query->where('estado', $request->estado);
         }
         if ($request->filled('fecha')) {
             $query->whereDate('fecha_autorizada', $request->fecha);

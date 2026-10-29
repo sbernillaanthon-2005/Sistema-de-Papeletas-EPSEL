@@ -3,11 +3,11 @@ import { PageProps } from "@/types";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import { Avatar, roleLabels } from "@/Components/PortalUI";
-import DeleteUserForm from "./Partials/DeleteUserForm";
 import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
 import UpdateProfilePhotoForm from "./Partials/UpdateProfilePhotoForm";
 import UpdateSignatureForm from "./Partials/UpdateSignatureForm";
+import profileBackdrop from "../../../images/mascota-azul-camion-cisterna.png";
 
 /* ── SVG icons inline (no emojis) ── */
 const IconUser = () => (
@@ -75,8 +75,8 @@ export default function Edit({
 
                 {/* ── Hero ── */}
                 <section className="portal-hero pp-hero pp-hero--premium">
-                    <div className="pp-hero-glow" aria-hidden="true" />
-                    <div className="pp-hero-inner">
+                    <img className="pp-hero-photo" src={profileBackdrop} alt="" aria-hidden="true" />
+                    <div className="pp-hero-identity">
                         <div className="pp-avatar-frame">
                             <Avatar name={fullName} photo={user.profile_photo_url} />
                             <span className="pp-avatar-status" aria-label="Cuenta activa">
@@ -85,7 +85,7 @@ export default function Edit({
                         </div>
                         <div className="pp-hero-text">
                             <p className="portal-hero-eyebrow">
-                                {roleLabels[user.rol]?.toUpperCase()}
+                                {(user.rol_label || roleLabels[user.rol])?.toUpperCase()}
                             </p>
                             <h2>{fullName}</h2>
                             <p>{user.cargo_designado || "Portal de personal EPSEL"}</p>
@@ -162,11 +162,11 @@ export default function Edit({
                                     <Avatar name={fullName} photo={user.profile_photo_url} />
                                     <div>
                                         <strong>{fullName}</strong>
-                                        <span>{roleLabels[user.rol] || user.rol}</span>
+                                        <span>{user.rol_label || roleLabels[user.rol] || user.rol}</span>
                                         <small>Cuenta verificada en el portal EPSEL</small>
                                     </div>
                                 </div>
-                                <UpdateProfilePhotoForm />
+                                <UpdateProfilePhotoForm className="pp-photo-upload" />
                             </div>
                         </section>
                         <section className="portal-card">
@@ -246,18 +246,6 @@ export default function Edit({
                             </div>
                             <div className="pp-section-body">
                                 <UpdatePasswordForm />
-                            </div>
-                        </section>
-                        <section className="portal-card pp-danger-card">
-                            <div className="pp-section-header pp-section-header--danger">
-                                <span className="pp-section-icon pp-section-icon--danger"><IconWarn /></span>
-                                <div>
-                                    <h2>Zona de riesgo</h2>
-                                    <p>Acciones permanentes e irreversibles.</p>
-                                </div>
-                            </div>
-                            <div className="pp-section-body">
-                                <DeleteUserForm />
                             </div>
                         </section>
                     </div>

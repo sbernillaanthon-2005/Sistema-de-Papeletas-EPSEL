@@ -1,5 +1,5 @@
 import { Link } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import PortalIcon, { PortalIconName } from "./PortalIcon";
 import { statuses } from "@/types/exit-slip";
 
@@ -15,14 +15,18 @@ export function Avatar({
     name,
     photo,
     small = false,
+    className = "",
+    style,
 }: {
     name: string;
     photo?: string | null;
     small?: boolean;
+    className?: string;
+    style?: CSSProperties;
 }) {
     const [failed, setFailed] = useState(false);
     return (
-        <span className={`portal-avatar ${small ? "portal-avatar-sm" : ""}`}>
+        <span className={`portal-avatar ${small ? "portal-avatar-sm" : ""} ${className}`.trim()} style={style}>
             {photo && !photo.includes("ui-avatars.com") && !failed ? (
                 <img src={photo} alt="" onError={() => setFailed(true)} />
             ) : (

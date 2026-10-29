@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use App\Support\DatabaseBackup;
 use App\Models\ScheduledDatabaseBackup;
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -67,8 +68,37 @@ class BackupController extends Controller
     public function destroyAutomatic(Request $request, ScheduledDatabaseBackup $scheduledDatabaseBackup, AuditLogger $audit): \Illuminate\Http\JsonResponse
     {
         // Eliminar el archivo físico si aún existe en disco
-        if (Storage::disk('private')->exists($scheduledDatabaseBackup->file_path)) {
-            Storage::disk('private')->delete($scheduledDatabaseBackup->file_path);
+        $relativePath = $scheduledDatabaseBackup->file_path;
+        $absolutePath = storage_path('app/private/'.$relativePath);
+
+        try {
+            if (Storage::disk('private')->exists($relativePath)) {
+                Storage::disk('private')->delete($relativePath);
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            clearstatcache(true, $absolutePath);
+            if (! is_file($absolutePath)) {
+                break;
+            }
+
+            try {
+                File::delete($absolutePath);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
+            usleep(100_000);
+        }
+
+        clearstatcache(true, $absolutePath);
+        if (is_file($absolutePath)) {
+            return response()->json([
+                'message' => 'No se pudo eliminar el archivo de respaldo. Puede estar en uso; ciérralo e inténtalo nuevamente.',
+            ], 409);
         }
 
         $filename = $scheduledDatabaseBackup->filename;

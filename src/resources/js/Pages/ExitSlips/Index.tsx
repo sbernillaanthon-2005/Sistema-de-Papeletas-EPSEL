@@ -3,6 +3,7 @@ import { Head, Link, router } from "@inertiajs/react";
 import { PageProps } from "@/types";
 import { useState, useEffect, useRef } from "react";
 import PortalIcon from "@/Components/PortalIcon";
+import PortalHeroCopy from "@/Components/PortalHeroCopy";
 import {
     Avatar,
     StatCard,
@@ -11,6 +12,7 @@ import {
     formatDate,
 } from "@/Components/PortalUI";
 import { statuses } from "@/types/exit-slip";
+import mascotReview from "../../../images/Mascota EPSEL revisa documentos.png";
 
 interface Slip {
     id: string;
@@ -32,43 +34,37 @@ type Page = {
 };
 const content: Record<
     string,
-    { title: string; intro: string; pending: string; hint: string }
+    { title: string; intro: string; hint: string }
 > = {
     admin: {
         title: "Supervisión de papeletas",
         intro: "Consulta el recorrido de las solicitudes y su estado en cada etapa.",
-        pending: "submitted",
-        hint: "Pendientes de revisión del jefe",
+        hint: "Papeletas que aún no finalizan",
     },
     hr: {
         title: "Gestión de Recursos Humanos",
         intro: "Revisa las solicitudes recibidas, valida su información y completa la autorización.",
-        pending: "submitted_to_hr",
-        hint: "Esperan tu revisión en RRHH",
+        hint: "Papeletas que aún no finalizan",
     },
     security: {
         title: "Control de salidas y retornos",
         intro: "Verifica las autorizaciones y registra los movimientos del personal.",
-        pending: "approved_by_hr",
-        hint: "Autorizadas para el control de acceso",
+        hint: "Papeletas que aún no finalizan",
     },
     area_head: {
         title: "Gestión de tu equipo",
         intro: "Revisa las solicitudes de tu equipo y mantén sus autorizaciones al día.",
-        pending: "submitted",
-        hint: "Solicitudes enviadas a jefatura",
+        hint: "Papeletas que aún no finalizan",
     },
     practitioner: {
         title: "Mi espacio de practicante",
         intro: "Crea tu papeleta y acompaña cada paso de su aprobación, desde un solo lugar.",
-        pending: "draft",
-        hint: "Borradores por completar y enviar",
+        hint: "Papeletas que aún no finalizan",
     },
     worker: {
         title: "Mi espacio de trabajo",
         intro: "Gestiona tus permisos de salida y consulta el avance de tus solicitudes.",
-        pending: "draft",
-        hint: "Borradores por completar y enviar",
+        hint: "Papeletas que aún no finalizan",
     },
 };
 export default function Index({
@@ -92,6 +88,9 @@ export default function Index({
     selectedFolder?: string | null;
 }>) {
     const config = content[auth.user.rol] || content.worker;
+    const titleParts = config.title.split(" ");
+    const titleAccent = titleParts.pop() || config.title;
+    const titleLead = titleParts.join(" ");
     const [query, setQuery] = useState(filters.q || "");
     const [date, setDate] = useState(filters.fecha || "");
     const [state, setState] = useState(filters.estado || "");
@@ -137,33 +136,22 @@ export default function Index({
         (sum, value) => sum + Number(value),
         0,
     );
+    const pendingTotal = total - Number(counts.completed || 0) - Number(counts.rejected || 0);
+    const approvedByHrTotal = Number(counts.approved_by_hr || 0)
+        + Number(counts.submitted_to_security || 0)
+        + Number(counts.completed || 0);
     const visibleFolders = folders.filter((item) =>
         `${item.name} ${item.dni}`.toLocaleLowerCase("es-PE").includes(folderSearch.toLocaleLowerCase("es-PE")),
     );
     return (
         <AuthenticatedLayout header={<h1>{config.title}</h1>}>
             <Head title={config.title} />
-            <div className="portal-stack">
-                <section className="portal-hero">
-                    <div>
-                        <p className="portal-hero-eyebrow">TU PORTAL EPSEL</p>
-                        <h2>Hola, {auth.user.nombres.split(" ")[0]}.</h2>
-                        <p>{config.intro}</p>
-                    </div>
-                    {canCreate && (
-                        <Link
-                            className="portal-btn portal-btn-white"
-                            href={route("exit-slips.create")}
-                        >
-                            <PortalIcon name="plus" />
-                            Nueva papeleta
-                        </Link>
-                    )}
-                </section>
-                <section
-                    className="portal-stats"
-                    aria-label="Resumen de papeletas"
-                >
+            <div className="portal-stack slips-page" data-exit-slips-page="true">
+                <section className="portal-hero slips-hero" style={{ backgroundImage: `url("${mascotReview}")`, backgroundPosition: "center center", backgroundSize: "100% 100%" }}>
+                    <PortalHeroCopy className="slips-hero-copy" eyebrow="TU PORTAL EPSEL" lead={titleLead} accent={titleAccent} description={config.intro} />
+                    <div className="slips-hero-note" aria-hidden="true"><span>AGUA QUE CONECTA PERSONAS</span><strong>SERVICIO<br />TRANSPARENCIA<br />CONFIANZA</strong><i /></div>
+                    {canCreate && <Link className="slips-hero-action" href={route("exit-slips.create")}><PortalIcon name="plus" /> Nueva papeleta</Link>}
+                    <section className="portal-stats slips-hero-stats" aria-label="Resumen de papeletas">
                     <StatCard
                         label="Total de papeletas"
                         value={total}
@@ -172,12 +160,8 @@ export default function Index({
                         tone="blue"
                     />
                     <StatCard
-                        label={
-                            auth.user.rol === "security"
-                                ? "Autorizadas"
-                                : "Por atender"
-                        }
-                        value={Number(counts[config.pending] || 0)}
+                        label="Por atender"
+                        value={pendingTotal}
                         hint={config.hint}
                         icon="clock"
                         tone="amber"
@@ -191,7 +175,7 @@ export default function Index({
                         value={
                             auth.user.rol === "security"
                                 ? inTransit
-                                : Number(counts.approved_by_hr || 0)
+                                : approvedByHrTotal
                         }
                         hint={
                             auth.user.rol === "security"
@@ -206,7 +190,9 @@ export default function Index({
                         value={Number(counts.completed || 0)}
                         hint="Salida y retorno registrados"
                         icon="shield"
+                        tone="blue"
                     />
+                    </section>
                 </section>
                 {auth.user.rol === "hr" && (
                     <section className="portal-card hr-folder-browser" aria-label="Expedientes por solicitante">
@@ -294,7 +280,7 @@ export default function Index({
                         )}
                     </section>
                 )}
-                <section className="portal-card" aria-busy={busy}>
+                <section className="portal-card slips-list-card" aria-busy={busy}>
                     <div className="portal-card-head">
                         <div>
                             <h2>
@@ -328,7 +314,7 @@ export default function Index({
                     >
                         {[
                             ["", "Todas"],
-                            [config.pending, "Por atender"],
+                            ["pending", "Por atender"],
                             ["completed", "Finalizadas"],
                         ].map(([value, label]) => (
                             <button
@@ -367,6 +353,7 @@ export default function Index({
                             onChange={(e) => setState(e.target.value)}
                         >
                             <option value="">Todos los estados</option>
+                            <option value="pending">Por atender</option>
                             {Object.entries(statuses).map(([value, label]) => (
                                 <option key={value} value={value}>
                                     {label}
@@ -386,25 +373,10 @@ export default function Index({
                             <PortalIcon name="filter" />
                             Filtrar
                         </button>
-                        {(filters.q || filters.estado || filters.fecha || folder) && (
-                            <button
-                                type="button"
-                                className="portal-btn portal-btn-light"
-                                onClick={() => {
-                                    setQuery("");
-                                    setDate("");
-                                    setState("");
-                                    setFolder("");
-                                    apply("", "", "", "");
-                                }}
-                            >
-                                Limpiar
-                            </button>
-                        )}
                     </form>
                     {exitSlips.length ? (
                         <div className="portal-table-wrap">
-                            <table className="portal-table">
+                            <table className="portal-table slips-table">
                                 <thead>
                                     <tr>
                                         <th>Papeleta</th>
@@ -493,7 +465,7 @@ export default function Index({
                                                     aria-label={`Ver papeleta ${slip.codigo}`}
                                                 >
                                                     Ver detalle
-                                                    <PortalIcon name="arrow" />
+                                                    <PortalIcon name="eye" />
                                                 </Link>
                                             </td>
                                         </tr>

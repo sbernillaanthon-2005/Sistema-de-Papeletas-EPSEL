@@ -1,7 +1,9 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { Pagination } from "@/types/exit-slip";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 import { DialogTitle } from "@headlessui/react";
 import Modal from "@/Components/Modal";
 import PortalIcon from "@/Components/PortalIcon";
@@ -18,9 +20,12 @@ type Person = {
     apellidos: string;
     dni: string;
     rol: string;
+    custom_role_id?: string | null;
+    rol_label?: string;
     activo: boolean;
     area_id: string | null;
     jefe_id: string | null;
+    jefe_responsable_nombre: string | null;
     area?: { nombre: string };
     jefe?: { nombres: string; apellidos: string };
     profile_photo_url?: string;
@@ -28,8 +33,9 @@ type Person = {
 type Props = {
     users: Pagination<Person>;
     areas: { id: string; nombre: string }[];
-    roles: { value: string; label: string }[];
-    heads: Person[];
+    responsibleHeads: string[];
+    registeredHeads: { id: string; nombre: string }[];
+    roles: { value: string; label: string; base_role?: string }[];
     summary: { total: number; active: number; heads: number; areas: number };
     filters: { q?: string; rol?: string; activo?: string };
     workflow: { key: string; label: string; value: number }[];
@@ -38,34 +44,27 @@ type Props = {
     pendingWorkflow: { id: string; code: string; requester: string; stage: string; responsible: string; requires_signature: boolean }[];
     reminderInterval: number;
 };
+gsap.registerPlugin(useGSAP);
 
 function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkflow"]; reminderInterval: number }) {
     const reminder = useForm({ minutes: reminderInterval });
     const signing = data.filter((item) => item.requires_signature);
     return <section className="portal-card pending-workflow admin-priority-panel" aria-label="Seguimiento de firmas pendientes">
-        <div className="pending-workflow-head"><div><p>CONTROL DE PROCESO</p><h2>Papeletas pendientes de completar</h2><span>{signing.length} esperando una firma · {data.length} detenidas en total</span></div>
-            <form className="reminder-control" onSubmit={(event) => { event.preventDefault(); reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true }); }}>
+        <div className="pending-workflow-head"><div className="pending-title-group"><span className="pending-file-icon"><PortalIcon name="file" /></span><div><p>CONTROL DE PROCESO</p><div className="pending-title-line"><h2>Papeletas pendientes de completar</h2><strong className="pending-count">{data.length} {data.length === 1 ? "pendiente" : "pendientes"}</strong></div><span>{signing.length} esperando una firma · {data.length} detenidas en total</span></div></div>
+            <div className="pending-reminder-side"><span>Los recordatorios llegan por la campana en tiempo real.</span><form className="reminder-control" onSubmit={(event) => { event.preventDefault(); reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true }); }}>
                 <label htmlFor="reminder-minutes">Recordar cada</label><input id="reminder-minutes" type="number" min="1" max="1440" value={reminder.data.minutes} onChange={(event) => reminder.setData("minutes", Number(event.target.value))} /><span>min</span><button className="portal-btn portal-btn-primary" disabled={reminder.processing}>Guardar</button>
-            </form>
+            </form></div>
         </div>
         <div className="pending-legend"><span><i className="pending-dot pending-dot--signature" /> Requiere firma</span><span><i className="pending-dot" /> Requiere derivación</span><span>Los recordatorios llegan por la campana en tiempo real.</span></div>
-        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("exit-slips.show", item.id)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span><span className={item.requires_signature ? "pending-chip pending-chip--signature" : "pending-chip"}>{item.requires_signature ? "Firma pendiente" : "Pendiente"}</span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
+        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("exit-slips.show", item.id)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
     </section>;
 }
 
 function WorkflowChart({ data }: { data: Props["workflow"] }) {
     const max = Math.max(...data.map((item) => item.value), 1);
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    const peak = data.reduce((current, item) =>
-        item.value > current.value ? item : current,
-    data[0]);
-
     return (
         <div className="admin-chart-content">
-            <div className="admin-chart-summary">
-                <div><strong>{total}</strong><span>papeletas en proceso</span></div>
-                <span className="admin-chart-peak">{peak?.value ? "Mayor carga: " + peak.label : "Sin acumulaciones"}</span>
-            </div>
             <div className="admin-bar-list" aria-label={"Papeletas por etapa. " + total + " papeletas en total."}>
             {data.map((item) => (
                 <Link
@@ -98,10 +97,6 @@ function MonthlyChart({ data }: { data: Props["monthly"] }) {
 
     return (
         <div className="admin-chart-content">
-            <div className="admin-chart-summary">
-                <div><strong>{total}</strong><span>solicitudes en 6 meses</span></div>
-                <span className="admin-chart-peak">{peak?.value ? peak.label + ": " + peak.value + " registradas" : "Sin solicitudes registradas"}</span>
-            </div>
             <div className="admin-month-chart" aria-label={"Solicitudes creadas por mes. " + total + " solicitudes durante los últimos seis meses."}>
             {data.map((item) => (
                 <div className={"admin-month-column " + (item.value === max && item.value > 0 ? "is-peak" : "")} key={item.label} aria-label={item.label + ": " + item.value + " solicitudes"}>
@@ -170,11 +165,65 @@ function AccessChart({ data }: { data: Props["accessByRole"] }) {
     );
 }
 
+type RegisteredItem = { key: string; label: string; id?: string };
+
+function RegisteredList({ label, items, emptyMessage, endpoint }: { label: string; items: RegisteredItem[]; emptyMessage: string; endpoint: string }) {
+    const [expanded, setExpanded] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState("");
+    const [busyId, setBusyId] = useState<string | null>(null);
+    const [error, setError] = useState("");
+    const save = (id: string) => {
+        if (!editingName.trim()) return;
+        setBusyId(id);
+        setError("");
+        router.put(`${endpoint}/${id}`, { nombre: editingName.trim() }, {
+            preserveScroll: true,
+            onSuccess: () => setEditingId(null),
+            onError: (errors) => setError(errors.nombre || errors.registro || "No se pudo guardar el cambio."),
+            onFinish: () => setBusyId(null),
+        });
+    };
+    const removeItem = (item: RegisteredItem) => {
+        if (!item.id || !window.confirm(`¿Eliminar «${item.label}»?`)) return;
+        setBusyId(item.id);
+        setError("");
+        router.delete(`${endpoint}/${item.id}`, {
+            preserveScroll: true,
+            onError: (errors) => setError(errors.registro || "No se pudo eliminar el registro."),
+            onFinish: () => setBusyId(null),
+        });
+    };
+    return <div className="admin-registered-heads">
+        <button type="button" className="admin-registered-heads-toggle" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+            <span className="admin-registered-heads-label">{label} <strong>{items.length}</strong></span>
+            <span className="admin-registered-heads-action">{expanded ? "Ocultar lista" : "Ver lista"} <PortalIcon name="chevron" /></span>
+        </button>
+        {expanded && <div className="admin-registered-heads-list">
+            {error && <p className="portal-error" role="alert">{error}</p>}
+            {items.length ? <ul>{items.map((item) => <li key={item.key} className="admin-registered-item">
+                {editingId === item.id ? <>
+                    <input aria-label={`Editar ${item.label}`} value={editingName} maxLength={255} onChange={(event) => setEditingName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); save(item.id!); } if (event.key === "Escape") setEditingId(null); }} />
+                    <button type="button" className="admin-registered-save" disabled={busyId === item.id || !editingName.trim()} onClick={() => save(item.id!)}>Guardar</button>
+                    <button type="button" className="admin-registered-cancel" onClick={() => setEditingId(null)}>Cancelar</button>
+                </> : <>
+                    <span>{item.label}</span>
+                    {item.id ? <div className="admin-registered-actions">
+                        <button type="button" aria-label={`Editar ${item.label}`} title="Editar" disabled={!!busyId} onClick={() => { setEditingId(item.id!); setEditingName(item.label); setError(""); }}><PortalIcon name="edit" /></button>
+                        <button type="button" className="admin-registered-delete" aria-label={`Eliminar ${item.label}`} title="Eliminar" disabled={!!busyId} onClick={() => removeItem(item)}><PortalIcon name="trash" /></button>
+                    </div> : <small className="admin-registered-system">{endpoint.endsWith("roles") ? "Rol del sistema" : "Cuenta existente"}</small>}
+                </>}
+            </li>)}</ul> : <p>{emptyMessage}</p>}
+        </div>}
+    </div>;
+}
+
 export default function Index({
     users,
     areas,
+    responsibleHeads,
+    registeredHeads,
     roles,
-    heads,
     summary,
     filters,
     workflow,
@@ -184,10 +233,25 @@ export default function Index({
     reminderInterval,
 }: Props) {
     const me = usePage().props.auth.user.id;
+    const dashboardRef = useRef<HTMLDivElement>(null);
+    useGSAP(() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const timeline = gsap.timeline({ defaults: { ease: "power2.out" } });
+        timeline.from(".admin-control-heading", { y: 12, opacity: 0, duration: .45, clearProps: "all" })
+            .from(".admin-dashboard-kpis .portal-stat", { y: 14, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.2")
+            .from(".admin-priority-panel, .admin-insight-card", { y: 12, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.12")
+            .from(".admin-bar-fill, .admin-access-active", { scaleX: 0, duration: .65, stagger: .05, transformOrigin: "left center", clearProps: "transform" }, "-=.12")
+            .from(".admin-month-fill", { scaleY: 0, duration: .65, stagger: .08, transformOrigin: "center bottom", clearProps: "transform" }, "<");
+    }, { scope: dashboardRef });
     const [creating, setCreating] = useState(false);
+    const [creatingArea, setCreatingArea] = useState(false);
+    const [creatingRole, setCreatingRole] = useState(false);
+    const [creatingHead, setCreatingHead] = useState(false);
     const [editing, setEditing] = useState<Person | null>(null);
     const [deleting, setDeleting] = useState<Person | null>(null);
     const [passwordVisible, setPasswordVisible] = useState(false);
+    const [editPasswordVisible, setEditPasswordVisible] = useState(false);
     const [isFetchingReniec, setIsFetchingReniec] = useState(false);
     const [dniLookupState, setDniLookupState] = useState<"idle" | "success" | "manual">("idle");
     const [query, setQuery] = useState(filters.q || "");
@@ -200,10 +264,14 @@ export default function Index({
         password: "",
         rol: "worker",
         area_id: "",
-        cargo_designado: "",
+        jefe_responsable_nombre: "",
     });
-    const edit = useForm({ activo: true, area_id: "", jefe_id: "" });
+    const edit = useForm({ nombres: "", apellidos: "", activo: true, area_id: "", jefe_responsable_nombre: "", rol: "worker", password: "", password_confirmation: "" });
+    const areaForm = useForm({ nombre: "" });
+    const roleForm = useForm({ nombre: "" });
+    const headForm = useForm({ nombre: "" });
     const remove = useForm({});
+    const selectedBaseRole = roles.find((item) => item.value === create.data.rol)?.base_role || create.data.rol;
 
     const lookupDni = async () => {
         const dni = create.data.dni.trim();
@@ -247,64 +315,36 @@ export default function Index({
     const openEdit = (person: Person) => {
         edit.clearErrors();
         edit.setData({
+            nombres: person.nombres,
+            apellidos: person.apellidos,
             activo: person.activo,
             area_id: person.area_id || "",
-            jefe_id: person.jefe_id || "",
+            jefe_responsable_nombre: person.jefe_responsable_nombre || (person.jefe ? `${person.jefe.nombres} ${person.jefe.apellidos}` : ""),
+            rol: person.custom_role_id ? `custom:${person.custom_role_id}` : person.rol,
+            password: "",
+            password_confirmation: "",
         });
+        setEditPasswordVisible(false);
         setEditing(person);
     };
     return (
         <AuthenticatedLayout header={<h1>Usuarios y accesos</h1>}>
             <Head title="Administración de usuarios" />
-            <div className="portal-stack admin-dashboard admin-dashboard-v2">
-                <section className="portal-hero admin-dashboard-hero">
-                    <div className="admin-dashboard-hero-copy">
-                        <p className="portal-hero-eyebrow">
-                            ADMINISTRACIÓN DEL SISTEMA
-                        </p>
-                        <h2>Un equipo conectado.</h2>
-                        <p>
-                            Organiza los accesos, asigna áreas y vincula al
-                            personal con su jefe responsable.
-                        </p>
-                        <div className="admin-dashboard-hero-signals" aria-label="Resumen operativo">
-                            <span><i className="admin-live-dot" /> {summary.active} cuentas con acceso</span>
-                            <span><PortalIcon name="clock" /> {pendingWorkflow.length} papeletas por atender</span>
-                        </div>
+            <div className="portal-stack admin-dashboard admin-dashboard-v2" data-admin-dashboard="true" ref={dashboardRef}>
+                <section className="admin-control-heading">
+                    <div className="admin-control-copy">
+                        <p>EPSEL · GESTIÓN DE PERSONAL</p>
+                        <h2>Centro de control</h2>
+                        <span>Administra los accesos, organiza las áreas y mantén el control del personal del sistema.</span>
                     </div>
-                    <div className="admin-dashboard-hero-actions">
-                        <Link href={route("exit-slips.index")} className="admin-dashboard-hero-link">
-                            Ver papeletas <PortalIcon name="arrow" />
-                        </Link>
-                        <button
-                            className="portal-btn portal-btn-white"
-                            onClick={() => setCreating(true)}
-                        >
-                            <PortalIcon name="plus" />
-                            Nuevo usuario
+                    <div className="admin-control-actions" aria-label="Acciones de administración">
+                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingHead(true)}><PortalIcon name="plus" /> Nuevo jefe responsable</button>
+                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingRole(true)}><PortalIcon name="plus" /> Registrar nuevo rol</button>
+                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingArea(true)}><PortalIcon name="plus" /> Nueva área</button>
+                        <button type="button" className="portal-btn portal-btn-primary" onClick={() => setCreating(true)}>
+                            <PortalIcon name="plus" /> Nuevo usuario
                         </button>
                     </div>
-                </section>
-                <section className="admin-command-deck" aria-label="Accesos rápidos de administración">
-                    <button type="button" className="admin-command-card admin-command-card--primary" onClick={() => setCreating(true)}>
-                        <span className="admin-command-icon"><PortalIcon name="plus" /></span>
-                        <span><small>ACCIÓN PRINCIPAL</small><strong>Registrar usuario</strong><em>Crear una cuenta y definir sus permisos.</em></span>
-                    </button>
-                    <Link href={route("exit-slips.index")} className="admin-command-card">
-                        <span className="admin-command-icon"><PortalIcon name="file" /></span>
-                        <span><small>OPERACIÓN</small><strong>Revisar bandeja</strong><em>{pendingWorkflow.length} papeletas necesitan seguimiento.</em></span>
-                        <PortalIcon name="arrow" />
-                    </Link>
-                    <Link href={route("admin.audit.index")} className="admin-command-card">
-                        <span className="admin-command-icon"><PortalIcon name="shield" /></span>
-                        <span><small>CONTROL</small><strong>Ver auditoría</strong><em>Consulta las acciones registradas del sistema.</em></span>
-                        <PortalIcon name="arrow" />
-                    </Link>
-                    <Link href={route("admin.backups.index")} className="admin-command-card">
-                        <span className="admin-command-icon"><PortalIcon name="download" /></span>
-                        <span><small>RESGUARDO</small><strong>Gestionar respaldos</strong><em>Descarga una copia segura de la base de datos.</em></span>
-                        <PortalIcon name="arrow" />
-                    </Link>
                 </section>
                 <section
                     className="portal-stats admin-dashboard-kpis"
@@ -329,24 +369,18 @@ export default function Index({
                         value={summary.heads}
                         hint="Responsables activos"
                         icon="shield"
+                        tone="amber"
                     />
                     <StatCard
                         label="Áreas registradas"
                         value={summary.areas}
                         hint="Estructura de la organización"
                         icon="grid"
-                        tone="amber"
+                        tone="purple"
                     />
                 </section>
                 <PendingWorkflow data={pendingWorkflow} reminderInterval={reminderInterval} />
                 <section className="admin-analytics-section" aria-label="Indicadores operativos">
-                    <div className="admin-section-heading">
-                        <div>
-                            <p>VISTA DE DECISIÓN</p>
-                            <h2>Operación en una mirada</h2>
-                        </div>
-                        <span>Selecciona una fila para profundizar.</span>
-                    </div>
                     <div className="admin-insights">
                     <article className="portal-card admin-insight-card admin-insight-card--flow">
                         <div className="admin-insight-head">
@@ -355,9 +389,10 @@ export default function Index({
                                 <h2>Flujo de papeletas</h2>
                                 <span>Identifica dónde se acumulan las solicitudes.</span>
                             </div>
-                            <Link href={route("exit-slips.index")} className="admin-insight-link">
-                                Ver bandeja <PortalIcon name="arrow" />
-                            </Link>
+                            <div className="admin-insight-heading-actions">
+                                <Link href={route("exit-slips.index")} className="admin-insight-link">Ver bandeja <PortalIcon name="arrow" /></Link>
+                                <span className="admin-insight-badge">{workflow.reduce((sum, item) => sum + item.value, 0)} en proceso</span>
+                            </div>
                         </div>
                         <WorkflowChart data={workflow} />
                     </article>
@@ -368,6 +403,7 @@ export default function Index({
                                 <h2>Solicitudes por mes</h2>
                                 <span>Compara la carga de los últimos seis meses.</span>
                             </div>
+                            <span className="admin-insight-badge">{monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.label}: {monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.value} registradas</span>
                         </div>
                         <MonthlyChart data={monthly} />
                     </article>
@@ -385,6 +421,7 @@ export default function Index({
                 </section>
                 <section className="portal-card admin-directory">
                     <div className="portal-card-head admin-directory-head">
+                        <span className="admin-directory-icon"><PortalIcon name="file" /></span>
                         <div>
                             <p className="admin-directory-eyebrow">DIRECTORIO Y GOBIERNO</p>
                             <h2>Directorio de personal</h2>
@@ -502,8 +539,7 @@ export default function Index({
                                                 </div>
                                             </td>
                                             <td>
-                                                {roleLabels[person.rol] ||
-                                                    person.rol}
+                                                {person.rol_label || roleLabels[person.rol] || person.rol}
                                             </td>
                                             <td>
                                                 <div>
@@ -511,9 +547,7 @@ export default function Index({
                                                         "Sin área asignada"}
                                                 </div>
                                                 <div className="portal-cell-muted mt-1">
-                                                    {person.jefe
-                                                        ? `${person.jefe.nombres} ${person.jefe.apellidos}`
-                                                        : "Sin jefe asignado"}
+                                                    {person.jefe_responsable_nombre || (person.jefe ? `${person.jefe.nombres} ${person.jefe.apellidos}` : "Sin jefe asignado")}
                                                 </div>
                                             </td>
                                             <td>
@@ -533,9 +567,9 @@ export default function Index({
                                             <td>
                                                 <div className="flex gap-2">
                                                     <button
-                                                        className="portal-icon-button"
-                                                        aria-label={`Editar acceso de ${person.nombres}`}
-                                                        title="Editar acceso"
+                                                        className="portal-icon-button user-action-edit"
+                                                        aria-label={`Editar usuario ${person.nombres} ${person.apellidos}`}
+                                                        title="Editar usuario"
                                                         onClick={() =>
                                                             openEdit(person)
                                                         }
@@ -544,7 +578,7 @@ export default function Index({
                                                     </button>
                                                     {person.id !== me && (
                                                         <button
-                                                            className="portal-icon-button"
+                                                            className="portal-icon-button user-action-delete"
                                                             aria-label={`Eliminar a ${person.nombres}`}
                                                             title="Eliminar usuario"
                                                             onClick={() => {
@@ -554,7 +588,7 @@ export default function Index({
                                                                 );
                                                             }}
                                                         >
-                                                            <PortalIcon name="close" />
+                                                            <PortalIcon name="trash" />
                                                         </button>
                                                     )}
                                                 </div>
@@ -584,6 +618,48 @@ export default function Index({
                     </p>
                 </aside>
             </div>
+            <Modal show={creatingHead} onClose={() => { if (!headForm.processing) { setCreatingHead(false); headForm.reset(); headForm.clearErrors(); } }} maxWidth="lg">
+                <form className="portal-modal" onSubmit={(event) => {
+                    event.preventDefault();
+                    headForm.post(route("admin.responsible-heads.store"), {
+                        preserveScroll: true,
+                        onSuccess: () => { setCreatingHead(false); headForm.reset(); },
+                    });
+                }}>
+                    <div className="portal-modal-head"><div><DialogTitle>Nuevo jefe responsable</DialogTitle><p>Registra un nombre para asignarlo al personal.</p></div><button type="button" aria-label="Cerrar" disabled={headForm.processing} onClick={() => { setCreatingHead(false); headForm.reset(); headForm.clearErrors(); }}>×</button></div>
+                    <div className="portal-field"><label htmlFor="standalone-head-name">Nombre del jefe</label><input id="standalone-head-name" required maxLength={255} value={headForm.data.nombre} onChange={(event) => headForm.setData("nombre", event.target.value)} placeholder="Ej.: Jefe de Operaciones" />{headForm.errors.nombre && <small className="portal-error" role="alert">{headForm.errors.nombre}</small>}</div>
+                    <RegisteredList label="Jefes registrados" items={responsibleHeads.map((name) => ({ key: name, label: name, id: registeredHeads.find((head) => head.nombre.toLocaleLowerCase() === name.toLocaleLowerCase())?.id }))} endpoint="/admin/responsible-heads" emptyMessage="Aún no hay jefes responsables registrados." />
+                    <div className="admin-role-creator-actions admin-head-form-actions"><button type="button" className="portal-btn portal-btn-light" disabled={headForm.processing} onClick={() => { setCreatingHead(false); headForm.reset(); headForm.clearErrors(); }}>Cancelar</button><button type="submit" className="portal-btn portal-btn-primary" disabled={headForm.processing || !headForm.data.nombre.trim()}>{headForm.processing ? "Guardando…" : "Guardar jefe"}</button></div>
+                </form>
+            </Modal>
+            <Modal show={creatingRole} onClose={() => { if (!roleForm.processing) { setCreatingRole(false); roleForm.reset(); roleForm.clearErrors(); } }} maxWidth="lg">
+                <form className="portal-modal" onSubmit={(event) => {
+                    event.preventDefault();
+                    roleForm.post(route("admin.roles.store"), {
+                        preserveScroll: true,
+                        onSuccess: () => { setCreatingRole(false); roleForm.reset(); },
+                    });
+                }}>
+                    <div className="portal-modal-head"><div><DialogTitle>Registrar nuevo rol</DialogTitle><p>Aparecerá en la lista de roles al registrar usuarios.</p></div><button type="button" aria-label="Cerrar" disabled={roleForm.processing} onClick={() => { setCreatingRole(false); roleForm.reset(); roleForm.clearErrors(); }}>×</button></div>
+                    <div className="portal-field"><label htmlFor="standalone-role-name">Nombre del rol</label><input id="standalone-role-name" required maxLength={80} value={roleForm.data.nombre} onChange={(event) => roleForm.setData("nombre", event.target.value)} placeholder="Ej.: Supervisor de operaciones" />{roleForm.errors.nombre && <small className="portal-error" role="alert">{roleForm.errors.nombre}</small>}</div>
+                    <RegisteredList label="Roles registrados" items={roles.map((role) => ({ key: role.value, label: role.label, id: role.value.startsWith("custom:") ? role.value.slice(7) : undefined }))} endpoint="/admin/roles" emptyMessage="Aún no hay roles registrados." />
+                    <div className="admin-role-creator-actions admin-head-form-actions"><button type="button" className="portal-btn portal-btn-light" disabled={roleForm.processing} onClick={() => { setCreatingRole(false); roleForm.reset(); roleForm.clearErrors(); }}>Cancelar</button><button type="submit" className="portal-btn portal-btn-primary" disabled={roleForm.processing || !roleForm.data.nombre.trim()}>{roleForm.processing ? "Guardando…" : "Guardar rol"}</button></div>
+                </form>
+            </Modal>
+            <Modal show={creatingArea} onClose={() => { if (!areaForm.processing) { setCreatingArea(false); areaForm.reset(); areaForm.clearErrors(); } }} maxWidth="lg">
+                <form className="portal-modal" onSubmit={(event) => {
+                    event.preventDefault();
+                    areaForm.post(route("admin.areas.store"), {
+                        preserveScroll: true,
+                        onSuccess: () => { setCreatingArea(false); areaForm.reset(); },
+                    });
+                }}>
+                    <div className="portal-modal-head"><div><DialogTitle>Nueva área</DialogTitle><p>Aparecerá en la lista de áreas al registrar usuarios.</p></div><button type="button" aria-label="Cerrar" disabled={areaForm.processing} onClick={() => { setCreatingArea(false); areaForm.reset(); areaForm.clearErrors(); }}>×</button></div>
+                    <div className="portal-field"><label htmlFor="standalone-area-name">Nombre del área</label><input id="standalone-area-name" required maxLength={255} value={areaForm.data.nombre} onChange={(event) => areaForm.setData("nombre", event.target.value)} placeholder="Ej.: Oficina de Operaciones" />{areaForm.errors.nombre && <small className="portal-error" role="alert">{areaForm.errors.nombre}</small>}</div>
+                    <RegisteredList label="Áreas registradas" items={areas.map((area) => ({ key: area.id, label: area.nombre, id: area.id }))} endpoint="/admin/areas" emptyMessage="Aún no hay áreas registradas." />
+                    <div className="admin-role-creator-actions admin-head-form-actions"><button type="button" className="portal-btn portal-btn-light" disabled={areaForm.processing} onClick={() => { setCreatingArea(false); areaForm.reset(); areaForm.clearErrors(); }}>Cancelar</button><button type="submit" className="portal-btn portal-btn-primary" disabled={areaForm.processing || !areaForm.data.nombre.trim()}>{areaForm.processing ? "Guardando…" : "Guardar área"}</button></div>
+                </form>
+            </Modal>
             <Modal show={creating} onClose={closeCreate}>
                 <form
                     className="portal-modal"
@@ -617,7 +693,7 @@ export default function Index({
                         </button>
                     </div>
                     <div className="portal-form-grid">
-                        {(["nombres", "apellidos", "dni", "cargo_designado"] as const).map((key) => (
+                        {(["nombres", "apellidos", "dni"] as const).map((key) => (
                             <div className="portal-field relative" key={key}>
                                 <label htmlFor={`create-${key}`}>
                                     {
@@ -625,7 +701,6 @@ export default function Index({
                                             nombres: "Nombres",
                                             apellidos: "Apellidos",
                                             dni: "DNI",
-                                            cargo_designado: "Cargo",
                                         }[key]
                                     }
                                 </label>
@@ -669,13 +744,24 @@ export default function Index({
                             </div>
                         ))}
                         <div className="portal-field">
+                            <label htmlFor="create-head">Jefe responsable (opcional)</label>
+                            <select
+                                id="create-head"
+                                value={create.data.jefe_responsable_nombre}
+                                onChange={(event) => create.setData("jefe_responsable_nombre", event.target.value)}
+                                aria-invalid={!!create.errors.jefe_responsable_nombre}
+                            >
+                                <option value="">Sin jefe asignado</option>
+                                {responsibleHeads.map((name) => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                            {create.errors.jefe_responsable_nombre && <small className="portal-error" role="alert">{create.errors.jefe_responsable_nombre}</small>}
+                        </div>
+                        <div className="portal-field">
                             <label htmlFor="create-role">Rol del usuario</label>
                             <select
                                 id="create-role"
                                 value={create.data.rol}
-                                onChange={(e) =>
-                                    create.setData("rol", e.target.value)
-                                }
+                                onChange={(e) => create.setData("rol", e.target.value)}
                             >
                                 {roles.map((r) => (
                                     <option key={r.value} value={r.value}>
@@ -683,21 +769,20 @@ export default function Index({
                                     </option>
                                 ))}
                             </select>
+                            {create.errors.rol && <small className="portal-error" role="alert">{create.errors.rol}</small>}
                         </div>
                         <div className="portal-field">
                             <label htmlFor="create-area">
                                 Área{" "}
-                                {create.data.rol === "area_head"
+                                {selectedBaseRole === "area_head"
                                     ? "(obligatoria)"
                                     : "(opcional)"}
                             </label>
                             <select
                                 id="create-area"
-                                required={create.data.rol === "area_head"}
+                                required={selectedBaseRole === "area_head"}
                                 value={create.data.area_id}
-                                onChange={(e) =>
-                                    create.setData("area_id", e.target.value)
-                                }
+                                onChange={(e) => create.setData("area_id", e.target.value)}
                             >
                                 <option value="">Seleccionar área</option>
                                 {areas.map((area) => (
@@ -770,7 +855,8 @@ export default function Index({
             </Modal>
             <Modal
                 show={!!editing}
-                onClose={() => !edit.processing && setEditing(null)}
+                onClose={() => {}}
+                closeable={false}
                 maxWidth="lg"
             >
                 <form
@@ -781,7 +867,6 @@ export default function Index({
                             edit.transform((data) => ({
                                 ...data,
                                 area_id: data.area_id || null,
-                                jefe_id: data.jefe_id || null,
                             }));
                             edit.put(route("admin.users.update", editing.id), {
                                 preserveScroll: true,
@@ -792,7 +877,7 @@ export default function Index({
                 >
                     <div className="portal-modal-head">
                         <div>
-                            <DialogTitle>Editar acceso</DialogTitle>
+                            <DialogTitle>Editar usuario</DialogTitle>
                             <p>
                                 {editing?.nombres} {editing?.apellidos}
                             </p>
@@ -807,18 +892,30 @@ export default function Index({
                         </button>
                     </div>
                     <div className="space-y-5">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="portal-field">
+                                <label htmlFor="edit-nombres">Nombres</label>
+                                <input id="edit-nombres" type="text" required maxLength={255} autoComplete="given-name" value={edit.data.nombres} onChange={(e) => edit.setData("nombres", e.target.value)} aria-invalid={!!edit.errors.nombres} />
+                            </div>
+                            <div className="portal-field">
+                                <label htmlFor="edit-apellidos">Apellidos</label>
+                                <input id="edit-apellidos" type="text" required maxLength={255} autoComplete="family-name" value={edit.data.apellidos} onChange={(e) => edit.setData("apellidos", e.target.value)} aria-invalid={!!edit.errors.apellidos} />
+                            </div>
+                        </div>
+                        <div className="portal-field">
+                            <label htmlFor="edit-role">Rol del usuario</label>
+                            <select id="edit-role" value={edit.data.rol} onChange={(e) => edit.setData("rol", e.target.value)} aria-invalid={!!edit.errors.rol} disabled={editing?.id === me}>
+                                {editing?.rol === "admin" && <option value="admin">Administrador</option>}
+                                {roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
+                            </select>
+                            {editing?.id === me && <small>Tu propio rol de administrador no puede cambiarse.</small>}
+                        </div>
                         <div className="portal-field">
                             <label htmlFor="edit-area">Área</label>
                             <select
                                 id="edit-area"
                                 value={edit.data.area_id}
-                                onChange={(e) =>
-                                    edit.setData({
-                                        ...edit.data,
-                                        area_id: e.target.value,
-                                        jefe_id: "",
-                                    })
-                                }
+                                onChange={(e) => edit.setData("area_id", e.target.value)}
                             >
                                 <option value="">Sin área asignada</option>
                                 {areas.map((area) => (
@@ -829,29 +926,29 @@ export default function Index({
                             </select>
                         </div>
                         <div className="portal-field">
-                            <label htmlFor="edit-head">Jefe responsable</label>
+                            <label htmlFor="edit-head">Jefe responsable (opcional)</label>
                             <select
                                 id="edit-head"
-                                value={edit.data.jefe_id}
-                                onChange={(e) =>
-                                    edit.setData("jefe_id", e.target.value)
-                                }
+                                value={edit.data.jefe_responsable_nombre}
+                                onChange={(e) => edit.setData("jefe_responsable_nombre", e.target.value)}
+                                aria-invalid={!!edit.errors.jefe_responsable_nombre}
                             >
                                 <option value="">Sin jefe asignado</option>
-                                {heads
-                                    .filter(
-                                        (head) =>
-                                            head.area_id ===
-                                                edit.data.area_id &&
-                                            head.id !== editing?.id,
-                                    )
-                                    .map((head) => (
-                                        <option key={head.id} value={head.id}>
-                                            {head.nombres} {head.apellidos}
-                                        </option>
-                                    ))}
+                                {responsibleHeads.map((name) => <option key={name} value={name}>{name}</option>)}
                             </select>
                         </div>
+                        <div className="portal-field">
+                            <label htmlFor="edit-password">Nueva contraseña (opcional)</label>
+                            <div className="relative flex items-center">
+                                <input id="edit-password" type={editPasswordVisible ? "text" : "password"} autoComplete="new-password" minLength={8} value={edit.data.password} onChange={(e) => edit.setData("password", e.target.value)} aria-invalid={!!edit.errors.password} className="pr-24" placeholder="Mínimo 8 caracteres" />
+                                <button type="button" className="absolute right-3 text-sm" aria-pressed={editPasswordVisible} onClick={() => setEditPasswordVisible(!editPasswordVisible)}>{editPasswordVisible ? "Ocultar" : "Mostrar"}</button>
+                            </div>
+                            <small>Déjala en blanco si no necesitas restablecerla.</small>
+                        </div>
+                        {edit.data.password && <div className="portal-field">
+                            <label htmlFor="edit-password-confirmation">Confirmar nueva contraseña</label>
+                            <input id="edit-password-confirmation" type={editPasswordVisible ? "text" : "password"} autoComplete="new-password" minLength={8} value={edit.data.password_confirmation} onChange={(e) => edit.setData("password_confirmation", e.target.value)} aria-invalid={!!edit.errors.password} />
+                        </div>}
                         <div className={`account-status-control ${edit.data.activo ? "is-active" : "is-inactive"}`}>
                             <div className="account-status-copy">
                                 <span className="account-status-eyebrow">ESTADO DE ACCESO</span>

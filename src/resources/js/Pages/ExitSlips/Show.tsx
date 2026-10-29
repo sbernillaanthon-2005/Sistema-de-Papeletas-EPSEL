@@ -1,7 +1,9 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { PageProps } from "@/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 import { DialogTitle } from "@headlessui/react";
 import Modal from "@/Components/Modal";
 import PortalIcon from "@/Components/PortalIcon";
@@ -50,6 +52,7 @@ const stageLabels = [
     "Vigilancia",
     "Finalizada",
 ];
+gsap.registerPlugin(useGSAP);
 export default function Show({
     exitSlip: slip,
     can,
@@ -67,6 +70,7 @@ export default function Show({
     });
     const [rejectOpen, setRejectOpen] = useState(false);
     const [noReturn, setNoReturn] = useState(false);
+    const progressRef = useRef<HTMLDivElement>(null);
     
     const transition = (action: string) =>
         form.post(
@@ -74,6 +78,23 @@ export default function Show({
             { preserveScroll: true, onSuccess: () => setRejectOpen(false) },
         );
     const stage = stages.indexOf(slip.estado);
+    useGSAP(() => {
+        if (!progressRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const timeline = gsap.timeline({ defaults: { ease: "power2.out" } });
+        const items = progressRef.current.querySelectorAll<HTMLElement>(".slip-detail-stage");
+        items.forEach((item, index) => {
+            if (index > stage) return;
+            const marker = item.querySelector<HTMLElement>(".slip-detail-marker");
+            const connector = item.querySelector<HTMLElement>(".slip-detail-connector");
+            if (marker) {
+                timeline.fromTo(marker, { scale: .65, opacity: .4 }, { scale: 1, opacity: 1, duration: .28 }, index === 0 ? 0 : ">-0.04");
+            }
+            if (connector && index < stage) {
+                timeline.fromTo(connector, { scaleX: 0 }, { scaleX: 1, duration: .32 }, ">-0.08");
+            }
+        });
+    }, { scope: progressRef, dependencies: [slip.estado], revertOnUpdate: true });
     const today = new Intl.DateTimeFormat("en-CA", {
         timeZone: "America/Lima",
         year: "numeric",
@@ -82,14 +103,15 @@ export default function Show({
     }).format(new Date());
     return (
         <AuthenticatedLayout header={<h1>Detalle de papeleta</h1>}>
-            <Head title={slip.codigo} />
-            <div className="portal-stack">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <Head title="Detalle de papeleta" />
+            <div className="portal-stack slip-detail-page">
+                <div className="slip-detail-toolbar">
                     <Link
                         className="portal-row-link"
                         href={route("exit-slips.index")}
                     >
-                        ← Volver a la bandeja
+                        <PortalIcon name="arrow" />
+                        Volver a la bandeja
                     </Link>
                     <a
                         className="portal-btn portal-btn-light"
@@ -97,22 +119,24 @@ export default function Show({
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <PortalIcon name="download" />
+                        <PortalIcon name="eye" />
                         Vista previa PDF
                     </a>
                 </div>
-                <section className="portal-card">
-                    <div className="portal-card-head">
+                <section className="portal-card slip-detail-overview">
+                    <div className="portal-card-head slip-detail-overview-head">
                         <div>
-                            <h2>{slip.codigo}</h2>
-                            <p>Emitida el {formatDate(slip.fecha_emision)}</p>
+                            <span className="slip-detail-eyebrow">Seguimiento de solicitud</span>
+                            <h2>Papeleta de salida</h2>
+                            <p>Solicitante: {slip.apellidos_nombres} · Emitida el {formatDate(slip.fecha_emision)}</p>
+                            <small className="slip-detail-reference">Referencia: {slip.codigo}</small>
                         </div>
                         <StatusBadge
                             state={slip.estado}
                             label={slip.estado_label}
                         />
                     </div>
-                    <ol
+                    <div className="slip-detail-progress-wrap" ref={progressRef}><ol
                         className="portal-progress"
                         aria-label="Avance de la papeleta"
                     >
@@ -120,21 +144,18 @@ export default function Show({
                             <li
                                 key={state}
                                 className={
-                                    index === stage
-                                        ? "current"
-                                        : index < stage
-                                          ? "done"
-                                          : ""
+                                    `slip-detail-stage ${index === stage ? "current" : index < stage ? "done" : ""}`
                                 }
                                 aria-current={
                                     index === stage ? "step" : undefined
                                 }
                             >
-                                <span>{index < stage ? "✓" : index + 1}</span>
+                                <span className="slip-detail-marker">{index < stage ? "✓" : index + 1}</span>
+                                {index < stages.length - 1 && <i className="slip-detail-connector" aria-hidden="true" />}
                                 {stageLabels[index]}
                             </li>
                         ))}
-                    </ol>
+                    </ol></div>
                     {slip.estado === "rejected" && (
                         <p className="portal-error mx-6">
                             La papeleta fue rechazada. Revisa el motivo en el
@@ -142,9 +163,9 @@ export default function Show({
                         </p>
                     )}
                 </section>
-                <div className="portal-detail-grid">
+                <div className="portal-detail-grid slip-detail-content">
                     <div className="portal-stack">
-                        <section className="portal-card">
+                        <section className="portal-card slip-detail-panel">
                             <div className="portal-card-head">
                                 <div>
                                     <h2>Información de la solicitud</h2>
@@ -292,7 +313,7 @@ export default function Show({
                             slip.hora_salida ||
                             slip.estado === "submitted_to_security" ||
                             slip.estado === "completed") && (
-                            <section className="portal-card">
+                            <section className="portal-card slip-detail-panel">
                                 <div className="portal-card-head">
                                     <div>
                                         <h2>Control de vigilancia</h2>
@@ -426,7 +447,7 @@ export default function Show({
                             </section>
                         )}
                     </div>
-                    <aside className="portal-card self-start">
+                    <aside className="portal-card self-start slip-detail-panel slip-detail-history">
                         <div className="portal-card-head">
                             <div>
                                 <h2>Historial de actividad</h2>

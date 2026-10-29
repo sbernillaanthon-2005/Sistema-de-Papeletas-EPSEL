@@ -15,6 +15,8 @@ export default function Authenticated({
     const { auth, flash } = usePage().props;
     const { url } = usePage();
     const user = auth.user;
+    const [visibleFlash, setVisibleFlash] = useState<string | null>(null);
+    const [flashLeaving, setFlashLeaving] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
         typeof window !== "undefined" && window.localStorage.getItem("epsel-sidebar") === "collapsed",
@@ -29,7 +31,8 @@ export default function Authenticated({
             ? "dark"
             : "light";
     });
-    const role = roleLabels[user.rol] || user.rol_label;
+    const role = user.rol_label || roleLabels[user.rol];
+    const isAdminDashboard = user.rol === "admin" && /^\/admin\/dashboard(?:\?|$)/.test(url);
     const isCreator = ["practitioner", "worker", "area_head"].includes(
         user.rol,
     );
@@ -37,7 +40,25 @@ export default function Authenticated({
 
     useEffect(() => {
         window.localStorage.setItem("epsel-theme", theme);
+        document.documentElement.dataset.theme = theme;
     }, [theme]);
+
+    useEffect(() => {
+        if (!flash?.success) {
+            setVisibleFlash(null);
+            return;
+        }
+
+        setVisibleFlash(flash.success);
+        setFlashLeaving(false);
+        const fadeTimer = window.setTimeout(() => setFlashLeaving(true), 4000);
+        const removeTimer = window.setTimeout(() => setVisibleFlash(null), 4350);
+
+        return () => {
+            window.clearTimeout(fadeTimer);
+            window.clearTimeout(removeTimer);
+        };
+    }, [flash]);
 
     useEffect(() => {
         window.localStorage.setItem(
@@ -88,12 +109,6 @@ export default function Authenticated({
 
     if (user.rol === "admin") {
         nav.push({
-            label: "Documentación Técnica",
-            href: route("admin.documentation"),
-            icon: "file",
-            active: url.startsWith("/admin/documentation"),
-        });
-        nav.push({
             label: "Auditoría",
             href: route("admin.audit.index"),
             icon: "shield",
@@ -111,6 +126,12 @@ export default function Authenticated({
             icon: "file",
             active: url.startsWith("/admin/exit-slip-formats"),
         });
+        nav.push({
+            label: "Documentación Técnica",
+            href: route("admin.documentation"),
+            icon: "file",
+            active: url.startsWith("/admin/documentation"),
+        });
     }
 
     if (user.rol === "hr") {
@@ -124,6 +145,16 @@ export default function Authenticated({
 
     const sidebar = (
         <>
+            <svg className="portal-sidebar-wave" viewBox="0 0 240 128" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    <linearGradient id="portal-sidebar-wave-fill" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#08619c" />
+                        <stop offset="62%" stopColor="#087fc3" />
+                        <stop offset="100%" stopColor="#0a9bdd" />
+                    </linearGradient>
+                </defs>
+                <path d="M0 0H240V95C213 105 197 120 165 117C128 113 113 91 78 91C43 91 25 111 0 116Z" fill="url(#portal-sidebar-wave-fill)" />
+            </svg>
             <div className="portal-sidebar-brand-row">
                 <Link className="portal-brand" href={route(home)}>
                     <span style={{ padding: 0, overflow: 'hidden', background: 'transparent', border: 0, borderRadius: 0 }}>
@@ -158,9 +189,9 @@ export default function Authenticated({
                         aria-current={item.active ? "page" : undefined}
                         title={item.label}
                     >
-                        <PortalIcon name={item.icon} />
-                        <span>{item.label}</span>
-                        {item.active && <span className="portal-nav-dot" />}
+                        <span className="portal-nav-icon"><PortalIcon name={item.icon} /></span>
+                        <span className="portal-nav-label">{item.label}</span>
+                        <span className="portal-nav-chevron" aria-hidden="true"><PortalIcon name="chevron" /></span>
                     </Link>
                 ))}
             </nav>
@@ -172,7 +203,7 @@ export default function Authenticated({
                 <p>Solicitudes, firmas y seguimiento en un solo lugar.</p>
             </div>
             <div className="portal-sidebar-bottom">
-                <div className="portal-sidebar-user">
+                <Link className="portal-sidebar-user" href={route("profile.edit")} title="Mi perfil">
                     <Avatar
                         name={`${user.nombres} ${user.apellidos}`}
                         photo={user.profile_photo_url}
@@ -182,7 +213,8 @@ export default function Authenticated({
                         <strong>{user.nombres}</strong>
                         <span>{role}</span>
                     </div>
-                </div>
+                    <PortalIcon className="portal-sidebar-user-chevron" name="chevron" aria-hidden="true" />
+                </Link>
                 <Link
                     className="portal-logout"
                     href={route("logout")}
@@ -238,9 +270,16 @@ export default function Authenticated({
                             <PortalIcon name="menu" />
                         </button>
                         <span className="portal-breadcrumb">
-                            Portal interno
-                            <PortalIcon name="chevron" />
-                            <strong>{role}</strong>
+                            {isAdminDashboard ? <>
+                                <PortalIcon name="shield" />
+                                <strong>Administración</strong>
+                                <PortalIcon name="chevron" />
+                                <strong>Usuarios y accesos</strong>
+                            </> : <>
+                                Portal interno
+                                <PortalIcon name="chevron" />
+                                <strong>{role}</strong>
+                            </>}
                         </span>
                     </div>
                     <div className="portal-topbar-right">
@@ -258,18 +297,18 @@ export default function Authenticated({
                             onClick={toggleTheme}
                             aria-label={
                                 theme === "dark"
-                                    ? "Activar modo claro"
-                                    : "Activar modo oscuro"
+                                    ? "Modo oscuro activo. Cambiar a modo claro"
+                                    : "Modo claro activo. Cambiar a modo oscuro"
                             }
                             aria-pressed={theme === "dark"}
                             title={
                                 theme === "dark"
-                                    ? "Activar modo claro"
-                                    : "Activar modo oscuro"
+                                    ? "Modo oscuro · cambiar a claro"
+                                    : "Modo claro · cambiar a oscuro"
                             }
                         >
                             <PortalIcon
-                                name={theme === "dark" ? "sun" : "moon"}
+                                name={theme === "dark" ? "moon" : "sun"}
                             />
                         </button>
                         <VoiceAssistant />
@@ -280,7 +319,12 @@ export default function Authenticated({
                             </MenuButton>
                             <MenuItems anchor="bottom end" className="portal-account-popover">
                                 <div className="portal-account-summary">
-                                    <Avatar name={`${user.nombres} ${user.apellidos}`} photo={user.profile_photo_url} small />
+                                    <Avatar
+                                        className="portal-account-summary-avatar"
+                                        name={`${user.nombres} ${user.apellidos}`}
+                                        photo={user.profile_photo_url}
+                                        style={{ alignItems: "center", boxSizing: "border-box", display: "inline-flex", flex: "0 0 46px", height: 48, justifyContent: "center", lineHeight: 1, marginTop: 0, padding: 0, textAlign: "center", width: 46 }}
+                                    />
                                     <div><strong>{user.nombres} {user.apellidos}</strong><span>{role}</span></div>
                                 </div>
                                 <MenuItem>
@@ -297,7 +341,7 @@ export default function Authenticated({
                         </Menu>
                     </div>
                 </header>
-                <div className="portal-page-heading">
+                <div className={`portal-page-heading${isAdminDashboard ? " portal-page-heading-admin-dashboard" : ""}`}>
                     <div>
                         <p>EPSEL · GESTIÓN DE PERSONAL</p>
                         {header}
@@ -307,10 +351,10 @@ export default function Authenticated({
                         {role}
                     </span>
                 </div>
-                {flash?.success && (
-                    <div className="portal-flash" role="status">
+                {visibleFlash && (
+                    <div className={`portal-flash${flashLeaving ? " portal-flash-leaving" : ""}`} role="status">
                         <PortalIcon name="check" />
-                        {flash.success}
+                        {visibleFlash}
                     </div>
                 )}
                 <main className="portal-content" id="portal-content">

@@ -15,7 +15,7 @@ class ExitSlipNotifier
             'user_id' => $recipientId,
             'tipo' => 'SIGNATURE_REMINDER',
             'exit_slip_id' => $slip->id,
-            'titulo' => $slip->codigo.' · Firma pendiente',
+            'titulo' => 'Firma pendiente',
             'mensaje' => "La papeleta de {$slip->apellidos_nombres} espera tu acción: {$stage}.",
         ]);
         NotificationCreated::dispatch($recipientId, $notification->id);
@@ -36,7 +36,7 @@ class ExitSlipNotifier
         foreach (array_unique(array_filter($recipients)) as $id) {
             $notification = Notification::create([
                 'user_id' => $id, 'tipo' => 'STATUS_CHANGED', 'exit_slip_id' => $slip->id,
-                'titulo' => $slip->codigo.' · '.$slip->estado->label(),
+                'titulo' => 'Papeleta: '.$slip->estado->label(),
                 'mensaje' => 'La papeleta de '.$slip->apellidos_nombres.' cambió a '.$slip->estado->label().'.',
             ]);
             NotificationCreated::dispatch($id, $notification->id);

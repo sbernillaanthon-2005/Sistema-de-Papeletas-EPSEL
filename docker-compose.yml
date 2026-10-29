@@ -13,6 +13,7 @@ services:
     volumes:
       - ./src:/var/www/html
       - php_vendor:/var/www/html/vendor
+      - automatic_backups:/var/www/html/storage/app/private/backups/automatic
       - ./src/vendor:/opt/host-vendor:ro
       - ./docker/php/start-dev.sh:/usr/local/bin/epsel-start-dev:ro
       - ./openspec:/var/www/html/openspec:ro
@@ -157,11 +158,13 @@ services:
       target: development
     container_name: epsel_scheduler
     restart: unless-stopped
+    user: "www-data"
     working_dir: /var/www/html
     command: php artisan schedule:work
     volumes:
       - ./src:/var/www/html
       - php_vendor:/var/www/html/vendor
+      - automatic_backups:/var/www/html/storage/app/private/backups/automatic
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     networks:
       - epsel_net
@@ -177,7 +180,7 @@ services:
     container_name: epsel_node
     restart: unless-stopped
     working_dir: /var/www/html
-    command: sh -c "test -x node_modules/.bin/vite || npm ci; npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
     ports:
       - "${VITE_PORT:-5173}:5173"
     volumes:
@@ -193,6 +196,7 @@ networks:
     driver: bridge
 
 volumes:
+  automatic_backups:
   php_vendor:
   node_modules:
   pgdata:

@@ -32,6 +32,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin panel
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
+        Route::post('/areas', [UserController::class, 'storeArea'])->name('areas.store');
+        Route::put('/areas/{area}', [UserController::class, 'updateArea'])->name('areas.update');
+        Route::delete('/areas/{area}', [UserController::class, 'destroyArea'])->name('areas.destroy');
+        Route::post('/roles', [UserController::class, 'storeRole'])->name('roles.store');
+        Route::put('/roles/{customRole}', [UserController::class, 'updateRole'])->name('roles.update');
+        Route::delete('/roles/{customRole}', [UserController::class, 'destroyRole'])->name('roles.destroy');
+        Route::post('/responsible-heads', [UserController::class, 'storeResponsibleHead'])->name('responsible-heads.store');
+        Route::put('/responsible-heads/{responsibleHead}', [UserController::class, 'updateResponsibleHead'])->name('responsible-heads.update');
+        Route::delete('/responsible-heads/{responsibleHead}', [UserController::class, 'destroyResponsibleHead'])->name('responsible-heads.destroy');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -61,7 +70,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile & Signatures
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     Route::post('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'update'])->name('profile-photo.update');
     Route::delete('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'destroy'])->name('profile-photo.destroy');

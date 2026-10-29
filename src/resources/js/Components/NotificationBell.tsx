@@ -12,6 +12,14 @@ type Item = {
     leida_at: string | null;
 };
 
+function readableTitle(title: string): string {
+    // Las notificaciones anteriores conservan el código técnico en la base de datos.
+    const withoutCode = title.replace(/^PAP-\d{8}-[A-Z0-9]+\s*[·•-]\s*/i, "");
+    return withoutCode === title || withoutCode === "Firma pendiente"
+        ? withoutCode
+        : `Papeleta: ${withoutCode}`;
+}
+
 /**
  * Genera un tono de notificación de forma programática con la Web Audio API.
  * No requiere ningún archivo de audio externo.
@@ -249,7 +257,7 @@ export default function NotificationBell() {
                             >
                                 <span className="nb-item-dot" />
                                 <div className="nb-item-body">
-                                    <strong>{n.titulo}</strong>
+                                    <strong>{readableTitle(n.titulo)}</strong>
                                     <p>{n.mensaje}</p>
                                 </div>
                                 {n.exit_slip_id && (

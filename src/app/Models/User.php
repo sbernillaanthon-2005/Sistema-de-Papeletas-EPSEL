@@ -23,9 +23,11 @@ class User extends Authenticatable
         'email',
         'password',
         'rol',
+        'custom_role_id',
         'area_id',
         'cargo_designado',
         'jefe_id',
+        'jefe_responsable_nombre',
         'activo',
         'profile_photo_path',
     ];
@@ -61,7 +63,12 @@ class User extends Authenticatable
 
     public function getRolLabelAttribute(): ?string
     {
-        return $this->rol?->label();
+        return $this->customRole?->nombre ?? $this->rol?->label();
+    }
+
+    public function customRole(): BelongsTo
+    {
+        return $this->belongsTo(CustomRole::class);
     }
 
     public function area(): BelongsTo

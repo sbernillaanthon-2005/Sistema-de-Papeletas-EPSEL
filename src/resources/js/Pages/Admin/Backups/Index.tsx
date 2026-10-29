@@ -90,7 +90,11 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
                 headers: { "X-CSRF-TOKEN": csrf },
             });
             setBackups((prev) => prev.filter((b) => b.id !== backup.id));
-        } catch {
+        } catch (error) {
+            if (axios.isAxiosError(error) && typeof error.response?.data?.message === "string") {
+                setDeleteError(error.response.data.message);
+                return;
+            }
             setDeleteError(`No se pudo eliminar el respaldo "${backup.filename}". Inténtalo nuevamente.`);
         } finally {
             setDeletingId(null);
@@ -114,9 +118,6 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
                             Genera una copia binaria completa de PostgreSQL (.dump) en tiempo real.
                             Incluye esquemas, relaciones, usuarios y registros de transacciones con auto-eliminación temporal en servidor.
                         </p>
-                    </div>
-                    <div className="admin-module-hero-icon backup-hero-icon-wrapper">
-                        <PortalIcon name="shield" />
                     </div>
                 </section>
 
@@ -165,28 +166,32 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
 
                         <div className="backup-specs-grid">
                             <div className="backup-spec-item">
-                                <span className="spec-label">Formato de salida</span>
-                                <span className="spec-value">
-                                    <PortalIcon name="file" /> Custom Binary (.dump)
-                                </span>
+                                <span className="backup-spec-icon"><PortalIcon name="file" /></span>
+                                <div className="backup-spec-copy">
+                                    <span className="spec-label">Formato de salida</span>
+                                    <span className="spec-value">Custom Binary (.dump)</span>
+                                </div>
                             </div>
                             <div className="backup-spec-item">
-                                <span className="spec-label">Contenido exportado</span>
-                                <span className="spec-value">
-                                    <PortalIcon name="grid" /> Esquema DDL + Registros DML
-                                </span>
+                                <span className="backup-spec-icon"><PortalIcon name="grid" /></span>
+                                <div className="backup-spec-copy">
+                                    <span className="spec-label">Contenido exportado</span>
+                                    <span className="spec-value">Esquema DDL + Registros DML</span>
+                                </div>
                             </div>
                             <div className="backup-spec-item">
-                                <span className="spec-label">Política de servidor</span>
-                                <span className="spec-value">
-                                    <PortalIcon name="check" /> Auto-eliminación tras envío
-                                </span>
+                                    <span className="backup-spec-icon"><PortalIcon name="settings" /></span>
+                                <div className="backup-spec-copy">
+                                    <span className="spec-label">Política de servidor</span>
+                                    <span className="spec-value">Auto-eliminación tras envío</span>
+                                </div>
                             </div>
                             <div className="backup-spec-item">
-                                <span className="spec-label">Registro de seguridad</span>
-                                <span className="spec-value">
-                                    <PortalIcon name="users" /> Log de descarga auditado
-                                </span>
+                                <span className="backup-spec-icon"><PortalIcon name="users" /></span>
+                                <div className="backup-spec-copy">
+                                    <span className="spec-label">Registro de seguridad</span>
+                                    <span className="spec-value">Log de descarga auditado</span>
+                                </div>
                             </div>
                         </div>
 

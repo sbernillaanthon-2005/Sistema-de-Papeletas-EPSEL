@@ -95,10 +95,10 @@ function WeekChart({ data }: { data: WeekPoint[] }) {
     return (
         <div className="ds-chart-analytics">
             <div className="ds-chart-summary">
-                <div><span>REGISTRADAS</span><strong>{total}</strong><small>en las últimas 4 semanas</small></div>
-                <p className={total ? "ds-chart-peak" : "ds-chart-peak is-empty"}>{total ? <>Semana con más actividad: <b>{peak.label}</b> · {peak.value}</> : "Sin actividad registrada"}</p>
+                <div><span>FINALIZADAS</span><strong>{total}</strong><small>en las últimas 4 semanas</small></div>
+                <p className={total ? "ds-chart-peak" : "ds-chart-peak is-empty"}>{total ? <>Semana con más finalizaciones: <b>{peak.label}</b> · {peak.value}</> : "Sin finalizaciones registradas"}</p>
             </div>
-            <div className="ds-chart" aria-label={`${total} papeletas registradas en las últimas cuatro semanas`}>
+            <div className="ds-chart" aria-label={`${total} papeletas finalizadas en las últimas cuatro semanas`}>
                 {data.map((d) => (
                     <div key={d.label} className={`ds-chart-col ${d.value === 0 ? "is-empty" : ""}`}>
                         <span className="ds-chart-val">{d.value}</span>
@@ -132,7 +132,7 @@ export default function Dashboard({
 }>) {
     const user     = auth.user;
     const firstName = user.nombres.split(" ")[0];
-    const rolLabel  = roleLabels[user.rol] || user.rol_label;
+    const rolLabel  = user.rol_label || roleLabels[user.rol];
     const isCreator = ["practitioner", "worker"].includes(user.rol);
 
     const trendPositive = stats.trend >= 0;
@@ -236,8 +236,8 @@ export default function Dashboard({
                     {/* Mini gráfico de barras semanal */}
                     <div className="portal-card ds-chart-card">
                         <div className="ds-card-header">
-                            <h3>Actividad semanal</h3>
-                            <p>Papeletas registradas en las últimas 4 semanas</p>
+                            <h3>Finalizaciones por semana</h3>
+                            <p>Papeletas finalizadas en las últimas 4 semanas</p>
                         </div>
                         <div className="ds-card-body">
                             <WeekChart data={weekly} />

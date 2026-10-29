@@ -1,4 +1,6 @@
-import { CSSProperties, PropsWithChildren, useCallback, useEffect, useState } from "react";
+import { CSSProperties, PropsWithChildren, useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 import LoginIcon from "@/Components/LoginIcon";
 import PortalIcon from "@/Components/PortalIcon";
 import background from "../../images/Fondo de login.png";
@@ -13,28 +15,16 @@ function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
 }
 
 const CAROUSEL_SLIDES = [
-    {
-        src: background,
-        alt: "Instalaciones de agua potable de EPSEL",
-        position: "77% center",
-    },
-    {
-        src: mascotaValvula,
-        alt: "Mascota EPSEL junto a la válvula de agua",
-        position: "center center",
-    },
-    {
-        src: plantaCostera,
-        alt: "Planta de agua costera al amanecer",
-        position: "center center",
-    },
+    { src: background, alt: "Instalaciones de agua potable de EPSEL", position: "center center" },
+    { src: mascotaValvula, alt: "Mascota EPSEL junto a una válvula de agua", position: "center center" },
+    { src: plantaCostera, alt: "Planta de agua costera al amanecer", position: "center center" },
 ] as const;
-
-const CAROUSEL_INTERVAL_MS = 5000;
+gsap.registerPlugin(useGSAP);
 
 export default function LoginLayout({ children }: PropsWithChildren) {
     const [activeSlide, setActiveSlide] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
+    const pageRef = useRef<HTMLDivElement>(null);
+    const carouselRef = useRef<HTMLDivElement>(null);
     const [theme, setTheme] = useState<"light" | "dark">(() => {
         if (typeof window === "undefined") return "light";
 
@@ -50,33 +40,48 @@ export default function LoginLayout({ children }: PropsWithChildren) {
         window.localStorage.setItem("epsel-theme", theme);
     }, [theme]);
 
-    const goToSlide = useCallback((index: number) => {
-        setActiveSlide(index);
+    useEffect(() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const timer = window.setInterval(() => {
+            setActiveSlide((current) => (current + 1) % CAROUSEL_SLIDES.length);
+        }, 5000);
+        return () => window.clearInterval(timer);
     }, []);
 
-    useEffect(() => {
-        if (isPaused) return;
-        const timer = setInterval(() => {
-            setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
-        }, CAROUSEL_INTERVAL_MS);
-        return () => clearInterval(timer);
-    }, [isPaused]);
+    useGSAP(() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        gsap.timeline({ defaults: { ease: "power2.out" } })
+            .from(".login-brand", { y: -12, opacity: 0, duration: .5 })
+            .from(".login-content > .login-welcome, .login-content > .login-description, .login-content > .login-access-note, .login-content > .login-form, .login-content > .login-support", {
+                y: 16, opacity: 0, duration: .5, stagger: .09, clearProps: "all",
+            }, "-=.25");
+    }, { scope: pageRef });
+
+    useGSAP(() => {
+        if (!carouselRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const slides = carouselRef.current.querySelectorAll<HTMLElement>(".login-carousel-slide");
+        slides.forEach((slide, index) => {
+            if (index !== activeSlide) gsap.to(slide, { opacity: 0, duration: .8, overwrite: true });
+        });
+        gsap.fromTo(slides[activeSlide], { opacity: 0, scale: 1.03 }, {
+            opacity: 1, scale: 1.08, duration: 1.1, ease: "power2.out", overwrite: true,
+        });
+    }, { scope: carouselRef, dependencies: [activeSlide] });
 
     return (
-        <div className="login-page" data-theme={theme}>
+        <div className="login-page login-gsap" data-theme={theme} ref={pageRef}>
             <a href="#login-form" className="login-skip">
                 Ir al formulario de acceso
             </a>
             <div className="login-shell">
                 <section className="login-panel" aria-label="Acceso a EPSEL">
                     <header className="login-brand">
-                        <div>
-                            <span className="login-brand-name">
-                                EPSEL<span> S.A.</span>
+                        <div className="login-brand-lockup">
+                            <span className="login-brand-copy">
+                                <span className="login-brand-name">EPSEL<span> S.A.</span></span>
+                                <span className="login-brand-caption">SISTEMA DE PAPELETAS</span>
                             </span>
-                            <span className="login-brand-caption">
-                                SISTEMA DE PAPELETAS
-                            </span>
+                            <span className="login-brand-promise">Gestión eficiente<br />para un mejor servicio.</span>
                         </div>
                         <button
                             type="button"
@@ -99,27 +104,18 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                 <aside
                     className="login-visual"
                     aria-label="Sistema de gestión de papeletas"
-                    onMouseEnter={() => setIsPaused(true)}
-                    onMouseLeave={() => setIsPaused(false)}
                 >
-                    {/* Carrusel de fondo — crossfade entre 3 imágenes */}
-                    <div
-                        className="login-carousel"
-                        aria-label="Galería de instalaciones EPSEL"
-                        role="region"
-                    >
+                    {/* Fondo institucional */}
+                    <div className="login-carousel" aria-hidden="true" ref={carouselRef}>
                         {CAROUSEL_SLIDES.map((slide, index) => (
                             <img
                                 key={slide.alt}
-                                className={`login-visual-photo login-carousel-slide${
-                                    index === activeSlide ? " is-active" : ""
-                                }`}
+                                className={`login-visual-photo login-carousel-slide${index === activeSlide ? " is-active" : ""}`}
                                 src={slide.src}
-                                alt={slide.alt}
+                                alt=""
                                 decoding="async"
-                                fetchPriority={index === 0 ? "high" : "low"}
                                 style={{ objectPosition: slide.position }}
-                                aria-hidden={index !== activeSlide}
+                                aria-hidden="true"
                             />
                         ))}
                     </div>
@@ -127,10 +123,8 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                     <div className="login-visual-orbit login-visual-orbit-two" aria-hidden="true" />
                     <div className="login-visual-shade" />
                     <div className="login-visual-top">
-                        <span className="login-visual-tag">
-                            <span /> GESTIÓN INTERNA
-                        </span>
                         <span className="login-visual-location">
+                            <span className="login-location-pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
                             Lambayeque, Perú
                         </span>
                     </div>
@@ -166,37 +160,33 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                             className="login-steps"
                             aria-label="Proceso de una papeleta"
                         >
-                            {["Solicita", "Aprueba", "Continúa"].map(
-                                (step, index) => (
-                                    <div key={step}>
-                                        <span className="login-step-number">
-                                            0{index + 1}
-                                        </span>
-                                        <span>{step}</span>
-                                    </div>
-                                ),
-                            )}
-                        </div>
-                        {/* Dots de navegación del carrusel */}
-                        <div
-                            className="login-carousel-dots"
-                            role="tablist"
-                            aria-label="Seleccionar imagen del carrusel"
-                        >
-                            {CAROUSEL_SLIDES.map((slide, index) => (
-                                <button
-                                    key={slide.alt}
-                                    type="button"
-                                    role="tab"
-                                    className={`login-carousel-dot${
-                                        index === activeSlide ? " is-active" : ""
-                                    }`}
-                                    aria-label={`Imagen ${index + 1}: ${slide.alt}`}
-                                    aria-selected={index === activeSlide}
-                                    onClick={() => goToSlide(index)}
-                                />
+                            {[
+                                { title: "Solicita", detail: "Registra tu papeleta de forma simple.", icon: "file" as const },
+                                { title: "Aprueba", detail: "Sigue su gestión en tiempo real.", icon: "check" as const },
+                                { title: "Continúa", detail: "Retoma tu trabajo con tranquilidad.", icon: "grid" as const },
+                            ].map(({ title, detail, icon }, index) => (
+                                <div key={title}>
+                                    <span className="login-step-icon"><PortalIcon name={icon} /></span>
+                                    <span className="login-step-copy">
+                                        <small>0{index + 1}</small>
+                                        <strong>{title}</strong>
+                                        <em>{detail}</em>
+                                    </span>
+                                </div>
                             ))}
                         </div>
+                    </div>
+                    <div className="login-carousel-dots" role="group" aria-label="Cambiar imagen de fondo">
+                        {CAROUSEL_SLIDES.map((slide, index) => (
+                            <button
+                                key={slide.alt}
+                                type="button"
+                                className={`login-carousel-dot${index === activeSlide ? " is-active" : ""}`}
+                                aria-label={`Mostrar imagen ${index + 1}: ${slide.alt}`}
+                                aria-pressed={index === activeSlide}
+                                onClick={() => setActiveSlide(index)}
+                            />
+                        ))}
                     </div>
                 </aside>
             </div>

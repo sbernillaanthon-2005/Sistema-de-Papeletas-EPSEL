@@ -1,7 +1,9 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PortalIcon from "@/Components/PortalIcon";
+import PortalHeroCopy from "@/Components/PortalHeroCopy";
 import { Head, router, useForm } from "@inertiajs/react";
 import { FormEvent, useMemo, useRef, useState } from "react";
+import formatsBanner from "../../../../images/banner-formatos-agua-mascota-fullbleed.png";
 
 type Format = {
     id: number;
@@ -90,15 +92,13 @@ export default function Index({ formats, baseAvailable, currentPreviewUrl }: Pro
             <Head title="Formatos de papeleta" />
             <div className="portal-stack formats-page">
                 <section className="portal-hero formats-hero">
-                    <div>
-                        <p className="portal-hero-eyebrow">GESTIÓN DOCUMENTAL</p>
-                        <h2>El formato que ve todo el personal.</h2>
-                        <p>Publica un PDF de referencia, revísalo y mantén una única versión vigente para las papeletas.</p>
+                    <img className="formats-hero-background" src={formatsBanner} alt="" aria-hidden="true" />
+                    <PortalHeroCopy className="formats-hero-content" eyebrow="GESTIÓN DOCUMENTAL" lead="El formato que ve" accent="todo el personal." description="Publica un PDF de referencia, revísalo y mantén una única versión vigente para las papeletas.">
                         <div className="formats-hero-status">
                             <span><i /> {activeFormat ? "Formato personalizado activo" : baseAvailable ? "Formato operativo del sistema" : "Sin formato publicado"}</span>
                             <span><PortalIcon name="users" /> Disponible para todos los usuarios</span>
                         </div>
-                    </div>
+                    </PortalHeroCopy>
                     <button type="button" className="portal-btn portal-btn-white" onClick={openCreate}>
                         <PortalIcon name="plus" />
                         Subir nuevo formato
@@ -143,7 +143,7 @@ export default function Index({ formats, baseAvailable, currentPreviewUrl }: Pro
                             <div><span>VISTA PREVIA</span><h2>{activeFormat?.name || (baseAvailable ? "Autorización de salida para practicantes" : "No hay un formato publicado")}</h2><p>{activeFormat ? activeFormat.original_name : baseAvailable ? "Autorizacion_salida_practicante_EPSEL.pdf · Formato base vigente del sistema." : "Publica una nueva versión para que el personal pueda consultarla."}</p></div>
                             <div className="formats-preview-actions">
                                 {activeFormat ? <button type="button" className="portal-btn portal-btn-light" onClick={() => openEdit(activeFormat)}><PortalIcon name="edit" /> Editar</button> : baseAvailable ? <button type="button" className="portal-btn portal-btn-light" onClick={replaceBaseFormat}><PortalIcon name="edit" /> Editar</button> : null}
-                                {activeFormat ? <button type="button" className="formats-delete formats-current-delete" onClick={() => { if (window.confirm(`¿Eliminar el formato “${activeFormat.name}”?${baseAvailable ? " Se restaurará el formato base del sistema." : ""}`)) router.delete(route("admin.exit-slip-formats.destroy", activeFormat.id), { preserveScroll: true, onSuccess: () => setPreviewVersion((version) => version + 1) }); }}><PortalIcon name="close" /> Eliminar</button> : baseAvailable ? <button type="button" className="formats-delete formats-current-delete" onClick={() => { if (window.confirm("¿Eliminar el formato base? El personal verá un aviso hasta que publiques una nueva versión.")) router.delete(route("admin.exit-slip-formats.destroy-base"), { preserveScroll: true, onSuccess: () => setPreviewVersion((version) => version + 1) }); }}><PortalIcon name="close" /> Eliminar</button> : null}
+                                {activeFormat ? <button type="button" className="formats-delete formats-current-delete" onClick={() => { if (window.confirm(`¿Eliminar el formato “${activeFormat.name}”?${baseAvailable ? " Se restaurará el formato base del sistema." : ""}`)) router.delete(route("admin.exit-slip-formats.destroy", activeFormat.id), { preserveScroll: true, onSuccess: () => setPreviewVersion((version) => version + 1) }); }}><PortalIcon name="trash" /> Eliminar</button> : baseAvailable ? <button type="button" className="formats-delete formats-current-delete" onClick={() => { if (window.confirm("¿Eliminar el formato base? El personal verá un aviso hasta que publiques una nueva versión.")) router.delete(route("admin.exit-slip-formats.destroy-base"), { preserveScroll: true, onSuccess: () => setPreviewVersion((version) => version + 1) }); }}><PortalIcon name="trash" /> Eliminar</button> : null}
                                 {activeFormat || baseAvailable ? <a className="portal-btn portal-btn-light formats-open-preview" href={currentPreviewUrl} target="_blank" rel="noreferrer"><PortalIcon name="arrow" /> Abrir</a> : <button type="button" className="portal-btn portal-btn-primary" onClick={openCreate}><PortalIcon name="plus" /> Publicar formato</button>}
                             </div>
                         </div>
@@ -154,9 +154,9 @@ export default function Index({ formats, baseAvailable, currentPreviewUrl }: Pro
                         <h2>Publicación segura</h2>
                         <p>La vista previa muestra siempre el formato activo. El archivo se conserva en almacenamiento privado y cada cambio queda auditado.</p>
                         <ul>
-                            <li>Sube únicamente documentos PDF.</li>
-                            <li>Verifica la vista previa antes de activar.</li>
-                            <li>Conserva una sola versión vigente.</li>
+                            <li><span className="formats-guidance-item-icon"><PortalIcon name="file" /></span><span>Sube únicamente documentos PDF.</span></li>
+                            <li><span className="formats-guidance-item-icon"><PortalIcon name="eye" /></span><span>Verifica la vista previa antes de activar.</span></li>
+                            <li><span className="formats-guidance-item-icon"><PortalIcon name="clock" /></span><span>Conserva una sola versión vigente.</span></li>
                         </ul>
                     </aside>
                 </section>

@@ -45,7 +45,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'dni' => $user->dni,
                     'rol' => $user->rol?->value,
-                    'rol_label' => $user->rol?->label(),
+                    'rol_label' => $user->rol_label,
                     'area_id' => $user->area_id,
                     'cargo_designado' => $user->cargo_designado,
                     'has_signature' => $signatureId !== null,

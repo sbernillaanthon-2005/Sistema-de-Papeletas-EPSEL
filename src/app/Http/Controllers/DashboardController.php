@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\ExitSlip;
+use App\Models\ExitSlipTransition;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,9 @@ class DashboardController extends Controller
             $end   = $now->copy()->subWeeks($i)->endOfWeek();
             $weekly[] = [
                 'label' => $start->format('d/m'),
-                'value' => (clone $base)
+                'value' => ExitSlipTransition::query()
+                    ->whereIn('exit_slip_id', (clone $base)->select('id'))
+                    ->where('estado_destino', 'completed')
                     ->whereBetween('created_at', [$start, $end])
                     ->count(),
             ];
