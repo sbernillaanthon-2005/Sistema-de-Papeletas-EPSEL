@@ -9,6 +9,7 @@ type Item = {
     titulo: string;
     mensaje: string;
     exit_slip_id: string | null;
+    exit_slip_code: string | null;
     leida_at: string | null;
 };
 
@@ -164,7 +165,7 @@ export default function NotificationBell() {
             await refresh();
             if (url) {
                 setOpen(false);
-                router.visit(route("exit-slips.show", url));
+                router.visit(route("papeletas.show", url));
             }
         } catch {
             setFailed(true);
@@ -253,7 +254,7 @@ export default function NotificationBell() {
                                 disabled={busy}
                                 key={n.id}
                                 className={`nb-item ${n.leida_at ? "" : "nb-item--unread"}`}
-                                onClick={() => void read(n.id, n.exit_slip_id)}
+                                onClick={() => void read(n.id, n.exit_slip_code || n.exit_slip_id)}
                             >
                                 <span className="nb-item-dot" />
                                 <div className="nb-item-body">

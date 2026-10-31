@@ -34,6 +34,14 @@ function workflowUrl(ExitSlip $slip, string $action): string
     return '/exit-slips/'.$slip->id.'/actions/'.$action;
 }
 
+it('uses the readable slip code for detail and PDF while retaining old links', function () {
+    $this->actingAs($this->owner)->get('/papeletas/'.$this->slip->codigo)->assertOk();
+    $this->get('/exit-slips/'.$this->slip->id)->assertOk();
+    $this->get('/papeletas/'.$this->slip->codigo.'/pdf')->assertOk()->assertHeader('content-type', 'application/pdf');
+    $this->get('/papeletas/'.$this->slip->codigo.'/pdf?download=1')->assertOk()->assertHeader('content-disposition', 'attachment; filename='.$this->slip->codigo.'.pdf');
+    $this->actingAs(User::factory()->create())->get('/papeletas/'.$this->slip->codigo)->assertForbidden();
+});
+
 it('completes the ordered approval flow with immutable signatures, actor audit and PDF', function () {
     $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit'))->assertRedirect();
     $this->actingAs($this->hr)->post(workflowUrl($this->slip, 'approve'))->assertForbidden();
@@ -148,6 +156,65 @@ it('marks only the current recipients notifications as read', function () {
     $this->patch('/notifications/all/read')->assertNoContent();
     $this->getJson('/notifications')->assertJsonPath('unread', 0);
     expect(Notification::where('user_id', $this->head->id)->whereNull('leida_at')->count())->toBe(1);
+});
+
+it('delivers each workflow notice only to the requester and the responsible office', function () {
+    $otherHead = User::factory()->create(['rol' => 'area_head']);
+    $security = User::factory()->create(['rol' => 'security', 'activo' => true]);
+    $inactiveHr = User::factory()->create(['rol' => 'hr', 'activo' => false]);
+    $other = User::factory()->create(['rol' => 'worker']);
+
+    $assertRecipients = function (string $status, array $expected) {
+        expect(Notification::where('exit_slip_id', $this->slip->id)
+            ->where('tipo', 'STATUS_CHANGED')
+            ->where('titulo', 'Papeleta: '.\App\Domain\ExitSlip\Enums\ExitSlipStatus::from($status)->label())
+            ->pluck('user_id')->sort()->values()->all())
+            ->toBe(collect($expected)->sort()->values()->all());
+    };
+
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit'))->assertRedirect();
+    $assertRecipients('submitted', [$this->owner->id, $this->head->id]);
+
+    $this->actingAs($this->head)->post(workflowUrl($this->slip, 'approve'))->assertRedirect();
+    $assertRecipients('approved_by_area', [$this->owner->id]);
+
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit_to_hr'))->assertRedirect();
+    $assertRecipients('submitted_to_hr', [$this->owner->id, $this->hr->id]);
+
+    $this->actingAs($this->hr)->post(workflowUrl($this->slip, 'approve'))->assertRedirect();
+    $assertRecipients('approved_by_hr', [$this->owner->id]);
+
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit_to_security'))->assertRedirect();
+    $assertRecipients('submitted_to_security', [$this->owner->id, $security->id]);
+
+    foreach ([$otherHead, $other] as $unrelated) {
+        $this->actingAs($unrelated)->getJson('/notifications')
+            ->assertOk()->assertJsonPath('unread', 0)->assertJsonCount(0, 'items');
+    }
+    $this->actingAs($inactiveHr)->getJson('/notifications')->assertForbidden();
+});
+
+it('sends signature reminders only to the person responsible for the current stage', function () {
+    $security = User::factory()->create(['rol' => 'security']);
+    $otherHead = User::factory()->create(['rol' => 'area_head']);
+
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit'))->assertRedirect();
+    $this->artisan('exit-slips:send-reminders')->assertSuccessful();
+    expect(Notification::where('tipo', 'SIGNATURE_REMINDER')->pluck('user_id')->all())
+        ->toBe([$this->head->id]);
+
+    $this->actingAs($this->head)->post(workflowUrl($this->slip, 'approve'))->assertRedirect();
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit_to_hr'))->assertRedirect();
+    $this->artisan('exit-slips:send-reminders')->assertSuccessful();
+    expect(Notification::where('tipo', 'SIGNATURE_REMINDER')->pluck('user_id')->sort()->values()->all())
+        ->toBe(collect([$this->head->id, $this->hr->id])->sort()->values()->all());
+
+    $this->actingAs($this->hr)->post(workflowUrl($this->slip, 'approve'))->assertRedirect();
+    $this->actingAs($this->owner)->post(workflowUrl($this->slip, 'submit_to_security'))->assertRedirect();
+    $this->artisan('exit-slips:send-reminders')->assertSuccessful();
+    expect(Notification::where('tipo', 'SIGNATURE_REMINDER')->pluck('user_id')->sort()->values()->all())
+        ->toBe(collect([$this->head->id, $this->hr->id, $security->id])->sort()->values()->all());
+    expect(Notification::where('user_id', $otherHead->id)->exists())->toBeFalse();
 });
 
 it('scopes inboxes and counters before applying search filters', function () {

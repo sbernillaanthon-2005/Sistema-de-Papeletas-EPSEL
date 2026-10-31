@@ -233,7 +233,7 @@ export default function Solicitantes({
                                                 </td>
                                                 <td>
                                                     <Link
-                                                        href={route("exit-slips.show", item.id)}
+                                                        href={route("papeletas.show", item.codigo)}
                                                         className="portal-row-link"
                                                     >
                                                         Ver detalle

@@ -264,6 +264,24 @@ it('filters the directory without changing global summary totals', function () {
     $this->getJson('/admin/dashboard?rol=invalid')->assertUnprocessable();
 });
 
+it('builds six distinct calendar months at the end of a month', function () {
+    \Illuminate\Support\Carbon::setTestNow('2026-10-31 12:00:00');
+
+    try {
+        $admin = User::factory()->create(['rol' => 'admin']);
+
+        $this->actingAs($admin)->get('/admin/dashboard')->assertInertia(fn ($page) => $page
+            ->where('monthly.0.key', '2026-05')
+            ->where('monthly.1.key', '2026-06')
+            ->where('monthly.2.key', '2026-07')
+            ->where('monthly.3.key', '2026-08')
+            ->where('monthly.4.key', '2026-09')
+            ->where('monthly.5.key', '2026-10'));
+    } finally {
+        \Illuminate\Support\Carbon::setTestNow();
+    }
+});
+
 it('lets an administrator update a user name and surname', function () {
     $admin = User::factory()->create(['rol' => 'admin']);
     $person = User::factory()->create(['rol' => 'worker', 'nombres' => 'Nombre anterior', 'apellidos' => 'Apellido anterior']);

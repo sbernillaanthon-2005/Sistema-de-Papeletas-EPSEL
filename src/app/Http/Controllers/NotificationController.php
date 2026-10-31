@@ -11,7 +11,16 @@ class NotificationController extends Controller
     {
         $q = Notification::where('user_id', $request->user()->id);
 
-        return response()->json(['items' => (clone $q)->latest('id')->limit(30)->get(), 'unread' => (clone $q)->whereNull('leida_at')->count()]);
+        $items = (clone $q)->with('exitSlip:id,codigo')->latest('id')->limit(30)->get()
+            ->map(function (Notification $notification) {
+                $data = $notification->toArray();
+                $data['exit_slip_code'] = $notification->exitSlip?->codigo;
+                unset($data['exit_slip']);
+
+                return $data;
+            });
+
+        return response()->json(['items' => $items, 'unread' => (clone $q)->whereNull('leida_at')->count()]);
     }
 
     public function read(Request $request, string $id)

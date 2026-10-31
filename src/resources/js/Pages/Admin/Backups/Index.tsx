@@ -18,7 +18,6 @@ const backupSize = (bytes: number) => bytes < 1024 * 1024
 
 export default function Index({ automaticBackups = [] }: { automaticBackups?: AutomaticBackup[] }) {
     const errors = usePage().props.errors as { backup?: string };
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
     
     const [downloading, setDownloading] = useState(false);
     const [downloadStep, setDownloadStep] = useState<string>("");
@@ -51,7 +50,7 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
 
             const response = await axios.post(route("admin.backups.download"), {}, {
                 responseType: "blob",
-                headers: { "X-CSRF-TOKEN": csrf },
+                withXSRFToken: true,
             });
 
             clearTimeout(stepTimer);
@@ -87,10 +86,14 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
 
         try {
             await axios.delete(route("admin.backups.automatic.destroy", backup.id), {
-                headers: { "X-CSRF-TOKEN": csrf },
+                withXSRFToken: true,
             });
             setBackups((prev) => prev.filter((b) => b.id !== backup.id));
         } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 419) {
+                setDeleteError("La sesión caducó. Recarga la página, inicia sesión de nuevo si es necesario y vuelve a intentarlo.");
+                return;
+            }
             if (axios.isAxiosError(error) && typeof error.response?.data?.message === "string") {
                 setDeleteError(error.response.data.message);
                 return;

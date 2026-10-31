@@ -248,11 +248,12 @@ class ExitSlipController extends Controller
 
         $this->repository->save($slip);
 
-        return redirect()->route('exit-slips.show', $slip->id)->with('success', 'Borrador creado.');
+        return redirect()->route('papeletas.show', $slip->codigo)->with('success', 'Borrador creado.');
     }
 
     public function show(string $id)
     {
+        $id = $this->resolveSlipId($id);
         $slip = $this->repository->findById($id);
         if (! $slip) {
             abort(404);
@@ -388,7 +389,7 @@ class ExitSlipController extends Controller
 
             $this->repository->save($updatedSlip);
 
-            return redirect()->route('exit-slips.show', $id)->with('success', 'Borrador actualizado.');
+            return redirect()->route('papeletas.show', $slip->codigo)->with('success', 'Borrador actualizado.');
         });
     }
 
@@ -411,6 +412,7 @@ class ExitSlipController extends Controller
 
     public function generatePdf(string $id)
     {
+        $id = $this->resolveSlipId($id);
         $slip = $this->repository->findById($id);
         if (! $slip) {
             abort(404);
@@ -440,7 +442,18 @@ class ExitSlipController extends Controller
         $pdf->setPaper('A4', 'landscape');
         $pdf->setOption('isRemoteEnabled', false);
 
-        return $pdf->stream($slip->codigo.'.pdf');
+        return request()->boolean('download')
+            ? $pdf->download($slip->codigo.'.pdf')
+            : $pdf->stream($slip->codigo.'.pdf');
+    }
+
+    private function resolveSlipId(string $reference): string
+    {
+        if (str_starts_with($reference, 'PAP-')) {
+            return \App\Models\ExitSlip::query()->where('codigo', $reference)->firstOrFail()->id;
+        }
+
+        return $reference;
     }
 
     private function getSignatureBase64(?string $path): ?string

@@ -62,6 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/exit-slips/export', [\App\Http\Controllers\ExitSlipController::class, 'export'])->name('exit-slips.export');
     Route::get('/exit-slip-format/current', [ExitSlipFormatPreviewController::class, 'show'])->name('exit-slip-formats.current');
+    Route::get('/papeletas/{codigo}', [\App\Http\Controllers\ExitSlipController::class, 'show'])->name('papeletas.show');
+    Route::get('/papeletas/{codigo}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('papeletas.pdf');
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');
     Route::post('/exit-slips/{exitSlip}/actions/{action}', [\App\Http\Controllers\ExitSlipController::class, 'transition'])->name('exit-slips.transition');
     Route::get('/exit-slips/{exitSlip}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('exit-slips.pdf');

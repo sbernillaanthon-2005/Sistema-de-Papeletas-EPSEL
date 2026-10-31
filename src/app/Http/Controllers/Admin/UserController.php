@@ -62,16 +62,18 @@ class UserController extends Controller
             ];
         });
 
-        $firstMonth = now('America/Lima')->subMonths(5)->startOfMonth();
+        $currentMonth = now('America/Lima')->startOfMonth();
+        $firstMonth = $currentMonth->copy()->subMonths(5);
         $monthCounts = ExitSlip::query()
             ->where('created_at', '>=', $firstMonth)
             ->selectRaw("to_char(date_trunc('month', created_at), 'YYYY-MM') as month_key, count(*) as total")
             ->groupBy('month_key')
             ->pluck('total', 'month_key');
-        $monthly = collect(range(5, 0))->map(function (int $offset) use ($monthCounts) {
-            $month = now('America/Lima')->subMonths($offset)->startOfMonth();
+        $monthly = collect(range(5, 0))->map(function (int $offset) use ($monthCounts, $currentMonth) {
+            $month = $currentMonth->copy()->subMonths($offset);
 
             return [
+                'key' => $month->format('Y-m'),
                 'label' => ucfirst($month->translatedFormat('M')),
                 'value' => (int) ($monthCounts[$month->format('Y-m')] ?? 0),
             ];

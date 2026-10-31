@@ -262,7 +262,7 @@ export default function Dashboard({
                                 recentSlips.map((slip) => (
                                     <Link
                                         key={slip.id}
-                                        href={route("exit-slips.show", slip.id)}
+                                        href={route("papeletas.show", slip.codigo)}
                                         className="ds-slip-row"
                                     >
                                         <div className="ds-slip-info">

@@ -52,6 +52,13 @@ const stageLabels = [
     "Vigilancia",
     "Finalizada",
 ];
+const historyIcons: Record<string, "file" | "send" | "check" | "users" | "shield" | "clock"> = {
+    draft: "file", submitted: "send", approved_by_area: "check", submitted_to_hr: "users",
+    approved_by_hr: "check", submitted_to_security: "shield", completed: "check", rejected: "clock",
+};
+const formatTimestamp = (value: string) => `${formatDate(value)} · ${new Intl.DateTimeFormat("es-PE", {
+    hour: "2-digit", minute: "2-digit", timeZone: "America/Lima",
+}).format(new Date(value))}`;
 gsap.registerPlugin(useGSAP);
 export default function Show({
     exitSlip: slip,
@@ -78,6 +85,8 @@ export default function Show({
             { preserveScroll: true, onSuccess: () => setRejectOpen(false) },
         );
     const stage = stages.indexOf(slip.estado);
+    const stageDates = stages.map((state) => history.find((item) => item.estado_destino === state)?.created_at);
+    const pdfUrl = route("papeletas.pdf", slip.codigo);
     useGSAP(() => {
         if (!progressRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -113,29 +122,26 @@ export default function Show({
                         <PortalIcon name="arrow" />
                         Volver a la bandeja
                     </Link>
-                    <a
-                        className="portal-btn portal-btn-light"
-                        href={route("exit-slips.pdf", slip.id)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <PortalIcon name="eye" />
-                        Vista previa PDF
-                    </a>
                 </div>
-                <section className="portal-card slip-detail-overview">
+                <section className="portal-card slip-detail-overview" aria-label="Resumen de la papeleta">
                     <div className="portal-card-head slip-detail-overview-head">
-                        <div>
+                        <span className="slip-detail-hero-icon"><PortalIcon name="file" /></span>
+                        <div className="slip-detail-hero-copy">
                             <span className="slip-detail-eyebrow">Seguimiento de solicitud</span>
                             <h2>Papeleta de salida</h2>
                             <p>Solicitante: {slip.apellidos_nombres} · Emitida el {formatDate(slip.fecha_emision)}</p>
                             <small className="slip-detail-reference">Referencia: {slip.codigo}</small>
                         </div>
-                        <StatusBadge
-                            state={slip.estado}
-                            label={slip.estado_label}
-                        />
+                        <div className="slip-detail-hero-actions">
+                            <StatusBadge state={slip.estado} label={slip.estado_label} />
+                            <div className="slip-detail-pdf-actions">
+                                <a className="portal-btn portal-btn-light" href={pdfUrl} target="_blank" rel="noopener noreferrer"><PortalIcon name="eye" />Vista previa PDF</a>
+                                <a className="portal-btn portal-btn-primary" href={`${pdfUrl}?download=1`}><PortalIcon name="download" />Descargar PDF</a>
+                            </div>
+                        </div>
                     </div>
+                </section>
+                <section className="portal-card slip-detail-timeline" aria-label="Avance de la papeleta">
                     <div className="slip-detail-progress-wrap" ref={progressRef}><ol
                         className="portal-progress"
                         aria-label="Avance de la papeleta"
@@ -152,7 +158,8 @@ export default function Show({
                             >
                                 <span className="slip-detail-marker">{index < stage ? "✓" : index + 1}</span>
                                 {index < stages.length - 1 && <i className="slip-detail-connector" aria-hidden="true" />}
-                                {stageLabels[index]}
+                                <strong>{stageLabels[index]}</strong>
+                                {stageDates[index] && <small>{formatTimestamp(stageDates[index]!)}</small>}
                             </li>
                         ))}
                     </ol></div>
@@ -166,7 +173,8 @@ export default function Show({
                 <div className="portal-detail-grid slip-detail-content">
                     <div className="portal-stack">
                         <section className="portal-card slip-detail-panel">
-                            <div className="portal-card-head">
+                            <div className="portal-card-head slip-detail-section-head">
+                                <span className="slip-detail-section-icon"><PortalIcon name="file" /></span>
                                 <div>
                                     <h2>Información de la solicitud</h2>
                                     <p>
@@ -174,42 +182,24 @@ export default function Show({
                                         salida.
                                     </p>
                                 </div>
-                                <PortalIcon name="file" />
                             </div>
                             <div className="portal-card-body">
                                 <dl className="portal-data-grid">
-                                    {[
-                                        ["Solicitante", slip.apellidos_nombres],
-                                        ["Cargo", slip.designado],
-                                        [
-                                            "Fecha autorizada",
-                                            formatDate(slip.fecha_autorizada),
-                                        ],
-                                        [
-                                            "Horario solicitado",
-                                            slip.hora_desde
-                                                ? `${slip.hora_desde} — ${slip.hora_hasta}`
-                                                : "Sin horario especificado",
-                                        ],
-                                        ["Motivo", slip.motivo_label],
-                                        [
-                                            "Detalle del motivo",
-                                            slip.motivo_detalle,
-                                        ],
-                                    ].map(([label, value]) => (
-                                        <div
-                                            key={label}
-                                            className={
-                                                label === "Detalle del motivo"
-                                                    ? "portal-data-wide"
-                                                    : ""
-                                            }
-                                        >
-                                            <dt>{label}</dt>
-                                            <dd>{value || "—"}</dd>
+                                    {([
+                                        ["Solicitante", slip.apellidos_nombres, "user"],
+                                        ["Cargo", slip.designado, "folder"],
+                                        ["Fecha autorizada", formatDate(slip.fecha_autorizada), "clock"],
+                                        ["Horario solicitado", slip.hora_desde ? `${slip.hora_desde} — ${slip.hora_hasta || ""}` : "Sin horario especificado", "clock"],
+                                        ["Motivo", slip.motivo_label, "file"],
+                                        ["Detalle del motivo", slip.motivo_detalle, "edit"],
+                                    ] as const).map(([label, value, icon]) => (
+                                        <div key={label} className={label === "Motivo" || label === "Detalle del motivo" ? "portal-data-wide" : ""}>
+                                            <span className="slip-detail-field-icon"><PortalIcon name={icon} /></span>
+                                            <span><dt>{label}</dt><dd>{value || "—"}</dd></span>
                                         </div>
                                     ))}
                                 </dl>
+                                <p className="slip-detail-note"><PortalIcon name="check" />Puedes consultar esta papeleta y su historial en cualquier momento.</p>
                                 {Object.keys(form.errors).length > 0 &&
                                     !rejectOpen && (
                                         <div
@@ -314,7 +304,8 @@ export default function Show({
                             slip.estado === "submitted_to_security" ||
                             slip.estado === "completed") && (
                             <section className="portal-card slip-detail-panel">
-                                <div className="portal-card-head">
+                                <div className="portal-card-head slip-detail-section-head">
+                                    <span className="slip-detail-section-icon security"><PortalIcon name="shield" /></span>
                                     <div>
                                         <h2>Control de vigilancia</h2>
                                         <p>
@@ -322,29 +313,34 @@ export default function Show({
                                             personal.
                                         </p>
                                     </div>
-                                    <PortalIcon name="shield" />
                                 </div>
                                 <div className="portal-card-body">
                                     <dl className="portal-data-grid">
                                         <div>
+                                            <span className="slip-detail-field-icon"><PortalIcon name="send" /></span><span>
                                             <dt>Salida registrada</dt>
                                             <dd>
                                                 {slip.hora_salida ||
                                                     "Pendiente"}
                                             </dd>
+                                            </span>
                                         </div>
                                         <div>
+                                            <span className="slip-detail-field-icon"><PortalIcon name="arrow" /></span><span>
                                             <dt>Retorno registrado</dt>
                                             <dd>
                                                 {slip.hora_retorno 
                                                     ? slip.hora_retorno 
                                                     : (slip.estado === 'completed' ? "Sin retorno" : "Pendiente")}
                                             </dd>
+                                            </span>
                                         </div>
                                         {slip.observaciones && (
                                             <div className="portal-data-wide">
+                                                <span className="slip-detail-field-icon"><PortalIcon name="edit" /></span><span>
                                                 <dt>Observaciones</dt>
                                                 <dd>{slip.observaciones}</dd>
+                                                </span>
                                             </div>
                                         )}
                                     </dl>
@@ -448,7 +444,8 @@ export default function Show({
                         )}
                     </div>
                     <aside className="portal-card self-start slip-detail-panel slip-detail-history">
-                        <div className="portal-card-head">
+                        <div className="portal-card-head slip-detail-section-head">
+                            <span className="slip-detail-section-icon history"><PortalIcon name="clock" /></span>
                             <div>
                                 <h2>Historial de actividad</h2>
                                 <p>Seguimiento de cada etapa.</p>
@@ -458,28 +455,14 @@ export default function Show({
                             <ol className="portal-timeline">
                                 {history.map((item) => (
                                     <li key={item.id}>
-                                        <strong>
-                                            {statuses[item.estado_destino] ||
-                                                item.estado_destino}
-                                        </strong>
-                                        <small>
-                                            {item.actor
-                                                ? `${item.actor.nombres} ${item.actor.apellidos}`
-                                                : "Usuario no disponible"}
-                                        </small>
-                                        <small>
-                                            {formatDate(item.created_at)} ·{" "}
-                                            {new Intl.DateTimeFormat("es-PE", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                                timeZone: "America/Lima",
-                                            }).format(
-                                                new Date(item.created_at),
-                                            )}
-                                        </small>
-                                        {item.comentario && (
-                                            <p>{item.comentario}</p>
-                                        )}
+                                        <span className="slip-detail-history-icon"><PortalIcon name={historyIcons[item.estado_destino] || "file"} /></span>
+                                        <span className="slip-detail-history-entry">
+                                            <strong>{statuses[item.estado_destino] || item.estado_destino}</strong>
+                                            <small>{item.actor ? `${item.actor.nombres} ${item.actor.apellidos}` : "Usuario no disponible"}</small>
+                                            <small>{formatTimestamp(item.created_at)}</small>
+                                            {item.comentario && <p>{item.comentario}</p>}
+                                        </span>
+                                        <span className="slip-detail-history-badge">{item.estado_destino === "rejected" ? "Rechazado" : "Completado"}</span>
                                     </li>
                                 ))}
                             </ol>

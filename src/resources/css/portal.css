@@ -5789,6 +5789,62 @@
 .portal-app[data-theme="dark"] .slip-detail-overview .portal-progress li.done .slip-detail-connector { background: #36b6b3; }
 .portal-app[data-theme="dark"] .slip-detail-overview .portal-progress li span { background: #143b49; border-color: #456777; color: #d3edf1; }
 .portal-app[data-theme="dark"] .slip-detail-overview .portal-progress li.current span { background: #0a91a8; border-color: #0a91a8; color: #fff; box-shadow: 0 0 0 5px #1a4856; }
+
+/* Detalle de papeleta: tarjetas, avance e historial */
+.slip-detail-page { gap: 18px; }
+.slip-detail-toolbar { justify-content: flex-start; padding: 0 2px; }
+.slip-detail-overview-head { display: flex; align-items: center; gap: 22px; min-height: 138px; background: linear-gradient(112deg,#f4fbff 0%,#fff 52%,#f4fbff 100%); }
+.slip-detail-hero-icon,.slip-detail-section-icon,.slip-detail-field-icon,.slip-detail-history-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.slip-detail-hero-icon { width: 68px; height: 68px; border-radius: 17px; color: white; background: linear-gradient(145deg,#54aaff,#0869dd); box-shadow: 0 10px 22px #187de52a; }
+.slip-detail-hero-icon svg { width: 32px; height: 32px; }
+.slip-detail-hero-copy { min-width: 0; flex: 1; }
+.slip-detail-hero-copy p { color: #58738c; line-height: 1.5; }
+.slip-detail-hero-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.slip-detail-pdf-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.slip-detail-pdf-actions .portal-btn { min-height: 42px; white-space: nowrap; }
+.slip-detail-timeline { border-radius: 18px; box-shadow: 0 12px 30px #164c6e10; }
+.slip-detail-timeline .portal-progress { min-width: 780px; padding: 22px 18px 18px; gap: 0; }
+.slip-detail-timeline .portal-progress li { position: relative; color: #516d85; font-size: 12px; padding: 0 4px; }
+.slip-detail-timeline .portal-progress .slip-detail-connector { position: absolute; left: calc(50% + 20px); right: calc(-50% + 20px); top: 18px; height: 2px; background: #dae8ef; transform-origin: left center; }
+.slip-detail-timeline .portal-progress li.done .slip-detail-connector { background: #17b8b2; }
+.slip-detail-timeline .portal-progress .slip-detail-marker { position: relative; z-index: 1; width: 38px; height: 38px; margin-bottom: 8px; background: #f4f9fb; border-color: #cde0e9; color: #55758a; font-size: 14px; }
+.slip-detail-timeline .portal-progress li.done .slip-detail-marker { background: #b9f1e8; border-color: #81d9cc; color: #067e79; }
+.slip-detail-timeline .portal-progress li.current .slip-detail-marker { background: #007db7; border-color: #007db7; color: #fff; box-shadow: 0 0 0 5px #dff3f9; }
+.slip-detail-timeline .portal-progress strong,.slip-detail-timeline .portal-progress small { display: block; }
+.slip-detail-timeline .portal-progress strong { color: #143a59; font-weight: 700; }
+.slip-detail-timeline .portal-progress small { color: #6e86a0; font-size: 10px; line-height: 1.45; margin-top: 5px; }
+.slip-detail-content { grid-template-columns: minmax(0,2fr) minmax(300px,.88fr); gap: 14px; }
+.slip-detail-panel > .slip-detail-section-head { display: flex; align-items: center; justify-content: flex-start; gap: 13px; min-height: 74px; padding: 17px 23px; }
+.slip-detail-section-icon { width: 42px; height: 42px; border-radius: 11px; color: #fff; background: linear-gradient(145deg,#50aaff,#0b72df); box-shadow: 0 7px 17px #187de526; }
+.slip-detail-section-icon.security { background: linear-gradient(145deg,#20c9bd,#078c83); }
+.slip-detail-section-icon.history { color: #087fc2; background: #fff; }
+.slip-detail-section-icon svg { width: 21px; height: 21px; }
+.slip-detail-panel .portal-data-grid { gap: 10px; }
+.slip-detail-panel .portal-data-grid > div { display: flex; align-items: center; gap: 13px; padding: 12px; background: #f8fcfe; border-color: #d9eaf2; }
+.slip-detail-field-icon { width: 40px; height: 40px; border-radius: 10px; color: #087feb; background: #fff; box-shadow: 0 3px 10px #1c74c018; }
+.slip-detail-field-icon svg { width: 20px; height: 20px; }
+.slip-detail-panel .portal-data-grid dt { margin-bottom: 2px; }
+.slip-detail-panel .portal-data-grid dd { font-weight: 650; }
+.slip-detail-note { display: flex; align-items: center; gap: 8px; padding: 10px 12px; margin-top: 18px; border: 1px solid #cce4f9; border-radius: 10px; background: #f4faff; color: #55718c; font-size: 12px; }
+.slip-detail-note svg { width: 18px; height: 18px; color: #117fe2; flex: none; }
+.slip-detail-history .portal-timeline { padding: 12px 20px 20px; }
+.slip-detail-history .portal-timeline li { display: flex; gap: 11px; align-items: flex-start; padding: 11px 0 11px 16px; border-left: 2px solid #d6eafa; }
+.slip-detail-history .portal-timeline li::before { width: 8px; height: 8px; left: -5px; top: 26px; background: #008beb; box-shadow: 0 0 0 4px #e9f5ff; }
+.slip-detail-history-icon { width: 38px; height: 38px; border-radius: 10px; background: #eff7ff; color: #067de4; }
+.slip-detail-history-icon svg { width: 19px; height: 19px; }
+.slip-detail-history-entry { min-width: 0; flex: 1; }
+.slip-detail-history-badge { padding: 4px 7px; border-radius: 8px; background: #d9f8ee; color: #087e65; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.slip-detail-history li:has(.slip-detail-history-icon svg) p { margin-top: 6px; }
+@media (max-width: 1100px) { .slip-detail-content { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 700px) { .slip-detail-overview-head { align-items: flex-start; flex-wrap: wrap; padding: 20px; } .slip-detail-hero-icon { width: 54px; height: 54px; } .slip-detail-hero-actions { width: 100%; align-items: flex-start; } .slip-detail-pdf-actions { justify-content: flex-start; } .slip-detail-panel .portal-data-grid { grid-template-columns: minmax(0,1fr); } .slip-detail-panel .portal-data-grid .portal-data-wide { grid-column: auto; } }
+.portal-app[data-theme="dark"] .slip-detail-overview-head,.portal-app[data-theme="dark"] .slip-detail-panel > .slip-detail-section-head { background: linear-gradient(110deg,#103b49,#102b38); }
+.portal-app[data-theme="dark"] .slip-detail-timeline .portal-progress strong,.portal-app[data-theme="dark"] .slip-detail-panel .portal-data-grid dd { color: #edfaff; }
+.portal-app[data-theme="dark"] .slip-detail-timeline .portal-progress small,.portal-app[data-theme="dark"] .slip-detail-hero-copy p { color: #b6d3df; }
+.portal-app[data-theme="dark"] .slip-detail-panel .portal-data-grid > div,.portal-app[data-theme="dark"] .slip-detail-history-icon { background: #123743; border-color: #315665; }
+.portal-app[data-theme="dark"] .slip-detail-field-icon { background: #0c2b3b; color: #67c9ff; }
+.portal-app[data-theme="dark"] .slip-detail-note { background: #103743; border-color: #315665; color: #c3e4eb; }
+.portal-app[data-theme="dark"] .slip-detail-timeline .portal-progress .slip-detail-marker { background: #143b49; border-color: #456777; color: #d3edf1; }
+.portal-app[data-theme="dark"] .slip-detail-timeline .portal-progress li.current .slip-detail-marker { background: #0a91a8; color: #fff; }
 .portal-app[data-theme="dark"] .slips-list-card > .portal-card-head { background: linear-gradient(110deg,#102a38,#123747); }
 .portal-app[data-theme="dark"] .slips-hero-stats .portal-stat { background: transparent; border-color: rgba(175, 228, 241, .28); box-shadow: none; }
 .portal-app[data-theme="dark"] .slips-hero-stats .portal-stat-label,

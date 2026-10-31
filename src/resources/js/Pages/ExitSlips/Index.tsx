@@ -402,8 +402,8 @@ export default function Index({
                                                 <Link
                                                     className="portal-cell-code"
                                                     href={route(
-                                                        "exit-slips.show",
-                                                        slip.id,
+                                                        "papeletas.show",
+                                                        slip.codigo,
                                                     )}
                                                 >
                                                     <span>
@@ -459,8 +459,8 @@ export default function Index({
                                                 <Link
                                                     className="portal-row-link"
                                                     href={route(
-                                                        "exit-slips.show",
-                                                        slip.id,
+                                                        "papeletas.show",
+                                                        slip.codigo,
                                                     )}
                                                     aria-label={`Ver papeleta ${slip.codigo}`}
                                                 >

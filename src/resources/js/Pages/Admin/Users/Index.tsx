@@ -39,7 +39,7 @@ type Props = {
     summary: { total: number; active: number; heads: number; areas: number };
     filters: { q?: string; rol?: string; activo?: string };
     workflow: { key: string; label: string; value: number }[];
-    monthly: { label: string; value: number }[];
+    monthly: { key: string; label: string; value: number }[];
     accessByRole: { key: string; label: string; active: number; inactive: number }[];
     pendingWorkflow: { id: string; code: string; requester: string; stage: string; responsible: string; requires_signature: boolean }[];
     reminderInterval: number;
@@ -56,7 +56,7 @@ function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkf
             </form></div>
         </div>
         <div className="pending-legend"><span><i className="pending-dot pending-dot--signature" /> Requiere firma</span><span><i className="pending-dot" /> Requiere derivación</span><span>Los recordatorios llegan por la campana en tiempo real.</span></div>
-        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("exit-slips.show", item.id)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
+        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("papeletas.show", item.code)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
     </section>;
 }
 
@@ -99,7 +99,7 @@ function MonthlyChart({ data }: { data: Props["monthly"] }) {
         <div className="admin-chart-content">
             <div className="admin-month-chart" aria-label={"Solicitudes creadas por mes. " + total + " solicitudes durante los últimos seis meses."}>
             {data.map((item) => (
-                <div className={"admin-month-column " + (item.value === max && item.value > 0 ? "is-peak" : "")} key={item.label} aria-label={item.label + ": " + item.value + " solicitudes"}>
+                <div className={"admin-month-column " + (item.value === max && item.value > 0 ? "is-peak" : "")} key={item.key} aria-label={item.label + ": " + item.value + " solicitudes"}>
                     <strong>{item.value}</strong>
                     <span className="admin-month-track">
                         <span
