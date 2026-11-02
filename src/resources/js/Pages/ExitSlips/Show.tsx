@@ -221,7 +221,7 @@ export default function Show({
                                             )}
                                         >
                                             <PortalIcon name="edit" />
-                                            Editar borrador
+                                            Editar papeleta
                                         </Link>
                                     )}
                                     {can.submit && (

@@ -25,21 +25,6 @@ export default function LoginLayout({ children }: PropsWithChildren) {
     const [activeSlide, setActiveSlide] = useState(0);
     const pageRef = useRef<HTMLDivElement>(null);
     const carouselRef = useRef<HTMLDivElement>(null);
-    const [theme, setTheme] = useState<"light" | "dark">(() => {
-        if (typeof window === "undefined") return "light";
-
-        const savedTheme = window.localStorage.getItem("epsel-theme");
-        if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
-
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-    });
-
-    useEffect(() => {
-        window.localStorage.setItem("epsel-theme", theme);
-    }, [theme]);
-
     useEffect(() => {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const timer = window.setInterval(() => {
@@ -69,7 +54,7 @@ export default function LoginLayout({ children }: PropsWithChildren) {
     }, { scope: carouselRef, dependencies: [activeSlide] });
 
     return (
-        <div className="login-page login-gsap" data-theme={theme} ref={pageRef}>
+        <div className="login-page login-gsap" data-theme="light" ref={pageRef}>
             <a href="#login-form" className="login-skip">
                 Ir al formulario de acceso
             </a>
@@ -83,16 +68,6 @@ export default function LoginLayout({ children }: PropsWithChildren) {
                             </span>
                             <span className="login-brand-promise">Gestión eficiente<br />para un mejor servicio.</span>
                         </div>
-                        <button
-                            type="button"
-                            className="login-theme-toggle"
-                            onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
-                            aria-label={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
-                            aria-pressed={theme === "dark"}
-                            title={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
-                        >
-                            <PortalIcon name={theme === "dark" ? "sun" : "moon"} />
-                        </button>
                     </header>
                     <main className="login-content">{children}</main>
                     <footer className="login-footer">

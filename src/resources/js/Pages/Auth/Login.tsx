@@ -1,7 +1,7 @@
 import LoginIcon from "@/Components/LoginIcon";
 import LoginLayout from "@/Layouts/LoginLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
-import { CSSProperties, FormEventHandler, useState } from "react";
+import { CSSProperties, FormEventHandler, useEffect, useState } from "react";
 import mascot from "../../../images/EPSEL-saludo-transparente.gif";
 
 function DropLetters({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -30,11 +30,17 @@ export default function Login({
 }) {
     const [showPassword, setShowPassword] = useState(false);
     const [capsLock, setCapsLock] = useState(false);
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         dni: "",
         password: "",
         remember: false as boolean,
     });
+
+    useEffect(() => {
+        if (!errors.dni && !errors.password) return;
+        const timer = window.setTimeout(() => clearErrors("dni", "password"), 5000);
+        return () => window.clearTimeout(timer);
+    }, [errors.dni, errors.password]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -99,8 +105,10 @@ export default function Login({
                             placeholder="Tu número de DNI"
                             autoComplete="username"
                             inputMode="numeric"
+                            minLength={8}
                             maxLength={8}
                             pattern="[0-9]{8}"
+                            title="Ingresa exactamente 8 dígitos numéricos"
                             autoCapitalize="none"
                             spellCheck={false}
                             required
@@ -108,12 +116,13 @@ export default function Login({
                             aria-describedby={
                                 errors.dni ? "login-dni-error" : undefined
                             }
-                            onChange={(e) =>
+                            onChange={(e) => {
+                                clearErrors("dni", "password");
                                 setData(
                                     "dni",
                                     e.target.value.replace(/\D/g, "").slice(0, 8),
-                                )
-                            }
+                                );
+                            }}
                         />
                         {data.dni.length === 8 && (
                             <span className="login-field-ready" aria-label="DNI completo">
@@ -163,9 +172,10 @@ export default function Login({
                                 setCapsLock(e.getModifierState("CapsLock"))
                             }
                             onBlur={() => setCapsLock(false)}
-                            onChange={(e) =>
-                                setData("password", e.target.value)
-                            }
+                            onChange={(e) => {
+                                clearErrors("dni", "password");
+                                setData("password", e.target.value);
+                            }}
                         />
                         <button
                             className="login-password-toggle"

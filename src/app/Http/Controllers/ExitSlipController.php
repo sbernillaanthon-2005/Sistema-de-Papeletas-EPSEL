@@ -10,6 +10,7 @@ use App\Domain\ExitSlip\Repositories\ExitSlipRepositoryInterface;
 use App\Domain\ExitSlip\ValueObjects\TimeRange;
 use App\Infrastructure\ExitSlip\ExitSlipWorkflow;
 use App\Models\User;
+use App\Support\AuditLogger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
@@ -86,6 +87,7 @@ class ExitSlipController extends Controller
                 'estado' => $slip->estado->value, 'estado_label' => $slip->estado->label(),
                 'apellidos_nombres' => in_array($slip->estado->value, ['draft', 'submitted']) && $slip->user ? trim($slip->user->nombres.' '.$slip->user->apellidos) : $slip->apellidos_nombres,
                 'can_edit' => Gate::allows('update', $slip),
+                'can_delete' => Gate::allows('delete', $slip),
             ];
         });
 
@@ -270,7 +272,7 @@ class ExitSlipController extends Controller
 
         $model = \App\Models\ExitSlip::findOrFail($id);
         $can = [];
-        foreach (['update', 'submit', 'approve', 'reject', 'revert', 'security', 'submit_to_hr', 'submit_to_security'] as $ability) {
+        foreach (['update', 'delete', 'submit', 'approve', 'reject', 'revert', 'security', 'submit_to_hr', 'submit_to_security'] as $ability) {
             $can[$ability] = Gate::allows($ability, $model);
         }
 
@@ -330,9 +332,9 @@ class ExitSlipController extends Controller
             || \App\Models\ExitSlipFormatSetting::current()->base_available;
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id, AuditLogger $audit)
     {
-        return DB::transaction(function () use ($request, $id) {
+        return DB::transaction(function () use ($request, $id, $audit) {
             \App\Models\ExitSlip::whereKey($id)->lockForUpdate()->firstOrFail();
             $slip = $this->repository->findById($id);
             if (! $slip) {
@@ -389,7 +391,40 @@ class ExitSlipController extends Controller
 
             $this->repository->save($updatedSlip);
 
-            return redirect()->route('papeletas.show', $slip->codigo)->with('success', 'Borrador actualizado.');
+            $audit->record($request, 'exit_slip.updated', 'Papeleta actualizada por un administrador o su solicitante.', 'ExitSlip', $slip->id, [
+                'codigo' => $slip->codigo,
+                'estado' => $slip->status->value,
+                'antes' => [
+                    'designado' => $slip->designationSnapshot,
+                    'motivo_salida' => $slip->reason->value,
+                    'motivo_detalle' => $slip->reasonDetail,
+                    'fecha_autorizada' => $slip->authorizedDate->format('Y-m-d'),
+                ],
+                'despues' => [
+                    'designado' => $updatedSlip->designationSnapshot,
+                    'motivo_salida' => $updatedSlip->reason->value,
+                    'motivo_detalle' => $updatedSlip->reasonDetail,
+                    'fecha_autorizada' => $updatedSlip->authorizedDate->format('Y-m-d'),
+                ],
+            ]);
+
+            return redirect()->route('papeletas.show', $slip->codigo)->with('success', 'Papeleta actualizada.');
+        });
+    }
+
+    public function destroy(Request $request, string $id, AuditLogger $audit)
+    {
+        return DB::transaction(function () use ($request, $id, $audit) {
+            $slip = \App\Models\ExitSlip::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+            Gate::authorize('delete', $slip);
+            $audit->record($request, 'exit_slip.deleted', 'Papeleta eliminada por el administrador.', 'ExitSlip', $slip->id, [
+                'codigo' => $slip->codigo,
+                'estado' => $slip->estado->value,
+                'solicitante' => $slip->apellidos_nombres,
+            ]);
+            $slip->delete();
+
+            return redirect()->route('exit-slips.index')->with('success', 'Papeleta eliminada.');
         });
     }
 

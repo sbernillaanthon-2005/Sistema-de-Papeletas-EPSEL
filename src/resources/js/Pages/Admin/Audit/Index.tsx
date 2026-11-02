@@ -45,6 +45,7 @@ const actionLabel = (action: string) => ({
     "exit_slip.reminder_interval_updated": "Recordatorio actualizado",
     "exit_slip.created": "Papeleta creada",
     "exit_slip.updated": "Papeleta actualizada",
+    "exit_slip.deleted": "Papeleta eliminada",
     "exit_slip.submitted": "Papeleta enviada",
     "exit_slip.approved": "Papeleta aprobada",
     "exit_slip.rejected": "Papeleta rechazada",

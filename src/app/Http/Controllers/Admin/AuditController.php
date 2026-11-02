@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Area;
 use App\Models\CustomRole;
 use App\Models\ExitSlipFormat;
+use App\Models\ExitSlip;
 use App\Models\ResponsibleHead;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class AuditController extends Controller
             ResponsibleHead::class => ResponsibleHead::whereIn('id', $logs->getCollection()->where('subject_type', ResponsibleHead::class)->pluck('subject_id'))->get()->keyBy('id'),
             Area::class => Area::whereIn('id', $logs->getCollection()->where('subject_type', Area::class)->pluck('subject_id'))->get()->keyBy('id'),
             'exit_slip_format' => ExitSlipFormat::whereIn('id', $logs->getCollection()->where('subject_type', 'exit_slip_format')->pluck('subject_id')->filter(fn ($id) => is_numeric($id)))->get()->keyBy('id'),
+            'ExitSlip' => ExitSlip::whereIn('id', $logs->getCollection()->where('subject_type', 'ExitSlip')->pluck('subject_id'))->get()->keyBy('id'),
         ];
         $logs->through(function (AuditLog $log) use ($subjectModels) {
             $subject = ($subjectModels[$log->subject_type ?? ''] ?? null)?->get($log->subject_id);
@@ -54,6 +56,7 @@ class AuditController extends Controller
                 User::class => $subject ? trim($subject->nombres.' '.$subject->apellidos) : ($log->metadata['nombre'] ?? $log->metadata['dni'] ?? null),
                 CustomRole::class, ResponsibleHead::class, Area::class => $subject?->nombre ?? ($log->metadata['despues'] ?? $log->metadata['nombre'] ?? $log->metadata['antes'] ?? null),
                 'exit_slip_format' => $subject?->name ?? ($log->metadata['name'] ?? null),
+                'ExitSlip' => $subject?->codigo ?? ($log->metadata['codigo'] ?? null),
                 default => $log->subject_id,
             };
             return [

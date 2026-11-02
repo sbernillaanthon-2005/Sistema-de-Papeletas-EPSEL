@@ -16,6 +16,8 @@ import mascotReview from "../../../images/Mascota EPSEL revisa documentos.png";
 
 interface Slip {
     id: string;
+    can_edit: boolean;
+    can_delete: boolean;
     codigo: string;
     fecha_autorizada: string;
     motivo_label: string;
@@ -97,6 +99,16 @@ export default function Index({
     const [folder, setFolder] = useState(selectedFolder || "");
     const [folderSearch, setFolderSearch] = useState("");
     const [busy, setBusy] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const deleteSlip = (slip: Slip) => {
+        if (!window.confirm(`¿Eliminar la papeleta ${slip.codigo} de ${slip.apellidos_nombres}? Esta acción no se puede deshacer.`)) return;
+        setDeletingId(slip.id);
+        router.delete(route("exit-slips.destroy", slip.id), {
+            preserveScroll: true,
+            onFinish: () => setDeletingId(null),
+        });
+    };
 
     // Ref para controlar el debounce del buscador principal
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -456,17 +468,29 @@ export default function Index({
                                                 />
                                             </td>
                                             <td>
-                                                <Link
-                                                    className="portal-row-link"
-                                                    href={route(
-                                                        "papeletas.show",
-                                                        slip.codigo,
+                                                <div className="portal-slip-row-actions">
+                                                    <Link
+                                                        className="portal-row-link"
+                                                        href={route(
+                                                            "papeletas.show",
+                                                            slip.codigo,
+                                                        )}
+                                                        aria-label={`Ver papeleta ${slip.codigo}`}
+                                                    >
+                                                        Ver detalle
+                                                        <PortalIcon name="eye" />
+                                                    </Link>
+                                                    {slip.can_edit && (
+                                                        <Link className="portal-slip-icon-action portal-slip-icon-action--edit" href={route("exit-slips.edit", slip.id)} aria-label={`Editar papeleta ${slip.codigo}`} title="Editar papeleta">
+                                                            <PortalIcon name="edit" />
+                                                        </Link>
                                                     )}
-                                                    aria-label={`Ver papeleta ${slip.codigo}`}
-                                                >
-                                                    Ver detalle
-                                                    <PortalIcon name="eye" />
-                                                </Link>
+                                                    {slip.can_delete && (
+                                                        <button type="button" className="portal-slip-icon-action portal-slip-icon-action--delete" onClick={() => deleteSlip(slip)} disabled={deletingId !== null} aria-label={`Eliminar papeleta ${slip.codigo}`} title="Eliminar papeleta">
+                                                            <PortalIcon name="trash" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

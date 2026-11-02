@@ -6764,3 +6764,117 @@ html[data-theme="dark"] .admin-role-creator small { color: #a9c1c9; }
 .admin-role-add-button svg { width: 1rem; height: 1rem; }
 html[data-theme="dark"] .admin-role-add-button { background: #123b4b; border-color: #2a8399; color: #7be7f5; }
 html[data-theme="dark"] .admin-role-add-button:hover { background: #175166; }
+/* Panel de actividad: composicion compacta y adaptable */
+.ds-page-title span { display: inline-flex; border-radius: 999px; background: #dcecff; color: #075ba8; padding: 5px 10px; font-size: 11px; font-weight: 800; text-transform: none; }
+.ds-page-title h1 { margin-top: 7px; }
+.ds-page-title p { color: #5c7691; font-size: 13px; margin-top: 2px; text-transform: none; }
+.portal-app[data-theme="dark"] .ds-page-title p { color: #adcadb; }
+.ds-dashboard { gap: 14px; }
+.ds-intro { padding: 8px 2px 2px; }
+.ds-intro span { display: inline-flex; border-radius: 999px; background: #dcecff; color: #075ba8; padding: 6px 11px; font-size: 11px; font-weight: 800; }
+.ds-intro h2 { color: #092943; font-size: clamp(27px, 2.5vw, 34px); line-height: 1.15; margin: 7px 0 2px; }
+.ds-intro p { color: #5c7691; font-size: 14px; }
+.ds-dashboard .ds-hero { position: relative; overflow: hidden; min-height: 210px; border-radius: 22px; background: linear-gradient(90deg, rgba(2,35,77,.90) 0%, rgba(2,35,77,.56) 36%, rgba(2,35,77,.02) 72%), url('../images/Agua para Todos en EPSEL.png') center 48%/cover; padding: 34px; box-shadow: 0 13px 28px rgba(16,74,121,.15); }
+.ds-dashboard .ds-hero::after { content: none; }
+.ds-dashboard .ds-hero-text { position: relative; z-index: 1; max-width: 70%; }
+.ds-dashboard .ds-hero-text h2 { font-size: clamp(21px, 2vw, 27px); font-weight: 750; }
+.ds-dashboard .ds-hero-text p { font-size: 13px; }
+.ds-hero-art { display: none; }
+.ds-hero-art svg:first-child { width: 86px; height: 100px; filter: drop-shadow(0 6px 8px #001b3c); }
+.ds-hero-art svg:last-child { position: absolute; width: 37px; height: 37px; background: #0caa8f; border: 4px solid #c8ecff; border-radius: 50%; padding: 5px; right: 2px; bottom: 8px; }
+.ds-dashboard .ds-kpi-grid { gap: 12px; }
+.ds-dashboard .ds-kpi { min-height: 108px; padding: 16px; border-radius: 17px; align-items: center; box-shadow: 0 9px 22px rgba(13,66,110,.07); }
+.ds-dashboard .ds-kpi-icon { width: 48px; height: 48px; border-radius: 13px; }
+.ds-dashboard .ds-kpi-icon--blue { color: #0878e7; background: #dcecff; }
+.ds-dashboard .ds-kpi-icon--amber { color: #ec7c00; background: #fff0d8; }
+.ds-dashboard .ds-kpi-icon--teal { color: #7f30eb; background: #efe7ff; }
+.ds-dashboard .ds-kpi-icon--green { color: #119754; background: #dff5e7; }
+.ds-dashboard .ds-kpi-label { color: #4e6680; font-size: 11px; text-transform: none; letter-spacing: 0; }
+.ds-dashboard .ds-kpi-value { color: #092943; font-size: 29px; }
+.ds-dashboard .ds-kpi-hint { color: #657d96; }
+.ds-dashboard .ds-bottom-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: stretch; gap: 14px; }
+.ds-dashboard .ds-bottom-grid .portal-card { border-radius: 18px; overflow: hidden; box-shadow: 0 14px 28px rgba(14,66,113,.08); }
+.ds-dashboard .ds-card-header { align-items: center; min-height: 66px; background: linear-gradient(100deg, #f7fbff, #fff); }
+.ds-dashboard .ds-card-header h3 { color: #092943; font-size: 15px; font-weight: 750; }
+.ds-dashboard .ds-chart-card .ds-card-header { flex-direction: row; align-items: center; }
+.ds-dashboard .ds-card-body { padding: 16px 22px 20px; }
+.ds-card-icon { color: #1479e4; width: 28px; height: 28px; }
+.ds-card-icon svg { width: 100%; height: 100%; }
+.ds-line-chart { position: relative; width: 100%; }
+.ds-line-chart svg { display: block; width: 100%; height: 215px; overflow: visible; }
+.ds-line-grid { stroke: #dce7f0; stroke-width: 1; }
+.ds-line-axis { fill: #6b86a4; font-size: 11px; font-weight: 600; }
+.ds-line-count { fill: #086acb; font-size: 12px; font-weight: 800; }
+.ds-chart-total { position: absolute; top: 0; right: 0; background: #e5f1ff; color: #095cae; border-radius: 10px; padding: 7px 10px; font-size: 11px; font-weight: 650; }
+.ds-dashboard .ds-slip-row { min-height: 61px; padding: 10px 20px; gap: 11px; }
+.ds-dashboard .ds-recent-card .ds-card-header { min-height: 67px; }
+.ds-recent-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ds-recent-heading-icon { display: grid; place-items: center; flex: 0 0 29px; width: 29px; height: 29px; border-radius: 9px; background: #e7f1ff; color: #1776df; }
+.ds-recent-heading-icon svg { width: 17px; height: 17px; }
+.ds-dashboard .ds-recent-heading h3 { font-size: 15px; line-height: 1.2; }
+.ds-dashboard .ds-recent-heading p { font-size: 11px; margin: 2px 0 0; }
+.ds-dashboard .ds-recent-list { padding: 0 14px 10px; }
+.ds-dashboard .ds-slip-row { min-height: 58px; padding: 9px 8px; }
+.ds-dashboard .ds-slip-row:nth-child(even) { background: #f8fbff; }
+.ds-dashboard .ds-slip-row:hover { background: #eef6ff; }
+.ds-slip-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; color: #1678d9; background: #e9f3ff; border-radius: 50%; }
+.ds-slip-avatar { font-size: 11px; font-weight: 800; letter-spacing: -.2px; }
+.ds-slip-avatar--blue { color: #0968cc; background: #cfe6ff; }
+.ds-slip-avatar--violet { color: #5f39d1; background: #e1d8ff; }
+.ds-dashboard .ds-status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0; padding: 5px 9px; }
+.ds-dashboard .ds-status-badge svg { width: 11px; height: 11px; }
+.ds-dashboard .ds-see-all { color: #0969ca; font-weight: 700; }
+.ds-dashboard .ds-slip-info strong { color: #0b2c4c; font-weight: 700; }
+.ds-dashboard .ds-slip-info span { color: #6882a0; }
+.ds-dashboard .ds-slip-arrow { color: #1479e4; }
+.ds-dashboard .ds-status--completed { background: #d6f7e8; color: #087746; }
+@media (max-width: 1050px) { .ds-dashboard .ds-kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 760px) { .ds-dashboard .ds-bottom-grid { grid-template-columns: 1fr; } .ds-dashboard .ds-hero-text { max-width: 80%; } }
+@media (max-width: 520px) { .ds-dashboard .ds-kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; } .ds-dashboard .ds-kpi { padding: 12px; gap: 9px; min-height: 98px; } .ds-dashboard .ds-kpi-icon { width: 38px; height: 38px; flex-basis: 38px; } .ds-dashboard .ds-kpi-label { font-size: 10px; } .ds-dashboard .ds-kpi-value { font-size: 24px; } .ds-dashboard .ds-kpi-hint { font-size: 10px; } .ds-dashboard .ds-hero { min-height: 170px; padding: 21px; background-position: 56% center; } .ds-hero-art { right: -9px; opacity: .5; } .ds-dashboard .ds-hero-text { max-width: 90%; } .ds-dashboard .ds-slip-row { flex-wrap: wrap; } .ds-dashboard .ds-status-badge { margin-left: 43px; } }
+.portal-app[data-theme="dark"] .ds-intro h2, .portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-value, .portal-app[data-theme="dark"] .ds-dashboard .ds-card-header h3, .portal-app[data-theme="dark"] .ds-dashboard .ds-slip-info strong { color: #edf8ff; }
+.portal-app[data-theme="dark"] .ds-intro p, .portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-label, .portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-hint, .portal-app[data-theme="dark"] .ds-dashboard .ds-slip-info span { color: #adcadb; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-card-header { background: #123545; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-slip-row:hover { background: #173d4c; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-slip-row:nth-child(even) { background: #123545; }
+.portal-app[data-theme="dark"] .ds-line-grid { stroke: #355768; }
+.portal-app[data-theme="dark"] .ds-page-title span,
+.portal-app[data-theme="dark"] .ds-intro span { background: #153e55; color: #a5e8ff; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi { background: #102d3b; border-color: #315565; box-shadow: 0 9px 22px rgba(0, 0, 0, .15); }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi:hover { background: #153747; border-color: #4a8192; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-icon--blue { background: #183c60; color: #7bbdff; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-icon--amber { background: #49371f; color: #ffbf68; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-icon--teal { background: #342855; color: #c2a1ff; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-kpi-icon--green { background: #193f35; color: #6bdda4; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-chart-total { background: #18445c; color: #d7f2ff; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-card-header p,
+.portal-app[data-theme="dark"] .ds-line-axis { color: #afcad8; fill: #afcad8; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-see-all,
+.portal-app[data-theme="dark"] .ds-dashboard .ds-slip-arrow { color: #73d9ee; }
+.portal-app[data-theme="dark"] .ds-dashboard .ds-see-all:hover { color: #b4f2ff; }
+@media (prefers-reduced-motion: reduce) { .ds-dashboard *, .ds-dashboard *::before, .ds-dashboard *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.portal-slip-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .45rem;
+    white-space: nowrap;
+}
+
+.portal-slip-icon-action {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--p-border, #d8e5ed);
+    border-radius: .65rem;
+    background: var(--p-surface, #fff);
+    cursor: pointer;
+}
+
+.portal-slip-icon-action svg { width: 1.1rem; height: 1.1rem; }
+.portal-slip-icon-action--edit { color: #0875d1; }
+.portal-slip-icon-action--delete { color: #d52736; }
+.portal-slip-icon-action--edit:hover { background: rgba(8, 117, 209, .1); }
+.portal-slip-icon-action--delete:hover { background: rgba(213, 39, 54, .1); }
+.portal-slip-icon-action:disabled { opacity: .5; cursor: wait; }

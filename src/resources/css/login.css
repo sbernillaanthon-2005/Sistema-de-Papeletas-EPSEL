@@ -610,28 +610,6 @@
     }
 }
 
-/* Tema global: la preferencia compartida con el portal también controla el login. */
-.login-theme-toggle {
-    align-items: center;
-    background: rgba(121, 226, 231, .12);
-    border: 1px solid rgba(178, 241, 244, .22);
-    border-radius: 11px;
-    color: #9de7eb;
-    cursor: pointer;
-    display: inline-flex;
-    height: 38px;
-    justify-content: center;
-    margin-left: auto;
-    transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
-    width: 38px;
-}
-.login-theme-toggle:hover {
-    background: rgba(121, 226, 231, .22);
-    border-color: rgba(188, 249, 249, .42);
-    color: #f0ffff;
-    transform: translateY(-1px);
-}
-.login-theme-toggle svg { height: 18px; width: 18px; }
 .login-page[data-theme="light"] {
     --login-ink: #143d51;
     --login-muted: #637b89;
@@ -687,21 +665,12 @@
 .login-page[data-theme="light"] .login-checkbox { background: #fff; border-color: #abc8d0; }
 .login-page[data-theme="light"] .login-submit { box-shadow: 0 13px 24px rgba(8, 126, 151, .20); }
 .login-page[data-theme="light"] .login-support { border-top-color: #dcebee; }
-.login-page[data-theme="light"] .login-theme-toggle {
-    background: #edf8f9;
-    border-color: #cfe8eb;
-    color: #087e97;
-}
-.login-page[data-theme="light"] .login-theme-toggle:hover { background: #e0f4f5; border-color: #9bcfd5; color: #05687d; }
 .login-page[data-theme="light"] .login-visual { border-color: rgba(216, 246, 248, .65); }
 .login-page[data-theme="light"] .login-visual-shade {
     background: linear-gradient(180deg, rgba(7, 81, 112, .14) 0%, rgba(7, 84, 111, .19) 34%, rgba(7, 58, 84, .70) 100%);
 }
 .login-page[data-theme="light"] .login-visual-console { background: rgba(9, 71, 96, .54); }
 .login-page[data-theme="light"] .login-visual-assurance { background: rgba(3, 54, 74, .54); }
-@media (prefers-reduced-motion: reduce) {
-    .login-theme-toggle { transition: none; }
-}
 @media (max-width: 350px) {
     .login-panel {
         padding-inline: 17px;
@@ -1353,12 +1322,6 @@
     margin-left: 9px;
     padding-left: 18px;
 }
-.login-theme-toggle {
-    background: rgba(4, 60, 93, .28);
-    border-color: rgba(163, 236, 249, .5);
-    color: #fff;
-}
-.login-theme-toggle:hover { background: rgba(22, 137, 170, .48); color: #fff; }
 .login-content {
     margin: auto;
     max-width: 100%;
@@ -1557,7 +1520,6 @@
     .login-page[data-theme="light"] .login-brand-name { color: #fff; font-size: 21px; }
     .login-page[data-theme="light"] .login-brand-caption { color: #e8faff; font-size: 7px; }
     .login-brand-promise { display: none; }
-    .login-theme-toggle { height: 38px; width: 38px; }
     .login-panel {
         border-radius: 20px;
         justify-self: center;

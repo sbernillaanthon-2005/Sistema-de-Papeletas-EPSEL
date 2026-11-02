@@ -79,9 +79,10 @@ export default function Form({
     const charLeft    = 2000 - data.motivo_detalle.length;
     const charPercent = Math.min(100, (data.motivo_detalle.length / 2000) * 100);
     const isEdit      = !!exitSlip?.id;
+    const isAdminEdit = isEdit && auth.user.rol === "admin";
 
     return (
-        <AuthenticatedLayout header={<h1>{isEdit ? "Editar borrador" : "Nueva papeleta"}</h1>}>
+        <AuthenticatedLayout header={<h1>{isEdit ? "Editar papeleta" : "Nueva papeleta"}</h1>}>
             <Head title={isEdit ? "Editar papeleta" : "Nueva papeleta"} />
             <div className="portal-stack">
 
@@ -95,8 +96,8 @@ export default function Form({
                 <section className="portal-hero portal-form-hero pf-hero">
                     <div className="pf-hero-text">
                         <p className="portal-hero-eyebrow">SOLICITUD DE AUTORIZACIÓN</p>
-                        <h2>{isEdit ? "Edita tu borrador" : "Nueva papeleta de salida"}</h2>
-                        <p>Completa los datos y guarda el borrador para enviarlo a tu jefe.</p>
+                        <h2>{isEdit ? "Editar papeleta de salida" : "Nueva papeleta de salida"}</h2>
+                        <p>{isAdminEdit ? "Corrige los datos de la papeleta. Su estado y sus firmas se conservarán." : "Completa los datos y guarda el borrador para enviarlo a tu jefe."}</p>
                         {formatAvailable ? <a
                             className="pf-format-preview"
                             href={route("exit-slip-formats.current")}
@@ -266,7 +267,7 @@ export default function Form({
                                         <input
                                             id="fecha_autorizada"
                                             type="date"
-                                            min={today}
+                                            min={isEdit ? undefined : today}
                                             required
                                             value={data.fecha_autorizada}
                                             onChange={(e) => setData("fecha_autorizada", e.target.value)}
@@ -364,7 +365,7 @@ export default function Form({
                             <div className="pf-actions-bar">
                                 <p className="pf-actions-hint">
                                     <IconInfo />
-                                    Al guardar podrás revisar la vista previa en PDF antes de enviar a tu jefe.
+                                    {isAdminEdit ? "Los cambios quedarán registrados y se reflejarán en la vista previa del PDF." : "Al guardar podrás revisar la vista previa en PDF antes de enviar a tu jefe."}
                                 </p>
                                 <div className="pf-actions-btns">
                                     <Link className="portal-btn portal-btn-light" href={route("exit-slips.index")}>
@@ -386,7 +387,7 @@ export default function Form({
                     </form>
 
                     {/* Sidebar firma */}
-                    <aside className="portal-stack">
+                    {!isAdminEdit && <aside className="portal-stack">
                         <section className="portal-card">
                             <div className="pf-sidebar-header">
                                 <h3>Firma digital</h3>
@@ -396,7 +397,7 @@ export default function Form({
                                 <UpdateSignatureForm />
                             </div>
                         </section>
-                    </aside>
+                    </aside>}
                 </div>
             </div>
         </AuthenticatedLayout>

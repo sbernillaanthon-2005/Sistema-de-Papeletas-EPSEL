@@ -33,12 +33,18 @@ class ExitSlipPolicy
 
     public function update(User $user, ExitSlip $slip): bool
     {
-        return $this->create($user) && $user->id === $slip->user_id && $slip->estado === Status::DRAFT;
+        return ($user->activo && $user->rol === Role::ADMIN)
+            || ($this->create($user) && $user->id === $slip->user_id && $slip->estado === Status::DRAFT);
+    }
+
+    public function delete(User $user, ExitSlip $slip): bool
+    {
+        return $user->activo && $user->rol === Role::ADMIN;
     }
 
     public function submit(User $user, ExitSlip $slip): bool
     {
-        return $this->update($user, $slip);
+        return $this->create($user) && $user->id === $slip->user_id && $slip->estado === Status::DRAFT;
     }
 
     public function revert(User $user, ExitSlip $slip): bool

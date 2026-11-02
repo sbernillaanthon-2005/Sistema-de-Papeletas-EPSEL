@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/papeletas/{codigo}', [\App\Http\Controllers\ExitSlipController::class, 'show'])->name('papeletas.show');
     Route::get('/papeletas/{codigo}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('papeletas.pdf');
     Route::resource('exit-slips', \App\Http\Controllers\ExitSlipController::class)->except('destroy');
+    Route::delete('/exit-slips/{exitSlip}', [\App\Http\Controllers\ExitSlipController::class, 'destroy'])->name('exit-slips.destroy');
     Route::post('/exit-slips/{exitSlip}/actions/{action}', [\App\Http\Controllers\ExitSlipController::class, 'transition'])->name('exit-slips.transition');
     Route::get('/exit-slips/{exitSlip}/pdf', [\App\Http\Controllers\ExitSlipController::class, 'generatePdf'])->name('exit-slips.pdf');
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');

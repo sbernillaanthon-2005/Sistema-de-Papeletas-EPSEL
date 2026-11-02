@@ -2,6 +2,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import { PageProps } from "@/types";
 import { roleLabels } from "@/Components/PortalUI";
+import { useRef } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP);
 
 /* ── Types ── */
 interface Stats {
@@ -89,32 +94,22 @@ const pendingLabel: Record<string, string> = {
 
 /* ── Mini bar chart ── */
 function WeekChart({ data }: { data: WeekPoint[] }) {
-    const max = Math.max(...data.map((d) => d.value), 1);
     const total = data.reduce((sum, point) => sum + point.value, 0);
-    const peak = data.reduce((current, point) => point.value > current.value ? point : current, data[0]);
+    const max = Math.max(3, ...data.map((point) => point.value));
+    const points = data.map((point, index) => ({ x: 44 + index * 104, y: 148 - (point.value / max) * 108 }));
+    const path = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+    const area = `${path} L ${points[points.length - 1]?.x ?? 44} 148 L 44 148 Z`;
     return (
-        <div className="ds-chart-analytics">
-            <div className="ds-chart-summary">
-                <div><span>FINALIZADAS</span><strong>{total}</strong><small>en las últimas 4 semanas</small></div>
-                <p className={total ? "ds-chart-peak" : "ds-chart-peak is-empty"}>{total ? <>Semana con más finalizaciones: <b>{peak.label}</b> · {peak.value}</> : "Sin finalizaciones registradas"}</p>
-            </div>
-            <div className="ds-chart" aria-label={`${total} papeletas finalizadas en las últimas cuatro semanas`}>
-                {data.map((d) => (
-                    <div key={d.label} className={`ds-chart-col ${d.value === 0 ? "is-empty" : ""}`}>
-                        <span className="ds-chart-val">{d.value}</span>
-                        <div className="ds-chart-bar-wrap" title={`${d.label}: ${d.value} papeleta${d.value !== 1 ? "s" : ""}`}>
-                        <div
-                            className="ds-chart-bar"
-                            style={{
-                                height: d.value ? `${Math.max(Math.round((d.value / max) * 100), 12)}%` : "0%",
-                                minHeight: d.value ? "10px" : "0px",
-                            }}
-                        />
-                        </div>
-                        <span className="ds-chart-label">{d.label}</span>
-                    </div>
-                ))}
-            </div>
+        <div className="ds-line-chart" role="img" aria-label={`${total} papeletas finalizadas en las últimas cuatro semanas`}>
+            <div className="ds-chart-total">Finalizadas: <strong>{total}</strong></div>
+            <svg viewBox="0 0 400 190" preserveAspectRatio="none" aria-hidden="true">
+                <defs><linearGradient id="ds-week-fill" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#1688ee" stopOpacity=".32"/><stop offset="1" stopColor="#1688ee" stopOpacity="0"/></linearGradient></defs>
+                {[40, 76, 112, 148].map((y) => <line key={y} x1="44" y1={y} x2="356" y2={y} className="ds-line-grid" />)}
+                {[0, 1, 2, 3].map((tick) => <text key={tick} x="28" y={152 - tick * 36} className="ds-line-axis">{tick}</text>)}
+                <path d={area} fill="url(#ds-week-fill)" />
+                <path className="ds-line-path" d={path} fill="none" stroke="#1279e7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                {points.map((point, index) => <g key={`${data[index].label}-${index}`}><circle cx={point.x} cy={point.y} r="4.5" fill="#fff" stroke="#1279e7" strokeWidth="2.5" /><text x={point.x} y="178" textAnchor="middle" className="ds-line-axis">{data[index].label}</text>{data[index].value > 0 && <text x={point.x} y={point.y - 13} textAnchor="middle" className="ds-line-count">{data[index].value}</text>}</g>)}
+            </svg>
         </div>
     );
 }
@@ -136,6 +131,11 @@ export default function Dashboard({
     const isCreator = ["practitioner", "worker"].includes(user.rol);
 
     const trendPositive = stats.trend >= 0;
+    const dashboardRef = useRef<HTMLDivElement>(null);
+    useGSAP(() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        gsap.fromTo(".ds-hero, .ds-kpi, .ds-bottom-grid > .portal-card", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .55, stagger: .07, ease: "power2.out", clearProps: "all" });
+    }, { scope: dashboardRef });
 
     const greeting = (() => {
         const h = new Date().getHours();
@@ -145,9 +145,9 @@ export default function Dashboard({
     })();
 
     return (
-        <AuthenticatedLayout header={<h1>Mi panel</h1>}>
+        <AuthenticatedLayout header={<div className="ds-page-title"><span>EPSEL · {rolLabel}</span><h1>Mi panel</h1><p>Gestiona y realiza el seguimiento de tus papeletas de salida.</p></div>}>
             <Head title="Panel de control" />
-            <div className="portal-stack">
+            <div className="portal-stack ds-dashboard" ref={dashboardRef}>
 
                 {/* ── Hero saludo ── */}
                 <section className="portal-hero ds-hero">
@@ -156,6 +156,7 @@ export default function Dashboard({
                         <h2>{greeting}, {firstName}.</h2>
                         <p>Aquí tienes un resumen de la actividad de tus papeletas.</p>
                     </div>
+                    <div className="ds-hero-art" aria-hidden="true"><IconFile /><IconCheck /></div>
                     {isCreator && (
                         <Link className="portal-btn portal-btn-white" href={route("exit-slips.create")}>
                             + Nueva papeleta
@@ -247,7 +248,7 @@ export default function Dashboard({
                     {/* Últimas papeletas */}
                     <div className="portal-card ds-recent-card">
                         <div className="ds-card-header">
-                            <h3>Últimas papeletas</h3>
+                            <div className="ds-recent-heading"><span className="ds-recent-heading-icon"><IconFile /></span><div><h3>Últimas papeletas</h3><p>Registro de las últimas solicitudes</p></div></div>
                             <Link href={route("exit-slips.index")} className="ds-see-all">
                                 Ver bandeja <IconArrow />
                             </Link>
@@ -259,18 +260,19 @@ export default function Dashboard({
                                     <p>No hay papeletas registradas aún.</p>
                                 </div>
                             ) : (
-                                recentSlips.map((slip) => (
+                                recentSlips.map((slip, index) => (
                                     <Link
                                         key={slip.id}
                                         href={route("papeletas.show", slip.codigo)}
                                         className="ds-slip-row"
                                     >
+                                        <span className={`ds-slip-avatar ds-slip-avatar--${index % 2 ? "violet" : "blue"}`} aria-hidden="true">{slip.solicitante.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("")}</span>
                                         <div className="ds-slip-info">
                                             <strong>{slip.solicitante}</strong>
                                             <span>{slip.codigo} · {slip.motivo_label} · {slip.fecha_autorizada}</span>
                                         </div>
                                         <span className={`ds-status-badge ${STATUS_COLORS[slip.estado] ?? ""}`}>
-                                            {slip.estado_label}
+                                            {slip.estado === "completed" && <IconCheck />}{slip.estado_label}
                                         </span>
                                         <span className="ds-slip-arrow"><IconArrow /></span>
                                     </Link>

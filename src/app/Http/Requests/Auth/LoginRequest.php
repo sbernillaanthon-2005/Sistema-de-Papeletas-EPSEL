@@ -28,8 +28,15 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'dni' => ['required', 'string'],
+            'dni' => ['required', 'string', 'regex:/^[0-9]{8}$/'],
             'password' => ['required', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'dni.regex' => 'El DNI debe contener exactamente 8 dígitos numéricos.',
         ];
     }
 
@@ -48,7 +55,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'dni' => trans('auth.failed'),
+                'dni' => 'El DNI o la contraseña son incorrectos.',
             ]);
         }
 
