@@ -3,7 +3,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import PortalIcon from "@/Components/PortalIcon";
 import { useEffect, useRef, useState } from "react";
 import { Block, chapterText, guide, layers, workflow } from "./guide";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 import "../../../../css/documentation.css";
+
+gsap.registerPlugin(useGSAP);
 
 const normalize = (text: string) =>
     text
@@ -17,6 +21,8 @@ const initialChapter = () => {
 };
 
 function ContentBlock({ block }: { block: Block }) {
+    const [copied, setCopied] = useState(false);
+
     if (block.type === "text") return <p>{block.text}</p>;
     if (block.type === "list") {
         const Tag = block.ordered ? "ol" : "ul";
@@ -74,11 +80,29 @@ function ContentBlock({ block }: { block: Block }) {
                 </table>
             </div>
         );
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(block.text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="guide-code">
-            <div>
-                <PortalIcon name="file" />
-                {block.label}
+            <div className="guide-code-header">
+                <div className="guide-code-badge">
+                    <PortalIcon name="file" />
+                    <span>{block.label}</span>
+                </div>
+                <button
+                    type="button"
+                    className="guide-code-copy-btn"
+                    onClick={handleCopy}
+                    title="Copiar código al portapapeles"
+                >
+                    <PortalIcon name={copied ? "check" : "file"} />
+                    <span>{copied ? "¡Copiado!" : "Copiar"}</span>
+                </button>
             </div>
             <pre>
                 <code>{block.text}</code>
@@ -159,6 +183,7 @@ function ProcessDiagram({ architecture = false }: { architecture?: boolean }) {
 }
 
 export default function DocumentationIndex() {
+    const containerRef = useRef<HTMLDivElement>(null);
     const [selected, setSelected] = useState(initialChapter);
     const [query, setQuery] = useState("");
     const [copied, setCopied] = useState("");
@@ -176,6 +201,16 @@ export default function DocumentationIndex() {
         1,
         Math.ceil(chapterText(chapter).split(/\s+/).length / 200),
     );
+
+    // GSAP Stagger Entrance
+    useGSAP(() => {
+        if (containerRef.current) {
+            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+            tl.fromTo(".guide-hero", { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45 })
+              .fromTo(".guide-intro-strip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35 }, "-=0.2")
+              .fromTo(".guide-workspace", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45 }, "-=0.15");
+        }
+    }, []);
 
     useEffect(() => {
         const sync = () => {
@@ -233,7 +268,7 @@ export default function DocumentationIndex() {
     return (
         <AuthenticatedLayout header={<h1>Centro de conocimiento</h1>}>
             <Head title={`${chapter.title} · Guía técnica EPSEL`} />
-            <div className="guide-page">
+            <div ref={containerRef} className="guide-page">
                 <section className="guide-hero">
                     <div className="guide-hero-copy">
                         <p className="guide-kicker">
