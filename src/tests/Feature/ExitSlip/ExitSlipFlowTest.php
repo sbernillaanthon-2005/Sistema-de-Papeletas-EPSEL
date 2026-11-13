@@ -38,3 +38,57 @@ it('validates authorized date based on America/Lima timezone', function () {
     $response->assertRedirect();
     $this->assertDatabaseHas('exit_slips', ['user_id' => $this->practitioner->id, 'estado' => 'draft']);
 });
+
+it('auto resolves and persists jefe_id upon submit when user has null jefe_id but has area or responsible head', function () {
+    \Illuminate\Support\Facades\Storage::fake('private');
+    \Illuminate\Support\Facades\Event::fake([\App\Infrastructure\Broadcasting\Events\NotificationCreated::class]);
+
+    $area = \App\Models\Area::create(['nombre' => 'Sub Gerencia de Sistemas e Informática']);
+    $head = User::factory()->create([
+        'nombres' => 'Jefe',
+        'apellidos' => 'Sistemas',
+        'rol' => UserRole::AREA_HEAD->value,
+        'area_id' => $area->id,
+        'activo' => true,
+    ]);
+
+    $practitioner = User::factory()->create([
+        'rol' => UserRole::PRACTITIONER->value,
+        'area_id' => $area->id,
+        'jefe_responsable_nombre' => 'Jefe OSI',
+        'jefe_id' => null,
+    ]);
+
+    $path = 'signatures/'.$practitioner->id.'.png';
+    $image = \Illuminate\Http\UploadedFile::fake()->image('sig.png', 200, 100);
+    \Illuminate\Support\Facades\Storage::disk('private')->put($path, file_get_contents($image->getRealPath()));
+    \App\Models\Signature::create([
+        'user_id' => $practitioner->id,
+        'ruta_archivo' => $path,
+        'mime' => 'image/png',
+        'hash_sha256' => hash('sha256', \Illuminate\Support\Facades\Storage::disk('private')->get($path)),
+    ]);
+
+    $todayLima = Carbon::now('America/Lima')->startOfDay();
+    $payload = [
+        'tipo_plantilla' => 'practitioner',
+        'fecha_emision' => $todayLima->format('Y-m-d'),
+        'designado' => 'Practicante',
+        'motivo_salida' => 'personal',
+        'motivo_detalle' => 'Trámite urgente',
+        'fecha_autorizada' => $todayLima->format('Y-m-d'),
+        'hora_desde' => '08:00',
+        'hora_hasta' => '12:00',
+    ];
+
+    $this->actingAs($practitioner)->post('/exit-slips', $payload)->assertRedirect();
+    $slip = \App\Models\ExitSlip::where('user_id', $practitioner->id)->firstOrFail();
+
+    $response = $this->actingAs($practitioner)
+        ->post('/exit-slips/'.$slip->id.'/actions/submit');
+
+    $response->assertRedirect();
+    $practitioner->refresh();
+    expect($practitioner->jefe_id)->toBe($head->id);
+    expect($slip->fresh()->estado->value)->toBe('submitted');
+});

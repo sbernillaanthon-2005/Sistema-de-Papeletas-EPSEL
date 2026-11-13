@@ -28,6 +28,14 @@ class ExitSlipWorkflow
             try {
                 if ($action === 'submit') {
                     if (! $actor->jefe || ! $actor->jefe->activo || $actor->jefe->rol->value !== 'area_head' || $actor->jefe_id === $actor->id) {
+                        $resolvedHeadId = $this->resolveActorHead($actor);
+                        if ($resolvedHeadId) {
+                            $actor->update(['jefe_id' => $resolvedHeadId]);
+                            $actor->load('jefe');
+                        }
+                    }
+
+                    if (! $actor->jefe || ! $actor->jefe->activo || $actor->jefe->rol->value !== 'area_head' || $actor->jefe_id === $actor->id) {
                         throw new \DomainException('Necesitas un jefe de Área activo asignado para enviar la papeleta.');
                     }
                     if ($slip->fecha_autorizada->toDateString() < now('America/Lima')->toDateString()) {
@@ -80,5 +88,54 @@ class ExitSlipWorkflow
         }
 
         return $path;
+    }
+
+    private function resolveActorHead(User $actor): ?string
+    {
+        if ($actor->area_id) {
+            $head = User::query()
+                ->where('rol', 'area_head')
+                ->where('activo', true)
+                ->where('area_id', $actor->area_id)
+                ->where('id', '!=', $actor->id)
+                ->first(['id']);
+            if ($head) {
+                return $head->id;
+            }
+        }
+
+        if ($actor->jefe_responsable_nombre) {
+            $normalize = fn (string $v) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $v)));
+            $norm = $normalize($actor->jefe_responsable_nombre);
+
+            $head = User::query()
+                ->where('rol', 'area_head')
+                ->where('activo', true)
+                ->where('id', '!=', $actor->id)
+                ->with('area')
+                ->get()
+                ->first(function (User $h) use ($norm, $normalize) {
+                    $fullName = $normalize($h->nombres.' '.$h->apellidos);
+                    if ($fullName === $norm) {
+                        return true;
+                    }
+                    $area = $h->area ? $normalize($h->area->nombre) : '';
+                    return (str_contains($norm, 'osi') && (str_contains($area, 'sistemas') || str_contains($area, 'informática')))
+                        || (str_contains($norm, 'rrhh') && str_contains($area, 'recursos humanos'))
+                        || (str_contains($norm, 'oper') && str_contains($area, 'operacion'));
+                });
+
+            if ($head) {
+                return $head->id;
+            }
+        }
+
+        $heads = User::query()
+            ->where('rol', 'area_head')
+            ->where('activo', true)
+            ->where('id', '!=', $actor->id)
+            ->get(['id']);
+
+        return $heads->count() === 1 ? $heads->first()->id : null;
     }
 }

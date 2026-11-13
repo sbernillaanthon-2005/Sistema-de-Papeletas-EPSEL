@@ -316,7 +316,7 @@ class UserController extends Controller
             'rol' => $baseRole,
             'custom_role_id' => $customRole?->id,
             'area_id' => $request->area_id,
-            'jefe_id' => $baseRole === UserRole::AREA_HEAD->value ? null : $this->resolveHeadId($headName),
+            'jefe_id' => $baseRole === UserRole::AREA_HEAD->value ? null : $this->resolveHeadId($headName, null, $request->area_id),
             'jefe_responsable_nombre' => $headName,
             'activo' => true,
         ]);
@@ -367,7 +367,8 @@ class UserController extends Controller
         $changes['custom_role_id'] = $customRole?->id;
         $headName = trim((string) $request->input('jefe_responsable_nombre')) ?: null;
         $changes['jefe_responsable_nombre'] = $headName;
-        $changes['jefe_id'] = $baseRole === UserRole::AREA_HEAD->value ? null : $this->resolveHeadId($headName, $user->id);
+        $targetAreaId = $changes['area_id'] ?? $user->area_id;
+        $changes['jefe_id'] = $baseRole === UserRole::AREA_HEAD->value ? null : $this->resolveHeadId($headName, $user->id, $targetAreaId);
         if ($request->filled('password')) {
             $changes['password'] = Hash::make($validated['password']);
         }
@@ -380,18 +381,64 @@ class UserController extends Controller
         return back()->with('success', 'Usuario actualizado correctamente.');
     }
 
-    private function resolveHeadId(?string $name, ?string $excludedId = null): ?string
+    private function resolveHeadId(?string $name, ?string $excludedId = null, ?string $areaId = null): ?string
     {
         if (! $name) {
             return null;
         }
 
         $normalize = fn (string $value) => mb_strtolower(trim(preg_replace('/\s+/u', ' ', $value)));
-        $matches = User::query()->where('rol', UserRole::AREA_HEAD->value)->where('activo', true)
-            ->get(['id', 'nombres', 'apellidos'])
-            ->filter(fn (User $head) => $head->id !== $excludedId && $normalize($head->nombres.' '.$head->apellidos) === $normalize($name));
+        $normName = $normalize($name);
 
-        return $matches->count() === 1 ? $matches->first()->id : null;
+        // 1. Direct match on active area_head by full name (e.g. "Jefe Sistemas")
+        $matches = User::query()->where('rol', UserRole::AREA_HEAD->value)->where('activo', true)
+            ->when($excludedId, fn ($q) => $q->where('id', '!=', $excludedId))
+            ->get(['id', 'nombres', 'apellidos'])
+            ->filter(fn (User $head) => $normalize($head->nombres.' '.$head->apellidos) === $normName);
+
+        if ($matches->count() === 1) {
+            return $matches->first()->id;
+        }
+
+        // 2. If an area is assigned, match active area_head in that same area
+        if ($areaId) {
+            $areaHead = User::query()->where('rol', UserRole::AREA_HEAD->value)->where('activo', true)
+                ->where('area_id', $areaId)
+                ->when($excludedId, fn ($q) => $q->where('id', '!=', $excludedId))
+                ->first(['id']);
+
+            if ($areaHead) {
+                return $areaHead->id;
+            }
+        }
+
+        // 3. Keyword / acronym match (e.g. "OSI" matches "Oficina de Sistemas e Informática" / "Sub Gerencia de Sistemas e Informática")
+        $keywordMatch = User::query()->where('rol', UserRole::AREA_HEAD->value)->where('activo', true)
+            ->whereNotNull('area_id')
+            ->when($excludedId, fn ($q) => $q->where('id', '!=', $excludedId))
+            ->with('area')
+            ->get()
+            ->first(function (User $head) use ($normName, $normalize) {
+                $areaName = $head->area ? $normalize($head->area->nombre) : '';
+                return (str_contains($normName, 'osi') && (str_contains($areaName, 'sistemas') || str_contains($areaName, 'informática')))
+                    || (str_contains($normName, 'rrhh') && str_contains($areaName, 'recursos humanos'))
+                    || (str_contains($normName, 'oper') && str_contains($areaName, 'operacion'));
+            });
+
+        if ($keywordMatch) {
+            return $keywordMatch->id;
+        }
+
+        // 4. Fallback: single active area_head in the system
+        $allActiveHeads = User::query()->where('rol', UserRole::AREA_HEAD->value)->where('activo', true)
+            ->when($excludedId, fn ($q) => $q->where('id', '!=', $excludedId))
+            ->get(['id']);
+
+        if ($allActiveHeads->count() === 1) {
+            return $allActiveHeads->first()->id;
+        }
+
+        return null;
     }
 
     public function destroy(Request $request, string $id, AuditLogger $audit)
