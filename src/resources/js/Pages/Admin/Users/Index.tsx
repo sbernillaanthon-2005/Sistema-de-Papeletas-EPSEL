@@ -15,6 +15,7 @@ import {
     PaginationBar,
     roleLabels,
 } from "@/Components/PortalUI";
+import adminHeroBanner from "../../../../images/Banner azul de agua con mascota EPSel.png";
 type Person = {
     id: string;
     nombres: string;
@@ -50,15 +51,104 @@ gsap.registerPlugin(useGSAP);
 function PendingWorkflow({ data, reminderInterval }: { data: Props["pendingWorkflow"]; reminderInterval: number }) {
     const reminder = useForm({ minutes: reminderInterval });
     const signing = data.filter((item) => item.requires_signature);
-    return <section className="portal-card pending-workflow admin-priority-panel" aria-label="Seguimiento de firmas pendientes">
-        <div className="pending-workflow-head"><div className="pending-title-group"><span className="pending-file-icon"><PortalIcon name="file" /></span><div><p>CONTROL DE PROCESO</p><div className="pending-title-line"><h2>Papeletas pendientes de completar</h2><strong className="pending-count">{data.length} {data.length === 1 ? "pendiente" : "pendientes"}</strong></div><span>{signing.length} esperando una firma · {data.length} detenidas en total</span></div></div>
-            <div className="pending-reminder-side"><span>Los recordatorios llegan por la campana en tiempo real.</span><form className="reminder-control" onSubmit={(event) => { event.preventDefault(); reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true }); }}>
-                <label htmlFor="reminder-minutes">Recordar cada</label><input id="reminder-minutes" type="number" min="1" max="1440" value={reminder.data.minutes} onChange={(event) => reminder.setData("minutes", Number(event.target.value))} /><span>min</span><button className="portal-btn portal-btn-primary" disabled={reminder.processing}>Guardar</button>
-            </form></div>
-        </div>
-        <div className="pending-legend"><span><i className="pending-dot pending-dot--signature" /> Requiere firma</span><span><i className="pending-dot" /> Requiere derivación</span><span>Los recordatorios llegan por la campana en tiempo real.</span></div>
-        {data.length ? <div className="pending-list">{data.map((item) => <Link key={item.id} href={route("papeletas.show", item.code)} className="pending-row" title={`Abrir ${item.code}`}><span className="pending-code">{item.code}</span><span className="pending-route"><b>{item.requester}</b><i /><strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>{item.stage}</strong><i /><b>{item.responsible}</b></span></Link>)}</div> : <div className="pending-empty"><PortalIcon name="check" /> No hay papeletas detenidas. El flujo está al día.</div>}
-    </section>;
+    const presets = [15, 30, 60, 120];
+
+    return (
+        <section className="adm-v3-sla-panel" aria-label="Seguimiento de firmas pendientes">
+            <div className="adm-v3-sla-head">
+                <div className="adm-v3-sla-title-group">
+                    <span className={`adm-v3-sla-icon ${data.length > 0 ? "is-pending" : ""}`}>
+                        <PortalIcon name={data.length > 0 ? "alert" : "shield"} />
+                    </span>
+                    <div className="adm-v3-sla-titles">
+                        <h3>
+                            <span>Monitor de firmas y flujo de aprobación</span>
+                            <span className={`adm-v3-hero-badge ${data.length > 0 ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                {data.length === 0 ? "Flujo al día" : `${data.length} en espera`}
+                            </span>
+                        </h3>
+                        <p>
+                            {data.length === 0
+                                ? "No hay papeletas detenidas. Todas las solicitudes avanzan a tiempo en cada etapa."
+                                : `${signing.length} esperando firma de jefatura/RRHH · ${data.length} pendientes en total`}
+                        </p>
+                    </div>
+                </div>
+
+                <form
+                    className="adm-v3-sla-reminder-form"
+                    onSubmit={(event) => {
+                        event.preventDefault();
+                        reminder.put(route("admin.reminder-settings.update"), { preserveScroll: true });
+                    }}
+                >
+                    <span className="adm-v3-sla-reminder-lbl">
+                        <PortalIcon name="clock" />
+                        Recordar cada:
+                    </span>
+                    <div className="adm-v3-sla-presets">
+                        {presets.map((m) => (
+                            <button
+                                key={m}
+                                type="button"
+                                className={`adm-v3-sla-preset-pill ${reminder.data.minutes === m ? "is-active" : ""}`}
+                                onClick={() => reminder.setData("minutes", m)}
+                            >
+                                {m}m
+                            </button>
+                        ))}
+                    </div>
+                    <input
+                        id="reminder-minutes"
+                        type="number"
+                        min="1"
+                        max="1440"
+                        className="adm-v3-sla-input"
+                        value={reminder.data.minutes}
+                        onChange={(event) => reminder.setData("minutes", Number(event.target.value))}
+                        title="Minutos entre recordatorios"
+                    />
+                    <span className="text-xs text-slate-500">min</span>
+                    <button
+                        type="submit"
+                        className="portal-btn portal-btn-primary adm-v3-sla-save-btn"
+                        disabled={reminder.processing}
+                    >
+                        {reminder.processing ? "Guardando..." : "Guardar"}
+                    </button>
+                </form>
+            </div>
+
+            {data.length ? (
+                <div className="pending-list">
+                    {data.map((item) => (
+                        <Link
+                            key={item.id}
+                            href={route("papeletas.show", item.code)}
+                            className="pending-row"
+                            title={`Abrir ${item.code}`}
+                        >
+                            <span className="pending-code">{item.code}</span>
+                            <span className="pending-route">
+                                <b>{item.requester}</b>
+                                <i />
+                                <strong className={item.requires_signature ? "pending-stage pending-stage--signature" : "pending-stage"}>
+                                    {item.stage}
+                                </strong>
+                                <i />
+                                <b>{item.responsible}</b>
+                            </span>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="adm-v3-sla-empty">
+                    <PortalIcon name="check" />
+                    <span>Todas las firmas se encuentran al día. El flujo de aprobación institucional no presenta retrasos ni cuellos de botella.</span>
+                </div>
+            )}
+        </section>
+    );
 }
 
 function WorkflowChart({ data }: { data: Props["workflow"] }) {
@@ -239,9 +329,9 @@ export default function Index({
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
         const timeline = gsap.timeline({ defaults: { ease: "power2.out" } });
-        timeline.from(".admin-control-heading", { y: 12, opacity: 0, duration: .45, clearProps: "all" })
-            .from(".admin-dashboard-kpis .portal-stat", { y: 14, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.2")
-            .from(".admin-priority-panel, .admin-insight-card", { y: 12, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.12")
+        timeline.from(".adm-v3-hero", { y: 12, opacity: 0, duration: .45, clearProps: "all" })
+            .from(".adm-v3-kpis-grid .adm-v3-kpi-card", { y: 14, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.2")
+            .from(".adm-v3-sla-panel, .adm-v3-insight-card, .adm-v3-directory-card", { y: 12, opacity: 0, duration: .4, stagger: .08, clearProps: "all" }, "-=.12")
             .from(".admin-bar-fill, .admin-access-active", { scaleX: 0, duration: .65, stagger: .05, transformOrigin: "left center", clearProps: "transform" }, "-=.12")
             .from(".admin-month-fill", { scaleY: 0, duration: .65, stagger: .08, transformOrigin: "center bottom", clearProps: "transform" }, "<");
     }, { scope: dashboardRef });
@@ -317,105 +407,207 @@ export default function Index({
     return (
         <AuthenticatedLayout header={<h1>Usuarios y accesos</h1>}>
             <Head title="Administración de usuarios" />
-            <div className="portal-stack admin-dashboard admin-dashboard-v2" data-admin-dashboard="true" ref={dashboardRef}>
-                <section className="admin-control-heading">
-                    <div className="admin-control-copy">
-                        <p>EPSEL · GESTIÓN DE PERSONAL</p>
-                        <h2>Centro de control</h2>
-                        <span>Administra los accesos, organiza las áreas y mantén el control del personal del sistema.</span>
+            <div className="portal-stack admin-dashboard admin-dashboard-v3" data-admin-dashboard="true" ref={dashboardRef}>
+                {/* ── Signature Executive Hero Banner ── */}
+                <section className="adm-v3-hero" aria-label="Centro de control institucional">
+                    <img
+                        className="adm-v3-hero-bg"
+                        src={adminHeroBanner}
+                        alt=""
+                        aria-hidden="true"
+                    />
+                    <div className="adm-v3-hero-content">
+                        <p className="adm-v3-hero-eyebrow">
+                            <span className="adm-v3-hero-pulse-dot" />
+                            GOBIERNO INSTITUCIONAL · CENTRO DE CONTROL
+                        </p>
+                        <h2 className="adm-v3-hero-title">
+                            Centro de control <span>y gobierno de accesos</span>
+                        </h2>
+                        <p className="adm-v3-hero-desc">
+                            Administra los accesos de los usuarios, organiza las dependencias jerárquicas y supervisa la trazabilidad y firmas del sistema en tiempo real.
+                        </p>
+                        <div className="adm-v3-hero-badges">
+                            <span className="adm-v3-hero-badge">
+                                <PortalIcon name="check" />
+                                Sistema operativo al 100%
+                            </span>
+                            <span className="adm-v3-hero-badge">
+                                <PortalIcon name="users" />
+                                {summary.active} cuentas activas
+                            </span>
+                            <span className="adm-v3-hero-badge">
+                                <PortalIcon name="shield" />
+                                {summary.heads} jefaturas asignadas
+                            </span>
+                            <span className="adm-v3-hero-badge">
+                                <PortalIcon name="grid" />
+                                {summary.areas} áreas orgánicas
+                            </span>
+                        </div>
                     </div>
-                    <div className="admin-control-actions" aria-label="Acciones de administración">
-                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingHead(true)}><PortalIcon name="plus" /> Nuevo jefe responsable</button>
-                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingRole(true)}><PortalIcon name="plus" /> Registrar nuevo rol</button>
-                        <button type="button" className="portal-btn portal-btn-light" onClick={() => setCreatingArea(true)}><PortalIcon name="plus" /> Nueva área</button>
-                        <button type="button" className="portal-btn portal-btn-primary" onClick={() => setCreating(true)}>
-                            <PortalIcon name="plus" /> Nuevo usuario
+
+                    <div className="adm-v3-hero-actions" aria-label="Acciones de administración">
+                        <button
+                            type="button"
+                            className="adm-v3-btn-primary"
+                            onClick={() => setCreating(true)}
+                        >
+                            <PortalIcon name="plus" />
+                            Registrar nuevo usuario
                         </button>
+                        <div className="adm-v3-catalogs-row">
+                            <button
+                                type="button"
+                                className="adm-v3-catalog-btn"
+                                onClick={() => setCreatingArea(true)}
+                                title="Crear nueva área de trabajo"
+                            >
+                                <PortalIcon name="grid" />
+                                Nueva área
+                            </button>
+                            <button
+                                type="button"
+                                className="adm-v3-catalog-btn"
+                                onClick={() => setCreatingRole(true)}
+                                title="Registrar nuevo rol personalizado"
+                            >
+                                <PortalIcon name="shield" />
+                                Nuevo rol
+                            </button>
+                            <button
+                                type="button"
+                                className="adm-v3-catalog-btn"
+                                onClick={() => setCreatingHead(true)}
+                                title="Registrar nuevo jefe responsable"
+                            >
+                                <PortalIcon name="users" />
+                                Nuevo jefe
+                            </button>
+                        </div>
                     </div>
                 </section>
-                <section
-                    className="portal-stats admin-dashboard-kpis"
-                    aria-label="Resumen de usuarios"
-                >
-                    <StatCard
-                        label="Usuarios registrados"
-                        value={summary.total}
-                        hint="Personal con cuenta en el sistema"
-                        icon="users"
-                        tone="blue"
-                    />
-                    <StatCard
-                        label="Cuentas activas"
-                        value={summary.active}
-                        hint="Con acceso habilitado"
-                        icon="check"
-                        tone="green"
-                    />
-                    <StatCard
-                        label="Jefes de área"
-                        value={summary.heads}
-                        hint="Responsables activos"
-                        icon="shield"
-                        tone="amber"
-                    />
-                    <StatCard
-                        label="Áreas registradas"
-                        value={summary.areas}
-                        hint="Estructura de la organización"
-                        icon="grid"
-                        tone="purple"
-                    />
+
+                {/* ── Modern Telemetry KPI Cards ── */}
+                <section className="adm-v3-kpis-grid" aria-label="Resumen de usuarios">
+                    <article className="adm-v3-kpi-card">
+                        <div className="adm-v3-kpi-card-top">
+                            <div className="adm-v3-kpi-icon-wrap tone-cyan">
+                                <PortalIcon name="users" />
+                            </div>
+                            <span className="adm-v3-kpi-badge">Directorio</span>
+                        </div>
+                        <div className="adm-v3-kpi-card-main">
+                            <span className="adm-v3-kpi-value">{summary.total}</span>
+                            <span className="adm-v3-kpi-label">Usuarios registrados</span>
+                            <span className="adm-v3-kpi-hint">Personal con cuenta en el sistema</span>
+                        </div>
+                    </article>
+
+                    <article className="adm-v3-kpi-card">
+                        <div className="adm-v3-kpi-card-top">
+                            <div className="adm-v3-kpi-icon-wrap tone-emerald">
+                                <PortalIcon name="check" />
+                            </div>
+                            <span className="adm-v3-kpi-badge">100% activo</span>
+                        </div>
+                        <div className="adm-v3-kpi-card-main">
+                            <span className="adm-v3-kpi-value">{summary.active}</span>
+                            <span className="adm-v3-kpi-label">Cuentas activas</span>
+                            <span className="adm-v3-kpi-hint">Con acceso institucional habilitado</span>
+                        </div>
+                    </article>
+
+                    <article className="adm-v3-kpi-card">
+                        <div className="adm-v3-kpi-card-top">
+                            <div className="adm-v3-kpi-icon-wrap tone-amber">
+                                <PortalIcon name="shield" />
+                            </div>
+                            <span className="adm-v3-kpi-badge">Aprobadores</span>
+                        </div>
+                        <div className="adm-v3-kpi-card-main">
+                            <span className="adm-v3-kpi-value">{summary.heads}</span>
+                            <span className="adm-v3-kpi-label">Jefes de área</span>
+                            <span className="adm-v3-kpi-hint">Responsables activos de aprobación</span>
+                        </div>
+                    </article>
+
+                    <article className="adm-v3-kpi-card">
+                        <div className="adm-v3-kpi-card-top">
+                            <div className="adm-v3-kpi-icon-wrap tone-purple">
+                                <PortalIcon name="grid" />
+                            </div>
+                            <span className="adm-v3-kpi-badge">Estructura</span>
+                        </div>
+                        <div className="adm-v3-kpi-card-main">
+                            <span className="adm-v3-kpi-value">{summary.areas}</span>
+                            <span className="adm-v3-kpi-label">Áreas registradas</span>
+                            <span className="adm-v3-kpi-hint">Subgerencias y departamentos EPSEL</span>
+                        </div>
+                    </article>
                 </section>
+
+                {/* ── SLA Monitor / Recordatorios ── */}
                 <PendingWorkflow data={pendingWorkflow} reminderInterval={reminderInterval} />
-                <section className="admin-analytics-section" aria-label="Indicadores operativos">
-                    <div className="admin-insights">
-                    <article className="portal-card admin-insight-card admin-insight-card--flow">
-                        <div className="admin-insight-head">
+
+                {/* ── Analytics Section V3 ── */}
+                <section className="adm-v3-analytics-grid" aria-label="Indicadores operativos">
+                    <article className="adm-v3-insight-card">
+                        <div className="adm-v3-insight-head">
                             <div>
-                                <p>OPERACIÓN</p>
-                                <h2>Flujo de papeletas</h2>
-                                <span>Identifica dónde se acumulan las solicitudes.</span>
+                                <p className="adm-v3-insight-tag">OPERACIÓN EN CURSO</p>
+                                <h2 className="adm-v3-insight-title">Flujo de papeletas</h2>
+                                <p className="adm-v3-insight-desc">Identifica dónde se acumulan las solicitudes.</p>
                             </div>
                             <div className="admin-insight-heading-actions">
-                                <Link href={route("exit-slips.index")} className="admin-insight-link">Ver bandeja <PortalIcon name="arrow" /></Link>
-                                <span className="admin-insight-badge">{workflow.reduce((sum, item) => sum + item.value, 0)} en proceso</span>
+                                <Link href={route("exit-slips.index")} className="admin-insight-link">
+                                    Ver bandeja <PortalIcon name="arrow" />
+                                </Link>
+                                <span className="adm-v3-insight-badge">
+                                    {workflow.reduce((sum, item) => sum + item.value, 0)} en proceso
+                                </span>
                             </div>
                         </div>
                         <WorkflowChart data={workflow} />
                     </article>
-                    <article className="portal-card admin-insight-card">
-                        <div className="admin-insight-head">
+
+                    <article className="adm-v3-insight-card">
+                        <div className="adm-v3-insight-head">
                             <div>
-                                <p>DEMANDA</p>
-                                <h2>Solicitudes por mes</h2>
-                                <span>Compara la carga de los últimos seis meses.</span>
+                                <p className="adm-v3-insight-tag">DEMANDA MENSUAL</p>
+                                <h2 className="adm-v3-insight-title">Solicitudes por mes</h2>
+                                <p className="adm-v3-insight-desc">Compara la carga de los últimos seis meses.</p>
                             </div>
-                            <span className="admin-insight-badge">{monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.label}: {monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.value} registradas</span>
+                            <span className="adm-v3-insight-badge">
+                                {monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.label}: {monthly.reduce((peak, item) => item.value > peak.value ? item : peak, monthly[0])?.value} reg.
+                            </span>
                         </div>
                         <MonthlyChart data={monthly} />
                     </article>
-                    <article className="portal-card admin-insight-card">
-                        <div className="admin-insight-head">
+
+                    <article className="adm-v3-insight-card">
+                        <div className="adm-v3-insight-head">
                             <div>
-                                <p>GOBIERNO DE ACCESOS</p>
-                                <h2>Cobertura por rol</h2>
-                                <span>Verde: activo · Gris: sin acceso.</span>
+                                <p className="adm-v3-insight-tag">GOBIERNO DE ACCESOS</p>
+                                <h2 className="adm-v3-insight-title">Cobertura por rol</h2>
+                                <p className="adm-v3-insight-desc">Verde: activo · Gris: sin acceso.</p>
                             </div>
                         </div>
                         <AccessChart data={accessByRole} />
                     </article>
-                    </div>
                 </section>
-                <section className="portal-card admin-directory">
-                    <div className="portal-card-head admin-directory-head">
-                        <span className="admin-directory-icon"><PortalIcon name="file" /></span>
-                        <div>
-                            <p className="admin-directory-eyebrow">DIRECTORIO Y GOBIERNO</p>
-                            <h2>Directorio de personal</h2>
-                            <p>
-                                Gestiona el acceso y la asignación de cada
-                                usuario.
-                            </p>
+
+                {/* ── Directorio de personal V3 ── */}
+                <section className="adm-v3-directory-card">
+                    <div className="adm-v3-directory-head">
+                        <div className="adm-v3-directory-title-wrap">
+                            <span className="adm-v3-directory-icon">
+                                <PortalIcon name="users" />
+                            </span>
+                            <div className="adm-v3-directory-titles">
+                                <h2>Directorio de personal</h2>
+                                <p>Gestiona el acceso, área asignada y edición de cada colaborador del sistema.</p>
+                            </div>
                         </div>
                         <div className="admin-directory-summary">
                             <span>{summary.active} activas</span>
