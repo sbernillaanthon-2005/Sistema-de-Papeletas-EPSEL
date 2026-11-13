@@ -9,6 +9,7 @@ import Modal from "@/Components/Modal";
 import PortalIcon from "@/Components/PortalIcon";
 import { StatusBadge, formatDate } from "@/Components/PortalUI";
 import { statuses } from "@/types/exit-slip";
+import ExitSlipPdfModal from "./ExitSlipPdfModal";
 
 interface Slip {
     id: string;
@@ -76,6 +77,7 @@ export default function Show({
         observaciones: slip.observaciones || "",
     });
     const [rejectOpen, setRejectOpen] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
     const [noReturn, setNoReturn] = useState(false);
     const progressRef = useRef<HTMLDivElement>(null);
     
@@ -135,7 +137,14 @@ export default function Show({
                         <div className="slip-detail-hero-actions">
                             <StatusBadge state={slip.estado} label={slip.estado_label} />
                             <div className="slip-detail-pdf-actions">
-                                <a className="portal-btn portal-btn-light" href={pdfUrl} target="_blank" rel="noopener noreferrer"><PortalIcon name="eye" />Vista previa PDF</a>
+                                <button
+                                    type="button"
+                                    className="portal-btn portal-btn-light"
+                                    onClick={() => setPreviewOpen(true)}
+                                >
+                                    <PortalIcon name="eye" />
+                                    Vista previa PDF
+                                </button>
                                 <a className="portal-btn portal-btn-primary" href={`${pdfUrl}?download=1`}><PortalIcon name="download" />Descargar PDF</a>
                             </div>
                         </div>
@@ -552,6 +561,18 @@ export default function Show({
                     </div>
                 </form>
             </Modal>
+
+            {/* Modal de Vista Previa de Papeleta PDF */}
+            <ExitSlipPdfModal
+                isOpen={previewOpen}
+                onClose={() => setPreviewOpen(false)}
+                pdfUrl={pdfUrl}
+                slipCode={slip.codigo}
+                solicitante={slip.apellidos_nombres}
+                fechaAutorizada={formatDate(slip.fecha_autorizada)}
+                estado={slip.estado}
+                estadoLabel={slip.estado_label}
+            />
         </AuthenticatedLayout>
     );
 }
