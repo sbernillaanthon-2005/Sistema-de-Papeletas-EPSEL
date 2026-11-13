@@ -7,6 +7,7 @@ import axios from "axios";
 import { FormEvent, useState, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import backupHeroImage from "../../../../images/Banner tecnológico azul con datos y seguridad.png";
 
 gsap.registerPlugin(useGSAP);
 
@@ -148,9 +149,14 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
             <Head title="Respaldos del Sistema · EPSEL" />
 
             <div ref={containerRef} className="portal-stack bk-v2-container">
-                {/* ── Hero Banner Ejecutivo ── */}
-                <section className="portal-hero bk-v2-hero">
-                    <div className="bk-v2-hero-overlay" />
+                {/* ── Hero Banner Ejecutivo con fondo oficial EPSEL ── */}
+                <section className="portal-hero admin-module-hero backup-hero bk-v2-hero">
+                    <img
+                        src={backupHeroImage}
+                        alt="Gestión y Resguardo de Base de Datos EPSEL"
+                        className="bk-v2-hero-bg-img"
+                    />
+                    <div className="bk-v2-hero-gradient-overlay" />
                     
                     <div className="bk-v2-hero-content">
                         <div className="bk-v2-hero-header-row">

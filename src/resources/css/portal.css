@@ -12032,20 +12032,30 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     position: relative;
     border-radius: 20px;
     overflow: hidden;
-    background: url("../images/Banner tecnológico azul con datos y seguridad.png") center 45% / 100% auto no-repeat,
-                linear-gradient(108deg, #021a30 0%, #032d52 48%, #055077 100%);
+    background: linear-gradient(108deg, #021a30 0%, #032d52 48%, #055077 100%);
     border: 1px solid rgba(56, 189, 248, 0.28);
     box-shadow: 0 14px 34px -8px rgba(2, 26, 48, 0.45);
     padding: 28px 34px;
-    min-height: 165px;
+    min-height: 180px;
     display: flex;
     align-items: center;
 }
 
-.bk-v2-hero-overlay {
+.bk-v2-hero-bg-img {
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, rgba(2, 26, 48, 0.94) 0%, rgba(3, 45, 82, 0.84) 50%, rgba(5, 80, 119, 0.52) 100%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center right;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bk-v2-hero-gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(2, 26, 48, 0.96) 0%, rgba(3, 42, 75, 0.75) 44%, rgba(4, 58, 92, 0.22) 72%, transparent 100%);
     pointer-events: none;
     z-index: 1;
 }
@@ -12057,7 +12067,7 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     flex-direction: column;
     gap: 8px;
     width: 100%;
-    max-width: 720px;
+    max-width: 620px;
 }
 
 .bk-v2-hero-header-row {
