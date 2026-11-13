@@ -176,8 +176,7 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
 
                         <h2 className="bk-v2-hero-title">Gestión y Resguardo de Base de Datos</h2>
                         <p className="bk-v2-hero-desc">
-                            Genera copias binarias completas de PostgreSQL (.dump) en tiempo real con transacciones ACID íntegras.
-                            Incluye esquemas DDL, secuencias, usuarios y registros históricos de papeletas con auto-eliminación temporal en servidor.
+                            Genera una copia binaria completa de PostgreSQL (.dump) en tiempo real. Incluye esquemas, relaciones, usuarios y registros de transacciones con auto-eliminación temporal en servidor.
                         </p>
 
                         <div className="bk-v2-hero-meta-chips">

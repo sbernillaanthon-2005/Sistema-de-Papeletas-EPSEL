@@ -12028,46 +12028,67 @@ html[data-theme="dark"] .audit-v2-copy-val code,
 }
 
 /* ── Hero Ejecutivo con Fondo Tecnológico ── */
+.portal-app.portal-tailwind-shell .bk-v2-hero,
+.portal-app .bk-v2-hero,
+.portal-hero.bk-v2-hero,
 .bk-v2-hero {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    background: linear-gradient(108deg, #021a30 0%, #032d52 48%, #055077 100%);
-    border: 1px solid rgba(56, 189, 248, 0.28);
-    box-shadow: 0 14px 34px -8px rgba(2, 26, 48, 0.45);
-    padding: 28px 34px;
-    min-height: 180px;
-    display: flex;
-    align-items: center;
+    position: relative !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    background: #02182b !important;
+    border: 1px solid rgba(56, 189, 248, 0.32) !important;
+    box-shadow: 0 14px 34px -8px rgba(2, 26, 48, 0.45) !important;
+    padding: 26px 36px !important;
+    min-height: 180px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+}
+
+.bk-v2-hero::before,
+.bk-v2-hero::after {
+    display: none !important;
 }
 
 .bk-v2-hero-bg-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center right;
-    pointer-events: none;
-    z-index: 0;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: right center !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
 }
 
+.portal-hero > div.bk-v2-hero-gradient-overlay,
+.bk-v2-hero .bk-v2-hero-gradient-overlay,
 .bk-v2-hero-gradient-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(2, 26, 48, 0.96) 0%, rgba(3, 42, 75, 0.75) 44%, rgba(4, 58, 92, 0.22) 72%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, rgba(2, 22, 40, 0.98) 0%, rgba(2, 28, 52, 0.92) 38%, rgba(2, 34, 62, 0.55) 56%, rgba(2, 34, 62, 0.10) 72%, transparent 100%) !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
 }
 
+.portal-hero > div.bk-v2-hero-content,
+.bk-v2-hero .bk-v2-hero-content,
 .bk-v2-hero-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-    max-width: 620px;
+    position: relative !important;
+    z-index: 2 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: min(540px, 54%) !important;
+    margin: 0 !important;
+    margin-right: auto !important;
+    margin-left: 0 !important;
 }
 
 .bk-v2-hero-header-row {
