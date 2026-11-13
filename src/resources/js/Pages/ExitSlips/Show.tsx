@@ -432,18 +432,15 @@ export default function Show({
                                                 className="portal-btn portal-btn-primary"
                                                 disabled={
                                                     form.processing ||
-                                                    today !==
-                                                        slip.fecha_autorizada
+                                                    slip.fecha_autorizada > today
                                                 }
                                             >
                                                 <PortalIcon name="check" />
                                                 Finalizar y Firmar Control
                                             </button>
-                                            {today !==
-                                                slip.fecha_autorizada && (
+                                            {slip.fecha_autorizada > today && (
                                                 <p className="text-xs text-slate-500">
-                                                    El registro se habilita en
-                                                    la fecha autorizada.
+                                                    El registro se habilitará a partir de la fecha autorizada ({formatDate(slip.fecha_autorizada)}).
                                                 </p>
                                             )}
                                         </form>

@@ -57,12 +57,20 @@ class ExitSlipWorkflow
                 } elseif ($action === 'revert') {
                     app(RevertToDraft::class)->execute($id, $actor->id);
                 } elseif ($action === 'security') {
-                    if ($slip->fecha_autorizada->toDateString() !== now('America/Lima')->toDateString()) {
-                        throw new \DomainException('El control corresponde únicamente a la fecha autorizada.');
+                    if ($slip->fecha_autorizada->toDateString() > now('America/Lima')->toDateString()) {
+                        throw new \DomainException('El control se habilitará a partir de la fecha autorizada: '.$slip->fecha_autorizada->format('d/m/Y'));
                     }
                     $old = $slip->estado->value;
-                    $slip->hora_salida = $data['hora_salida'];
-                    $slip->hora_retorno = $data['hora_retorno'];
+                    if (isset($data['movimiento'])) {
+                        if ($data['movimiento'] === 'salida') {
+                            $slip->hora_salida = now('America/Lima')->format('H:i');
+                        } elseif ($data['movimiento'] === 'retorno') {
+                            $slip->hora_retorno = now('America/Lima')->format('H:i');
+                        }
+                    } else {
+                        $slip->hora_salida = $data['hora_salida'] ?? $slip->hora_salida;
+                        $slip->hora_retorno = !empty($data['hora_retorno']) ? $data['hora_retorno'] : null;
+                    }
                     $slip->observaciones = $data['observaciones'] ?? $slip->observaciones;
                     $slip->supervisor = trim($actor->nombres.' '.$actor->apellidos);
                     $slip->firma_vigilancia_path = $this->signature($actor);

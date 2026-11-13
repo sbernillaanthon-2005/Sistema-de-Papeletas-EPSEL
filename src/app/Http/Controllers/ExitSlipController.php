@@ -435,13 +435,18 @@ class ExitSlipController extends Controller
     public function transition(Request $request, string $id, string $action, ExitSlipWorkflow $workflow)
     {
         abort_unless(in_array($action, ['submit', 'approve', 'submit_to_hr', 'submit_to_security', 'reject', 'revert', 'security'], true), 404);
+        if ($action === 'security' && $request->input('hora_retorno') === '') {
+            $request->merge(['hora_retorno' => null]);
+        }
         $data = match ($action) {
             'reject' => $request->validate(['comentario' => 'required|string|max:2000']),
-            'security' => $request->validate([
-                'hora_salida' => 'required|date_format:H:i',
-                'hora_retorno' => 'nullable|date_format:H:i|after:hora_salida',
-                'observaciones' => 'nullable|string|max:2000'
-            ]),
+            'security' => $request->has('movimiento')
+                ? $request->validate(['movimiento' => 'required|in:salida,retorno', 'observaciones' => 'nullable|string|max:2000'])
+                : $request->validate([
+                    'hora_salida' => 'required|date_format:H:i',
+                    'hora_retorno' => 'nullable|date_format:H:i',
+                    'observaciones' => 'nullable|string|max:2000',
+                ]),
             default => [],
         };
         $workflow->execute($id, $request->user(), $action, $data);
