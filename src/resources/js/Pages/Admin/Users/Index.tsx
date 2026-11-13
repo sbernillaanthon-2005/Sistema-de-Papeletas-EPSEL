@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { DialogTitle } from "@headlessui/react";
 import Modal from "@/Components/Modal";
+import EditUserModal from "./EditUserModal";
 import PortalIcon from "@/Components/PortalIcon";
 import {
     Avatar,
@@ -251,7 +252,6 @@ export default function Index({
     const [editing, setEditing] = useState<Person | null>(null);
     const [deleting, setDeleting] = useState<Person | null>(null);
     const [passwordVisible, setPasswordVisible] = useState(false);
-    const [editPasswordVisible, setEditPasswordVisible] = useState(false);
     const [isFetchingReniec, setIsFetchingReniec] = useState(false);
     const [dniLookupState, setDniLookupState] = useState<"idle" | "success" | "manual">("idle");
     const [query, setQuery] = useState(filters.q || "");
@@ -266,7 +266,6 @@ export default function Index({
         area_id: "",
         jefe_responsable_nombre: "",
     });
-    const edit = useForm({ nombres: "", apellidos: "", activo: true, area_id: "", jefe_responsable_nombre: "", rol: "worker", password: "", password_confirmation: "" });
     const areaForm = useForm({ nombre: "" });
     const roleForm = useForm({ nombre: "" });
     const headForm = useForm({ nombre: "" });
@@ -313,18 +312,6 @@ export default function Index({
         }
     };
     const openEdit = (person: Person) => {
-        edit.clearErrors();
-        edit.setData({
-            nombres: person.nombres,
-            apellidos: person.apellidos,
-            activo: person.activo,
-            area_id: person.area_id || "",
-            jefe_responsable_nombre: person.jefe_responsable_nombre || (person.jefe ? `${person.jefe.nombres} ${person.jefe.apellidos}` : ""),
-            rol: person.custom_role_id ? `custom:${person.custom_role_id}` : person.rol,
-            password: "",
-            password_confirmation: "",
-        });
-        setEditPasswordVisible(false);
         setEditing(person);
     };
     return (
@@ -853,146 +840,15 @@ export default function Index({
                     </div>
                 </form>
             </Modal>
-            <Modal
+            <EditUserModal
                 show={!!editing}
-                onClose={() => {}}
-                closeable={false}
-                maxWidth="lg"
-            >
-                <form
-                    className="portal-modal"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        if (editing) {
-                            edit.transform((data) => ({
-                                ...data,
-                                area_id: data.area_id || null,
-                            }));
-                            edit.put(route("admin.users.update", editing.id), {
-                                preserveScroll: true,
-                                onSuccess: () => setEditing(null),
-                            });
-                        }
-                    }}
-                >
-                    <div className="portal-modal-head">
-                        <div>
-                            <DialogTitle>Editar usuario</DialogTitle>
-                            <p>
-                                {editing?.nombres} {editing?.apellidos}
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            aria-label="Cerrar"
-                            disabled={edit.processing}
-                            onClick={() => setEditing(null)}
-                        >
-                            ×
-                        </button>
-                    </div>
-                    <div className="space-y-5">
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="portal-field">
-                                <label htmlFor="edit-nombres">Nombres</label>
-                                <input id="edit-nombres" type="text" required maxLength={255} autoComplete="given-name" value={edit.data.nombres} onChange={(e) => edit.setData("nombres", e.target.value)} aria-invalid={!!edit.errors.nombres} />
-                            </div>
-                            <div className="portal-field">
-                                <label htmlFor="edit-apellidos">Apellidos</label>
-                                <input id="edit-apellidos" type="text" required maxLength={255} autoComplete="family-name" value={edit.data.apellidos} onChange={(e) => edit.setData("apellidos", e.target.value)} aria-invalid={!!edit.errors.apellidos} />
-                            </div>
-                        </div>
-                        <div className="portal-field">
-                            <label htmlFor="edit-role">Rol del usuario</label>
-                            <select id="edit-role" value={edit.data.rol} onChange={(e) => edit.setData("rol", e.target.value)} aria-invalid={!!edit.errors.rol} disabled={editing?.id === me}>
-                                {editing?.rol === "admin" && <option value="admin">Administrador</option>}
-                                {roles.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-                            </select>
-                            {editing?.id === me && <small>Tu propio rol de administrador no puede cambiarse.</small>}
-                        </div>
-                        <div className="portal-field">
-                            <label htmlFor="edit-area">Área</label>
-                            <select
-                                id="edit-area"
-                                value={edit.data.area_id}
-                                onChange={(e) => edit.setData("area_id", e.target.value)}
-                            >
-                                <option value="">Sin área asignada</option>
-                                {areas.map((area) => (
-                                    <option key={area.id} value={area.id}>
-                                        {area.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="portal-field">
-                            <label htmlFor="edit-head">Jefe responsable (opcional)</label>
-                            <select
-                                id="edit-head"
-                                value={edit.data.jefe_responsable_nombre}
-                                onChange={(e) => edit.setData("jefe_responsable_nombre", e.target.value)}
-                                aria-invalid={!!edit.errors.jefe_responsable_nombre}
-                            >
-                                <option value="">Sin jefe asignado</option>
-                                {responsibleHeads.map((name) => <option key={name} value={name}>{name}</option>)}
-                            </select>
-                        </div>
-                        <div className="portal-field">
-                            <label htmlFor="edit-password">Nueva contraseña (opcional)</label>
-                            <div className="relative flex items-center">
-                                <input id="edit-password" type={editPasswordVisible ? "text" : "password"} autoComplete="new-password" minLength={8} value={edit.data.password} onChange={(e) => edit.setData("password", e.target.value)} aria-invalid={!!edit.errors.password} className="pr-24" placeholder="Mínimo 8 caracteres" />
-                                <button type="button" className="absolute right-3 text-sm" aria-pressed={editPasswordVisible} onClick={() => setEditPasswordVisible(!editPasswordVisible)}>{editPasswordVisible ? "Ocultar" : "Mostrar"}</button>
-                            </div>
-                            <small>Déjala en blanco si no necesitas restablecerla.</small>
-                        </div>
-                        {edit.data.password && <div className="portal-field">
-                            <label htmlFor="edit-password-confirmation">Confirmar nueva contraseña</label>
-                            <input id="edit-password-confirmation" type={editPasswordVisible ? "text" : "password"} autoComplete="new-password" minLength={8} value={edit.data.password_confirmation} onChange={(e) => edit.setData("password_confirmation", e.target.value)} aria-invalid={!!edit.errors.password} />
-                        </div>}
-                        <div className={`account-status-control ${edit.data.activo ? "is-active" : "is-inactive"}`}>
-                            <div className="account-status-copy">
-                                <span className="account-status-eyebrow">ESTADO DE ACCESO</span>
-                                <strong>{edit.data.activo ? "Cuenta activa" : "Cuenta desactivada"}</strong>
-                                <p>{edit.data.activo
-                                    ? "Puede iniciar sesión y recibir notificaciones del sistema."
-                                    : "No podrá iniciar sesión ni recibir nuevas notificaciones hasta volver a activarla."}</p>
-                            </div>
-                            <label className="account-status-switch">
-                                <input
-                                    type="checkbox"
-                                    disabled={editing?.id === me}
-                                    checked={edit.data.activo}
-                                    onChange={(e) => edit.setData("activo", e.target.checked)}
-                                />
-                                <span aria-hidden="true" />
-                                <em>{edit.data.activo ? "Activa" : "Desactivada"}</em>
-                            </label>
-                            {editing?.id === me && <small>Tu propia cuenta no puede desactivarse.</small>}
-                        </div>
-                    </div>
-                    {Object.values(edit.errors).length > 0 && (
-                        <p className="portal-error" role="alert">
-                            {Object.values(edit.errors).join(" ")}
-                        </p>
-                    )}
-                    <div className="mt-6 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            className="portal-btn portal-btn-light"
-                            disabled={edit.processing}
-                            onClick={() => setEditing(null)}
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            className="portal-btn portal-btn-primary"
-                            disabled={edit.processing}
-                        >
-                            Guardar cambios
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+                user={editing}
+                roles={roles}
+                areas={areas}
+                responsibleHeads={responsibleHeads}
+                me={me}
+                onClose={() => setEditing(null)}
+            />
             <Modal
                 show={!!deleting}
                 onClose={() => !remove.processing && setDeleting(null)}

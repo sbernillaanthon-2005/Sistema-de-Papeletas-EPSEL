@@ -314,6 +314,10 @@ class ExitSlipController extends Controller
             'formatAvailable' => $this->hasAvailableExitSlipFormat(),
             'exitSlip' => [
                 'id' => $slip->id,
+                'codigo' => $slip->codigo,
+                'solicitante' => $slip->fullNameSnapshot,
+                'estado' => $slip->status->value,
+                'estado_label' => $slip->status->label(),
                 'tipo_plantilla' => $slip->templateType->value,
                 'fecha_emision' => $slip->issueDate->format('Y-m-d'),
                 'designado' => $slip->designationSnapshot,

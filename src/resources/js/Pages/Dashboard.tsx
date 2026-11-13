@@ -2,9 +2,10 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import { PageProps } from "@/types";
 import { roleLabels } from "@/Components/PortalUI";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import PortalIcon from "@/Components/PortalIcon";
 
 gsap.registerPlugin(useGSAP);
 
@@ -18,7 +19,10 @@ interface Stats {
     trend: number;
     approvalRate: number | null;
 }
-interface WeekPoint { label: string; value: number; }
+interface WeekPoint {
+    label: string;
+    value: number;
+}
 interface RecentSlip {
     id: string;
     codigo: string;
@@ -29,92 +33,173 @@ interface RecentSlip {
     motivo_label: string;
 }
 
-/* ── SVG Icons ── */
-const IconFile = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-    </svg>
-);
-const IconClock = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-);
-const IconCheck = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m5 13 4 4L19 7"/>
-    </svg>
-);
-const IconTrendUp = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-    </svg>
-);
-const IconTrendDown = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
-    </svg>
-);
-const IconArrow = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 12h14M12 5l7 7-7 7"/>
-    </svg>
-);
-const IconCalendar = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-);
-const IconShield = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
-    </svg>
-);
-
 /* ── Helpers ── */
 const STATUS_COLORS: Record<string, string> = {
-    draft:                 "ds-status--draft",
-    submitted:             "ds-status--submitted",
-    approved_by_area:      "ds-status--approved",
-    submitted_to_hr:       "ds-status--hr",
-    approved_by_hr:        "ds-status--approved",
+    draft: "ds-status--draft",
+    submitted: "ds-status--submitted",
+    approved_by_area: "ds-status--approved",
+    submitted_to_hr: "ds-status--hr",
+    approved_by_hr: "ds-status--approved",
     submitted_to_security: "ds-status--security",
-    completed:             "ds-status--completed",
-    rejected:              "ds-status--rejected",
+    completed: "ds-status--completed",
+    rejected: "ds-status--rejected",
 };
 
 const pendingLabel: Record<string, string> = {
     practitioner: "Borradores sin enviar",
-    worker:       "Borradores sin enviar",
-    area_head:    "Enviadas a mi jefatura",
-    hr:           "Esperan revisión RRHH",
-    security:     "Autorizadas por RRHH",
-    admin:        "Pendientes en el sistema",
+    worker: "Borradores sin enviar",
+    area_head: "Enviadas a mi jefatura",
+    hr: "Esperan revisión RRHH",
+    security: "Autorizadas por RRHH",
+    admin: "Pendientes en el sistema",
 };
 
-/* ── Mini bar chart ── */
+/* ── Modern Bar Chart Component ── */
 function WeekChart({ data }: { data: WeekPoint[] }) {
     const total = data.reduce((sum, point) => sum + point.value, 0);
-    const max = Math.max(3, ...data.map((point) => point.value));
-    const points = data.map((point, index) => ({ x: 44 + index * 104, y: 148 - (point.value / max) * 108 }));
-    const path = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
-    const area = `${path} L ${points[points.length - 1]?.x ?? 44} 148 L 44 148 Z`;
+    const maxVal = Math.max(3, ...data.map((point) => point.value));
+    const peakPoint = data.reduce(
+        (max, p) => (p.value > max.value ? p : max),
+        data[0] || { label: "", value: 0 }
+    );
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
     return (
-        <div className="ds-line-chart" role="img" aria-label={`${total} papeletas finalizadas en las últimas cuatro semanas`}>
-            <div className="ds-chart-total">Finalizadas: <strong>{total}</strong></div>
-            <svg viewBox="0 0 400 190" preserveAspectRatio="none" aria-hidden="true">
-                <defs><linearGradient id="ds-week-fill" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#1688ee" stopOpacity=".32"/><stop offset="1" stopColor="#1688ee" stopOpacity="0"/></linearGradient></defs>
-                {[40, 76, 112, 148].map((y) => <line key={y} x1="44" y1={y} x2="356" y2={y} className="ds-line-grid" />)}
-                {[0, 1, 2, 3].map((tick) => <text key={tick} x="28" y={152 - tick * 36} className="ds-line-axis">{tick}</text>)}
-                <path d={area} fill="url(#ds-week-fill)" />
-                <path className="ds-line-path" d={path} fill="none" stroke="#1279e7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                {points.map((point, index) => <g key={`${data[index].label}-${index}`}><circle cx={point.x} cy={point.y} r="4.5" fill="#fff" stroke="#1279e7" strokeWidth="2.5" /><text x={point.x} y="178" textAnchor="middle" className="ds-line-axis">{data[index].label}</text>{data[index].value > 0 && <text x={point.x} y={point.y - 13} textAnchor="middle" className="ds-line-count">{data[index].value}</text>}</g>)}
-            </svg>
+        <div
+            className="ds-barchart-container"
+            role="region"
+            aria-label="Estadísticas de finalizaciones semanales"
+        >
+            {/* Header summary strip */}
+            <div className="ds-barchart-summary">
+                <div className="ds-barchart-kpis">
+                    <div className="ds-barchart-stat">
+                        <span className="ds-barchart-stat-label">TOTAL FINALIZADAS</span>
+                        <div className="ds-barchart-stat-val">
+                            <strong>{total}</strong>
+                            <small>en 4 semanas</small>
+                        </div>
+                    </div>
+                    <div className="ds-barchart-divider" />
+                    <div className="ds-barchart-stat">
+                        <span className="ds-barchart-stat-label">PROMEDIO SEMANAL</span>
+                        <div className="ds-barchart-stat-val">
+                            <strong>{(total / Math.max(1, data.length)).toFixed(1)}</strong>
+                            <small>papeletas / sem</small>
+                        </div>
+                    </div>
+                </div>
+
+                {peakPoint && peakPoint.value > 0 ? (
+                    <div className="ds-barchart-peak-pill">
+                        <span className="ds-barchart-peak-dot" />
+                        <span>
+                            Semana pico: <strong>{peakPoint.label}</strong> ({peakPoint.value})
+                        </span>
+                    </div>
+                ) : (
+                    <div className="ds-barchart-peak-pill is-neutral">
+                        <span>Sin finalizaciones recientes</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Visual Bar Canvas */}
+            <div className="ds-barchart-canvas">
+                {/* Horizontal reference grid lines */}
+                <div className="ds-barchart-gridlines" aria-hidden="true">
+                    <div className="ds-barchart-gridline" style={{ bottom: "100%" }}>
+                        <span>{maxVal}</span>
+                    </div>
+                    <div className="ds-barchart-gridline" style={{ bottom: "66%" }}>
+                        <span>{Math.round((maxVal * 2) / 3)}</span>
+                    </div>
+                    <div className="ds-barchart-gridline" style={{ bottom: "33%" }}>
+                        <span>{Math.round(maxVal / 3)}</span>
+                    </div>
+                    <div className="ds-barchart-gridline" style={{ bottom: "0%" }}>
+                        <span>0</span>
+                    </div>
+                </div>
+
+                {/* Bars group */}
+                <div className="ds-barchart-bars">
+                    {data.map((point, index) => {
+                        const heightPercent =
+                            point.value === 0
+                                ? 4
+                                : Math.max(10, (point.value / maxVal) * 100);
+                        const isHovered = hoveredIndex === index;
+                        const isPeak = point.value > 0 && point.value === peakPoint.value;
+
+                        return (
+                            <div
+                                key={point.label}
+                                className={`ds-barchart-col ${
+                                    isHovered ? "is-hovered" : ""
+                                } ${isPeak ? "is-peak" : ""}`}
+                                onMouseEnter={() => setHoveredIndex(index)}
+                                onMouseLeave={() => setHoveredIndex(null)}
+                            >
+                                {/* Floating Value Pill */}
+                                <div
+                                    className={`ds-barchart-val-pill ${
+                                        point.value > 0 ? "has-value" : "is-zero"
+                                    }`}
+                                >
+                                    {point.value}
+                                </div>
+
+                                {/* Bar Track & Fill */}
+                                <div className="ds-barchart-track">
+                                    <div
+                                        className={`ds-barchart-bar-fill ${
+                                            point.value > 0 ? "is-active" : "is-empty"
+                                        }`}
+                                        style={{ height: `${heightPercent}%` }}
+                                    >
+                                        <div className="ds-barchart-bar-gloss" />
+                                    </div>
+                                </div>
+
+                                {/* X-axis Date Label */}
+                                <span
+                                    className={`ds-barchart-col-label ${
+                                        point.value > 0 ? "is-active" : ""
+                                    }`}
+                                >
+                                    {point.label}
+                                </span>
+
+                                {/* Tooltip on Hover */}
+                                {isHovered && (
+                                    <div className="ds-barchart-tooltip" role="tooltip">
+                                        <span className="ds-barchart-tip-week">
+                                            Semana del {point.label}
+                                        </span>
+                                        <strong>
+                                            {point.value}{" "}
+                                            {point.value === 1
+                                                ? "papeleta finalizada"
+                                                : "papeletas finalizadas"}
+                                        </strong>
+                                        {total > 0 && (
+                                            <small>
+                                                {Math.round((point.value / total) * 100)}% del total mensual
+                                            </small>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
     );
 }
 
-/* ── Main component ── */
+/* ── Main Dashboard Component ── */
 export default function Dashboard({
     auth,
     stats,
@@ -125,17 +210,48 @@ export default function Dashboard({
     weekly: WeekPoint[];
     recentSlips: RecentSlip[];
 }>) {
-    const user     = auth.user;
+    const user = auth.user;
     const firstName = user.nombres.split(" ")[0];
-    const rolLabel  = user.rol_label || roleLabels[user.rol];
+    const rolLabel = user.rol_label || roleLabels[user.rol] || user.rol;
     const isCreator = ["practitioner", "worker"].includes(user.rol);
 
     const trendPositive = stats.trend >= 0;
     const dashboardRef = useRef<HTMLDivElement>(null);
-    useGSAP(() => {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        gsap.fromTo(".ds-hero, .ds-kpi, .ds-bottom-grid > .portal-card", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .55, stagger: .07, ease: "power2.out", clearProps: "all" });
-    }, { scope: dashboardRef });
+
+    // GSAP animations for entrance and bar chart scale
+    useGSAP(
+        () => {
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+            // Entrance timeline
+            const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+            tl.fromTo(
+                ".ds-hero, .ds-kpi",
+                { opacity: 0, y: 14 },
+                { opacity: 1, y: 0, duration: 0.4, stagger: 0.05, clearProps: "all" }
+            )
+                .fromTo(
+                    ".ds-bottom-grid > .portal-card",
+                    { opacity: 0, y: 16 },
+                    { opacity: 1, y: 0, duration: 0.45, stagger: 0.08, clearProps: "all" },
+                    "-=0.2"
+                )
+                .fromTo(
+                    ".ds-barchart-bar-fill",
+                    { scaleY: 0 },
+                    {
+                        scaleY: 1,
+                        duration: 0.6,
+                        stagger: 0.07,
+                        transformOrigin: "bottom",
+                        ease: "back.out(1.3)",
+                    },
+                    "-=0.2"
+                );
+        },
+        { scope: dashboardRef }
+    );
 
     const greeting = (() => {
         const h = new Date().getHours();
@@ -144,24 +260,54 @@ export default function Dashboard({
         return "Buenas noches";
     })();
 
+    const formattedToday = new Intl.DateTimeFormat("es-PE", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    }).format(new Date());
+
     return (
-        <AuthenticatedLayout header={<div className="ds-page-title"><span>EPSEL · {rolLabel}</span><h1>Mi panel</h1><p>Gestiona y realiza el seguimiento de tus papeletas de salida.</p></div>}>
+        <AuthenticatedLayout
+            header={
+                <div className="ds-page-title">
+                    <span>EPSEL · {rolLabel}</span>
+                    <h1>Mi panel</h1>
+                    <p>Gestiona y realiza el seguimiento de tus papeletas de salida.</p>
+                </div>
+            }
+        >
             <Head title="Panel de control" />
             <div className="portal-stack ds-dashboard" ref={dashboardRef}>
-
                 {/* ── Hero saludo ── */}
                 <section className="portal-hero ds-hero">
                     <div className="ds-hero-text">
-                        <p className="portal-hero-eyebrow">{rolLabel.toUpperCase()} · EPSEL</p>
-                        <h2>{greeting}, {firstName}.</h2>
-                        <p>Aquí tienes un resumen de la actividad de tus papeletas.</p>
+                        <div className="ds-hero-eyebrow-row">
+                            <span className="portal-hero-eyebrow">
+                                {rolLabel.toUpperCase()} · EPSEL S.A.
+                            </span>
+                            <span className="ds-hero-date-pill">
+                                {formattedToday}
+                            </span>
+                        </div>
+                        <h2>
+                            {greeting}, {firstName}.
+                        </h2>
+                        <p>
+                            Aquí tienes el control consolidado de tus solicitudes, firmas y autorizaciones.
+                        </p>
                     </div>
-                    <div className="ds-hero-art" aria-hidden="true"><IconFile /><IconCheck /></div>
-                    {isCreator && (
-                        <Link className="portal-btn portal-btn-white" href={route("exit-slips.create")}>
-                            + Nueva papeleta
-                        </Link>
-                    )}
+
+                    <div className="ds-hero-actions">
+                        {isCreator && (
+                            <Link
+                                className="portal-btn portal-btn-white ds-hero-btn"
+                                href={route("exit-slips.create")}
+                            >
+                                <PortalIcon name="plus" />
+                                <span>Nueva papeleta</span>
+                            </Link>
+                        )}
+                    </div>
                 </section>
 
                 {/* ── KPI cards ── */}
@@ -169,38 +315,62 @@ export default function Dashboard({
                     {/* Total */}
                     <div className="ds-kpi">
                         <div className="ds-kpi-icon ds-kpi-icon--blue">
-                            <IconFile />
+                            <PortalIcon name="file" />
                         </div>
                         <div className="ds-kpi-body">
                             <span className="ds-kpi-label">Total en tu ámbito</span>
                             <strong className="ds-kpi-value">{stats.total}</strong>
-                            <span className="ds-kpi-hint">Todas las papeletas registradas</span>
+                            <span className="ds-kpi-hint">
+                                Todas las papeletas registradas
+                            </span>
                         </div>
                     </div>
 
                     {/* Pendientes */}
                     <div className="ds-kpi">
                         <div className="ds-kpi-icon ds-kpi-icon--amber">
-                            <IconClock />
+                            <PortalIcon name="clock" />
                         </div>
                         <div className="ds-kpi-body">
                             <span className="ds-kpi-label">Pendientes</span>
-                            <strong className="ds-kpi-value">{stats.pending}</strong>
-                            <span className="ds-kpi-hint">{pendingLabel[user.rol] || "Requieren acción"}</span>
+                            <div className="flex items-center gap-2">
+                                <strong className="ds-kpi-value">{stats.pending}</strong>
+                                {stats.pending > 0 && (
+                                    <span className="ds-kpi-badge-pending">
+                                        Requiere acción
+                                    </span>
+                                )}
+                            </div>
+                            <span className="ds-kpi-hint">
+                                {pendingLabel[user.rol] || "Requieren acción"}
+                            </span>
                         </div>
                     </div>
 
                     {/* Este mes */}
                     <div className="ds-kpi">
                         <div className="ds-kpi-icon ds-kpi-icon--teal">
-                            <IconCalendar />
+                            <PortalIcon name="clock" />
                         </div>
                         <div className="ds-kpi-body">
                             <span className="ds-kpi-label">Este mes</span>
                             <strong className="ds-kpi-value">{stats.thisMonth}</strong>
-                            <span className={`ds-kpi-trend ${trendPositive ? "ds-kpi-trend--up" : "ds-kpi-trend--down"}`}>
-                                {trendPositive ? <IconTrendUp /> : <IconTrendDown />}
-                                {Math.abs(stats.trend)}% vs mes anterior
+                            <span
+                                className={`ds-kpi-trend ${
+                                    trendPositive
+                                        ? "ds-kpi-trend--up"
+                                        : "ds-kpi-trend--down"
+                                }`}
+                            >
+                                <PortalIcon
+                                    name="arrow"
+                                    className={
+                                        trendPositive
+                                            ? "-rotate-45"
+                                            : "rotate-45"
+                                    }
+                                />
+                                <span>{Math.abs(stats.trend)}% vs mes anterior</span>
                             </span>
                         </div>
                     </div>
@@ -209,36 +379,50 @@ export default function Dashboard({
                     {stats.approvalRate !== null ? (
                         <div className="ds-kpi">
                             <div className="ds-kpi-icon ds-kpi-icon--green">
-                                <IconShield />
+                                <PortalIcon name="shield" />
                             </div>
                             <div className="ds-kpi-body">
                                 <span className="ds-kpi-label">Tasa de aprobación</span>
-                                <strong className="ds-kpi-value">{stats.approvalRate}%</strong>
-                                <span className="ds-kpi-hint">{stats.completed} completadas · {stats.rejected} rechazadas</span>
+                                <strong className="ds-kpi-value">
+                                    {stats.approvalRate}%
+                                </strong>
+                                <span className="ds-kpi-hint">
+                                    {stats.completed} completadas · {stats.rejected} rechazadas
+                                </span>
                             </div>
                         </div>
                     ) : (
                         <div className="ds-kpi">
                             <div className="ds-kpi-icon ds-kpi-icon--green">
-                                <IconCheck />
+                                <PortalIcon name="check" />
                             </div>
                             <div className="ds-kpi-body">
                                 <span className="ds-kpi-label">Completadas</span>
-                                <strong className="ds-kpi-value">{stats.completed}</strong>
-                                <span className="ds-kpi-hint">Salida y retorno registrados</span>
+                                <strong className="ds-kpi-value">
+                                    {stats.completed}
+                                </strong>
+                                <span className="ds-kpi-hint">
+                                    Salida y retorno registrados
+                                </span>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* ── Fila inferior: gráfico + últimas papeletas ── */}
+                {/* ── Fila inferior: Gráfico de barras + Últimas papeletas ── */}
                 <div className="ds-bottom-grid">
-
-                    {/* Mini gráfico de barras semanal */}
+                    {/* Modern Bar Chart */}
                     <div className="portal-card ds-chart-card">
                         <div className="ds-card-header">
-                            <h3>Finalizaciones por semana</h3>
-                            <p>Papeletas finalizadas en las últimas 4 semanas</p>
+                            <div className="ds-card-title-group">
+                                <span className="ds-card-icon-wrap">
+                                    <PortalIcon name="grid" />
+                                </span>
+                                <div>
+                                    <h3>Finalizaciones por semana</h3>
+                                    <p>Papeletas completadas en las últimas 4 semanas</p>
+                                </div>
+                            </div>
                         </div>
                         <div className="ds-card-body">
                             <WeekChart data={weekly} />
@@ -248,41 +432,89 @@ export default function Dashboard({
                     {/* Últimas papeletas */}
                     <div className="portal-card ds-recent-card">
                         <div className="ds-card-header">
-                            <div className="ds-recent-heading"><span className="ds-recent-heading-icon"><IconFile /></span><div><h3>Últimas papeletas</h3><p>Registro de las últimas solicitudes</p></div></div>
-                            <Link href={route("exit-slips.index")} className="ds-see-all">
-                                Ver bandeja <IconArrow />
+                            <div className="ds-card-title-group">
+                                <span className="ds-card-icon-wrap">
+                                    <PortalIcon name="file" />
+                                </span>
+                                <div>
+                                    <h3>Últimas papeletas</h3>
+                                    <p>Registro de las solicitudes más recientes</p>
+                                </div>
+                            </div>
+                            <Link
+                                href={route("exit-slips.index")}
+                                className="ds-see-all"
+                            >
+                                <span>Ver bandeja</span>
+                                <PortalIcon name="arrow" />
                             </Link>
                         </div>
+
                         <div className="ds-recent-list">
                             {recentSlips.length === 0 ? (
                                 <div className="ds-empty">
-                                    <IconFile />
-                                    <p>No hay papeletas registradas aún.</p>
+                                    <PortalIcon name="file" />
+                                    <strong>No hay papeletas registradas</strong>
+                                    <p>Tus nuevas solicitudes aparecerán aquí en orden cronológico.</p>
                                 </div>
                             ) : (
-                                recentSlips.map((slip, index) => (
-                                    <Link
-                                        key={slip.id}
-                                        href={route("papeletas.show", slip.codigo)}
-                                        className="ds-slip-row"
-                                    >
-                                        <span className={`ds-slip-avatar ds-slip-avatar--${index % 2 ? "violet" : "blue"}`} aria-hidden="true">{slip.solicitante.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("")}</span>
-                                        <div className="ds-slip-info">
-                                            <strong>{slip.solicitante}</strong>
-                                            <span>{slip.codigo} · {slip.motivo_label} · {slip.fecha_autorizada}</span>
-                                        </div>
-                                        <span className={`ds-status-badge ${STATUS_COLORS[slip.estado] ?? ""}`}>
-                                            {slip.estado === "completed" && <IconCheck />}{slip.estado_label}
-                                        </span>
-                                        <span className="ds-slip-arrow"><IconArrow /></span>
-                                    </Link>
-                                ))
+                                recentSlips.map((slip, index) => {
+                                    const initials = slip.solicitante
+                                        .split(/\s+/)
+                                        .filter(Boolean)
+                                        .slice(0, 2)
+                                        .map((part) => part[0].toUpperCase())
+                                        .join("");
+
+                                    return (
+                                        <Link
+                                            key={slip.id}
+                                            href={route("papeletas.show", slip.codigo)}
+                                            className="ds-slip-row"
+                                        >
+                                            <span
+                                                className={`ds-slip-avatar ds-slip-avatar--${
+                                                    index % 2 ? "teal" : "blue"
+                                                }`}
+                                                aria-hidden="true"
+                                            >
+                                                {initials}
+                                            </span>
+
+                                            <div className="ds-slip-info">
+                                                <strong>{slip.solicitante}</strong>
+                                                <div className="ds-slip-meta-line">
+                                                    <span className="ds-slip-code-pill">
+                                                        {slip.codigo}
+                                                    </span>
+                                                    <span>·</span>
+                                                    <span>{slip.motivo_label}</span>
+                                                    <span>·</span>
+                                                    <span>{slip.fecha_autorizada}</span>
+                                                </div>
+                                            </div>
+
+                                            <span
+                                                className={`ds-status-badge ${
+                                                    STATUS_COLORS[slip.estado] ?? ""
+                                                }`}
+                                            >
+                                                {slip.estado === "completed" && (
+                                                    <PortalIcon name="check" />
+                                                )}
+                                                <span>{slip.estado_label}</span>
+                                            </span>
+
+                                            <span className="ds-slip-arrow">
+                                                <PortalIcon name="arrow" />
+                                            </span>
+                                        </Link>
+                                    );
+                                })
                             )}
                         </div>
                     </div>
-
                 </div>
-
             </div>
         </AuthenticatedLayout>
     );

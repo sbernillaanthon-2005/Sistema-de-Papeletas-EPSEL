@@ -53,3 +53,7 @@ docker/postgres/data/
 
 # Composer
 src/composer.phar
+
+# Python cache
+__pycache__/
+*.pyc

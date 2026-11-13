@@ -184,6 +184,7 @@ export default function Authenticated({
                     <Link
                         key={item.label}
                         href={item.href}
+                        prefetch
                         onClick={() => setMenuOpen(false)}
                         className={item.active ? "active" : ""}
                         aria-current={item.active ? "page" : undefined}

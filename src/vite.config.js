@@ -9,6 +9,18 @@ export default defineConfig({
         origin: 'http://localhost:5173',
         hmr: { host: 'localhost' },
         cors: true,
+        watch: {
+            usePolling: true,
+            interval: 1500,
+            ignored: [
+                '**/node_modules/**',
+                '**/vendor/**',
+                '**/.git/**',
+                '**/storage/**',
+                '**/public/**',
+                '**/tests/**',
+            ],
+        },
     },
     plugins: [
         tailwindcss(),
