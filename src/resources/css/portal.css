@@ -12027,7 +12027,7 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     width: 100%;
 }
 
-/* ── Hero Ejecutivo con Fondo Tecnológico ── */
+/* ── Hero Ejecutivo con Fondo Tecnológico Oficial EPSEL ── */
 .portal-app.portal-tailwind-shell .bk-v2-hero,
 .portal-app .bk-v2-hero,
 .portal-hero.bk-v2-hero,
@@ -12035,10 +12035,10 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     position: relative !important;
     border-radius: 20px !important;
     overflow: hidden !important;
-    background: #02182b !important;
+    background: #021a30 !important;
     border: 1px solid rgba(56, 189, 248, 0.32) !important;
     box-shadow: 0 14px 34px -8px rgba(2, 26, 48, 0.45) !important;
-    padding: 26px 36px !important;
+    padding: 28px 36px !important;
     min-height: 180px !important;
     display: flex !important;
     flex-direction: row !important;
@@ -12056,8 +12056,8 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    object-fit: fill !important;
-    object-position: center !important;
+    object-fit: cover !important;
+    object-position: 80% center !important;
     pointer-events: none !important;
     z-index: 0 !important;
 }
@@ -12069,7 +12069,7 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     inset: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    background: linear-gradient(90deg, rgba(2, 20, 36, 0.48) 0%, rgba(2, 26, 46, 0.25) 45%, transparent 75%) !important;
+    background: linear-gradient(90deg, rgba(2, 22, 40, 0.84) 0%, rgba(2, 26, 48, 0.62) 36%, rgba(2, 30, 54, 0.18) 55%, transparent 72%) !important;
     pointer-events: none !important;
     z-index: 1 !important;
 }
@@ -12083,36 +12083,29 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     flex-direction: column !important;
     align-items: flex-start !important;
     text-align: left !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
-    max-width: min(520px, 52%) !important;
+    max-width: min(500px, 48%) !important;
     margin: 0 !important;
     margin-right: auto !important;
     margin-left: 0 !important;
 }
 
-.bk-v2-hero-header-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.bk-v2-status-pill {
+.bk-v2-hero-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 999px;
-    background: rgba(2, 20, 36, 0.72) !important;
+    background: rgba(2, 22, 42, 0.72) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(6, 182, 212, 0.50) !important;
-    color: #67e8f9;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #e2f7fb;
     font-size: 11px;
-    font-weight: 750;
+    font-weight: 700;
     letter-spacing: 0.05em;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 .bk-v2-pulse-dot {
@@ -12123,34 +12116,22 @@ html[data-theme="dark"] .audit-v2-copy-val code,
     box-shadow: 0 0 8px #10b981;
 }
 
-.bk-v2-server-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 8px;
-    background: rgba(2, 20, 36, 0.72) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.20) !important;
-    color: #bae6fd;
-    font-size: 11.5px;
-    font-weight: 650;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+.bk-v2-badge-separator {
+    color: rgba(56, 189, 248, 0.5);
+    font-size: 10px;
 }
 
-.bk-v2-server-chip svg {
-    width: 13px;
-    height: 13px;
-    color: #38bdf8;
+.bk-v2-badge-sub {
+    color: #7dd3fc;
+    font-weight: 600;
 }
 
 .bk-v2-hero-title {
-    font-size: clamp(22px, 2.3vw, 28px);
+    font-size: clamp(22px, 2.3vw, 27px);
     font-weight: 800;
     color: #ffffff;
     letter-spacing: -0.4px;
-    margin: 2px 0 0;
+    margin: 0;
     line-height: 1.25;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.95);
 }
@@ -12166,21 +12147,25 @@ html[data-theme="dark"] .audit-v2-copy-val code,
 .bk-v2-hero-meta-chips {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 4px;
-    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+    flex-wrap: nowrap;
 }
 
 .bk-v2-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 11px;
     color: #93c5fd;
-    background: rgba(2, 20, 36, 0.68) !important;
+    background: rgba(2, 22, 42, 0.70) !important;
     backdrop-filter: blur(6px) !important;
     -webkit-backdrop-filter: blur(6px) !important;
-    padding: 3px 9px;
+    padding: 3px 10px;
     border-radius: 6px;
     border: 1px solid rgba(56, 189, 248, 0.25) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
 }
 
 .bk-v2-chip strong {

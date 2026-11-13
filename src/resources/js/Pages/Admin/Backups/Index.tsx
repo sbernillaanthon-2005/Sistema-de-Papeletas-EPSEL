@@ -159,35 +159,27 @@ export default function Index({ automaticBackups = [] }: { automaticBackups?: Au
                     <div className="bk-v2-hero-gradient-overlay" />
                     
                     <div className="bk-v2-hero-content">
-                        <div className="bk-v2-hero-header-row">
-                            <div className="bk-v2-status-pill">
-                                <span className="bk-v2-pulse-dot" />
-                                <span>SISTEMA OPERATIVO &bull; CONTINUIDAD DE DATOS</span>
-                            </div>
-                            <div className="bk-v2-server-chip">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <ellipse cx="12" cy="5" rx="9" ry="3" />
-                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                                </svg>
-                                <span>PostgreSQL 16 &bull; Online</span>
-                            </div>
+                        <div className="bk-v2-hero-badge">
+                            <span className="bk-v2-pulse-dot" />
+                            <span>SISTEMA OPERATIVO &bull; CONTINUIDAD DE DATOS</span>
+                            <span className="bk-v2-badge-separator">&bull;</span>
+                            <span className="bk-v2-badge-sub">PostgreSQL 16 Online</span>
                         </div>
 
                         <h2 className="bk-v2-hero-title">Gestión y Resguardo de Base de Datos</h2>
                         <p className="bk-v2-hero-desc">
-                            Genera una copia binaria completa de PostgreSQL (.dump) en tiempo real. Incluye esquemas, relaciones, usuarios y registros de transacciones con auto-eliminación temporal en servidor.
+                            Genera una copia binaria completa de PostgreSQL (.dump) en tiempo real con esquemas, usuarios y transacciones auditadas.
                         </p>
 
                         <div className="bk-v2-hero-meta-chips">
                             <span className="bk-v2-chip">
-                                <strong>Compresión:</strong> pg_dump custom (-Fc)
+                                <strong>Compresión:</strong> pg_dump (-Fc)
                             </span>
                             <span className="bk-v2-chip">
-                                <strong>Codificación:</strong> UTF-8 (es_PE)
+                                <strong>Codificación:</strong> UTF-8
                             </span>
                             <span className="bk-v2-chip">
-                                <strong>Seguridad:</strong> Streaming cifrado
+                                <strong>Seguridad:</strong> Cifrado SSL
                             </span>
                         </div>
                     </div>
