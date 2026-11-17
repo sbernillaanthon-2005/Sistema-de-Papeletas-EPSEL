@@ -54,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         if ($this->app->environment('testing')) {
             // Browser tests use the production bundle, independent of the dev server.
             \Illuminate\Support\Facades\Vite::useHotFile(storage_path('framework/testing.hot'));
