@@ -5532,9 +5532,9 @@
 .admin-dashboard-v2 .admin-bar-list,
 .admin-dashboard-v2 .admin-access-list { gap: 10px; }
 .admin-dashboard-v2 .admin-bar-row { grid-template-columns: 140px minmax(50px,1fr) 43px; }
-.admin-dashboard-v2 .admin-access-row { grid-template-columns: minmax(135px, 1.15fr) minmax(45px, 1fr) 28px; }
+.admin-dashboard-v2 .admin-access-row { grid-template-columns: minmax(165px, 1.25fr) minmax(45px, 1fr) 28px; }
 .admin-dashboard-v2 .admin-bar-label,
-.admin-dashboard-v2 .admin-access-label { color: #27465e; font-size: 11px; }
+.admin-dashboard-v2 .admin-access-label { color: #27465e; font-size: 11px; min-width: 0; overflow: hidden; white-space: normal; overflow-wrap: break-word; }
 .admin-dashboard-v2 .admin-bar-track,
 .admin-dashboard-v2 .admin-access-track { background: #eaf0f2; height: 10px; }
 .admin-dashboard-v2 .admin-bar-row strong { display: flex; gap: 12px; justify-content: flex-end; }
