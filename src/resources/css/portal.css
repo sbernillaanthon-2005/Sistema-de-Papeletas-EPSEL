@@ -14540,3 +14540,32 @@ html[data-theme="dark"] .nb-item:hover,
 .portal-app[data-theme="dark"] .nb-item:hover {
     background: #153c4b;
 }
+
+/* Tarjeta vacía y modal de Respaldos V2 en modo oscuro */
+html[data-theme="dark"] .bk-v2-empty-state,
+.portal-app[data-theme="dark"] .bk-v2-empty-state {
+    background: #0d2330;
+    border-color: #254655;
+}
+
+html[data-theme="dark"] .bk-v2-empty-icon,
+.portal-app[data-theme="dark"] .bk-v2-empty-icon {
+    background: rgba(14, 165, 233, 0.16);
+    color: #38bdf8;
+}
+
+html[data-theme="dark"] .bk-v2-empty-text strong,
+.portal-app[data-theme="dark"] .bk-v2-empty-text strong {
+    color: #f1f5f9;
+}
+
+html[data-theme="dark"] .bk-v2-empty-text p,
+.portal-app[data-theme="dark"] .bk-v2-empty-text p {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .bk-v2-modal-card,
+.portal-app[data-theme="dark"] .bk-v2-modal-card {
+    background: #102a38;
+    color: #e2f1f5;
+}
