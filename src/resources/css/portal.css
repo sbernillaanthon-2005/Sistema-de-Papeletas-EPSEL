@@ -14486,3 +14486,57 @@ html[data-theme="dark"] .portal-account-popover .portal-account-logout[data-focu
     background: rgba(239, 68, 68, 0.16);
     color: #fecaca;
 }
+
+/* Panel de notificaciones en modo oscuro */
+html[data-theme="dark"] .portal-notifications,
+.portal-app[data-theme="dark"] .portal-notifications {
+    background: #102a38;
+    border-color: #254655;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+    color: #e2f1f5;
+}
+
+html[data-theme="dark"] .nb-panel-header,
+.portal-app[data-theme="dark"] .nb-panel-header {
+    background: #0d2330;
+    border-bottom-color: #254655;
+}
+
+html[data-theme="dark"] .nb-panel-title,
+.portal-app[data-theme="dark"] .nb-panel-title {
+    color: #f1f8fa;
+}
+
+html[data-theme="dark"] .nb-close:hover,
+.portal-app[data-theme="dark"] .nb-close:hover {
+    background: #153c4b;
+    color: #ecf9fb;
+}
+
+html[data-theme="dark"] .nb-read-all:hover,
+.portal-app[data-theme="dark"] .nb-read-all:hover {
+    background: #153c4b;
+}
+
+html[data-theme="dark"] .nb-count-tag,
+.portal-app[data-theme="dark"] .nb-count-tag {
+    background: rgba(14, 165, 233, 0.18);
+    border-color: rgba(56, 189, 248, 0.35);
+    color: #7dd3fc;
+}
+
+html[data-theme="dark"] .nb-empty,
+.portal-app[data-theme="dark"] .nb-empty {
+    color: #9cb8c2;
+}
+
+html[data-theme="dark"] .nb-item,
+.portal-app[data-theme="dark"] .nb-item {
+    border-bottom-color: #1c3d4d;
+    color: #d4e8ee;
+}
+
+html[data-theme="dark"] .nb-item:hover,
+.portal-app[data-theme="dark"] .nb-item:hover {
+    background: #153c4b;
+}
