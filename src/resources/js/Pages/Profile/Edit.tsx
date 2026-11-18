@@ -7,7 +7,7 @@ import UpdatePasswordForm from "./Partials/UpdatePasswordForm";
 import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm";
 import UpdateProfilePhotoForm from "./Partials/UpdateProfilePhotoForm";
 import UpdateSignatureForm from "./Partials/UpdateSignatureForm";
-import heroBg from "../../../images/Banner tecnológico azul con datos y seguridad.png";
+import heroBg from "../../../images/banner-tecnologico-azul-seguridad.png";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 

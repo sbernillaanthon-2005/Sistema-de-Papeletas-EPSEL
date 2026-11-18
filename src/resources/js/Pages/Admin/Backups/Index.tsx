@@ -7,7 +7,7 @@ import axios from "axios";
 import { FormEvent, useState, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import backupHeroImage from "../../../../images/Banner tecnológico azul con datos y seguridad.png";
+import backupHeroImage from "../../../../images/banner-tecnologico-azul-seguridad.png";
 
 gsap.registerPlugin(useGSAP);
 
