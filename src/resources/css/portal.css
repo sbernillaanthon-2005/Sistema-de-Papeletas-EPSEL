@@ -6423,14 +6423,14 @@ html[data-theme="dark"] .portal-modal-panel .portal-icon-button { background: #1
 .portal-app.portal-tailwind-shell .backup-hero {
     background:
         linear-gradient(90deg, rgba(4, 35, 58, .24) 0%, rgba(4, 35, 58, .12) 48%, rgba(4, 35, 58, .02) 100%),
-        url("../images/Banner tecnológico azul con datos y seguridad.png") center 50% / 100% auto no-repeat,
+        url("../images/banner-tecnologico-azul-seguridad.png") center 50% / 100% auto no-repeat,
         linear-gradient(105deg, #082b46 0%, #06445d 58%, #087e91 100%);
 }
 .portal-app.portal-tailwind-shell .backup-hero::before { display: none; }
 .portal-app[data-theme="dark"].portal-tailwind-shell .backup-hero {
     background:
         linear-gradient(90deg, rgba(3, 22, 40, .34) 0%, rgba(3, 22, 40, .2) 48%, rgba(3, 22, 40, .04) 100%),
-        url("../images/Banner tecnológico azul con datos y seguridad.png") center 50% / 100% auto no-repeat,
+        url("../images/banner-tecnologico-azul-seguridad.png") center 50% / 100% auto no-repeat,
         linear-gradient(105deg, #061c30 0%, #07344b 58%, #075a68 100%);
 }
 
@@ -6440,7 +6440,7 @@ html[data-theme="dark"] .portal-modal-panel .portal-icon-button { background: #1
     align-items: center;
     background:
         linear-gradient(90deg, rgba(4, 35, 58, .24) 0%, rgba(4, 35, 58, .12) 48%, rgba(4, 35, 58, .02) 100%),
-        url("../images/Banner tecnológico azul con datos y seguridad.png") center 50% / 100% auto no-repeat,
+        url("../images/banner-tecnologico-azul-seguridad.png") center 50% / 100% auto no-repeat,
         linear-gradient(105deg, #082b46 0%, #06445d 58%, #087e91 100%);
     min-height: 158px;
     padding: 24px 30px;
@@ -6507,7 +6507,7 @@ html[data-theme="dark"] .portal-modal-panel .portal-icon-button { background: #1
 .portal-app[data-theme="dark"] .backup-hero {
     background:
         linear-gradient(90deg, rgba(3, 22, 40, .34) 0%, rgba(3, 22, 40, .2) 48%, rgba(3, 22, 40, .04) 100%),
-        url("../images/Banner tecnológico azul con datos y seguridad.png") center 50% / 100% auto no-repeat,
+        url("../images/banner-tecnologico-azul-seguridad.png") center 50% / 100% auto no-repeat,
         linear-gradient(105deg, #061c30 0%, #07344b 58%, #075a68 100%);
 }
 .portal-app[data-theme="dark"] .backup-specs-grid { background: #0d2633; border-color: #244655; }
@@ -10895,6 +10895,10 @@ html[data-theme="dark"] .ds-slip-row:hover {
     .pp-v2-grid {
         grid-template-columns: 1fr;
     }
+    .pp-v2-col--wide,
+    .pp-v2-col--narrow {
+        grid-column: 1;
+    }
     .pp-v2-hero {
         padding: 20px;
     }
@@ -11064,6 +11068,47 @@ html[data-theme="dark"] .pp-v2-modal-title,
 html[data-theme="dark"] .pp-v2-modal-desc,
 .portal-app[data-theme="dark"] .pp-v2-modal-desc {
     color: #94a3b8;
+}
+
+html[data-theme="dark"] .pp-v2-canvas-title,
+.portal-app[data-theme="dark"] .pp-v2-canvas-title {
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] .pp-v2-guidelines-icon,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-icon {
+    background: rgba(14, 165, 233, 0.16);
+    color: #38bdf8;
+}
+
+html[data-theme="dark"] .pp-v2-guidelines-icon.tone-green,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-icon.tone-green {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+}
+
+html[data-theme="dark"] .pp-v2-guidelines-header h4,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-header h4 {
+    color: #f0f9ff;
+}
+
+html[data-theme="dark"] .pp-v2-guidelines-intro,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-intro,
+html[data-theme="dark"] .pp-v2-guidelines-list li,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-list li {
+    color: #cbd5e1;
+}
+
+html[data-theme="dark"] .pp-v2-guidelines-list strong,
+.portal-app[data-theme="dark"] .pp-v2-guidelines-list strong {
+    color: #f0f9ff;
+}
+
+html[data-theme="dark"] .pp-v2-security-guarantee,
+.portal-app[data-theme="dark"] .pp-v2-security-guarantee {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(52, 211, 153, 0.3);
+    color: #a7f3d0;
 }
 
 
@@ -14560,6 +14605,30 @@ html[data-theme="dark"] .bk-v2-empty-text strong,
 html[data-theme="dark"] .bk-v2-empty-text p,
 .portal-app[data-theme="dark"] .bk-v2-empty-text p {
     color: #94a3b8;
+}
+
+html[data-theme="dark"] .bk-v2-security-list strong,
+.portal-app[data-theme="dark"] .bk-v2-security-list strong {
+    color: #f1f5f9;
+}
+
+html[data-theme="dark"] .bk-v2-security-list p,
+.portal-app[data-theme="dark"] .bk-v2-security-list p {
+    color: #adc7d5;
+}
+
+html[data-theme="dark"] .bk-v2-audit-link,
+.portal-app[data-theme="dark"] .bk-v2-audit-link {
+    background: #12384c;
+    border-color: #2b6278;
+    color: #8be7ff;
+}
+
+html[data-theme="dark"] .bk-v2-audit-link:hover,
+.portal-app[data-theme="dark"] .bk-v2-audit-link:hover {
+    background: #1a4a60;
+    border-color: #47a8c5;
+    color: #d3f7ff;
 }
 
 html[data-theme="dark"] .bk-v2-modal-card,
