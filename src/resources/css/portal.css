@@ -14589,3 +14589,113 @@ html[data-theme="dark"] .bk-v2-modal-card,
     background: #102a38;
     color: #e2f1f5;
 }
+
+/* Buscador y carpetas de RRHH (.hr-folder-*) en modo oscuro */
+html[data-theme="dark"] .hr-folder-search-count,
+.portal-app[data-theme="dark"] .hr-folder-search-count {
+    color: #9ec0cc;
+}
+
+html[data-theme="dark"] .hr-folder-search-count strong,
+.portal-app[data-theme="dark"] .hr-folder-search-count strong {
+    color: #38bdf8;
+}
+
+html[data-theme="dark"] .hr-folder-search,
+.portal-app[data-theme="dark"] .hr-folder-search {
+    background: #0d2330;
+    border-color: #254655;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    color: #8eb2c0;
+}
+
+html[data-theme="dark"] .hr-folder-search:focus-within,
+.portal-app[data-theme="dark"] .hr-folder-search:focus-within {
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18);
+}
+
+html[data-theme="dark"] .hr-folder-search > input,
+.portal-app[data-theme="dark"] .hr-folder-search > input {
+    color: #f0f9ff;
+}
+
+html[data-theme="dark"] .hr-folder-search > input::placeholder,
+.portal-app[data-theme="dark"] .hr-folder-search > input::placeholder {
+    color: #6f92a0;
+}
+
+html[data-theme="dark"] .hr-folder-search-clear,
+.portal-app[data-theme="dark"] .hr-folder-search-clear {
+    background: #173a4c;
+    color: #cbd5e1;
+}
+
+html[data-theme="dark"] .hr-folder-search-clear:hover,
+.portal-app[data-theme="dark"] .hr-folder-search-clear:hover {
+    background: #204d63;
+    color: #ffffff;
+}
+
+html[data-theme="dark"] .hr-folder-card,
+.portal-app[data-theme="dark"] .hr-folder-card {
+    background: #0d2330;
+    border-color: #254655;
+}
+
+html[data-theme="dark"] .hr-folder-card:hover,
+.portal-app[data-theme="dark"] .hr-folder-card:hover {
+    background: #133142;
+    border-color: #38bdf8;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .hr-folder-card.is-selected,
+.portal-app[data-theme="dark"] .hr-folder-card.is-selected {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(6, 182, 212, 0.12) 100%);
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.5), 0 6px 18px rgba(0, 0, 0, 0.32);
+}
+
+html[data-theme="dark"] .hr-folder-copy strong,
+.portal-app[data-theme="dark"] .hr-folder-copy strong {
+    color: #f0f9ff;
+}
+
+html[data-theme="dark"] .hr-folder-card.is-selected .hr-folder-copy strong,
+.portal-app[data-theme="dark"] .hr-folder-card.is-selected .hr-folder-copy strong {
+    color: #7df4ff;
+}
+
+html[data-theme="dark"] .hr-folder-copy small,
+.portal-app[data-theme="dark"] .hr-folder-copy small {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .hr-folder-icon,
+.portal-app[data-theme="dark"] .hr-folder-icon {
+    background: rgba(14, 165, 233, 0.16);
+    color: #38bdf8;
+}
+
+html[data-theme="dark"] .hr-folder-card--all .hr-folder-icon,
+.portal-app[data-theme="dark"] .hr-folder-card--all .hr-folder-icon {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+html[data-theme="dark"] .hr-folder-card.is-selected .hr-folder-icon,
+.portal-app[data-theme="dark"] .hr-folder-card.is-selected .hr-folder-icon {
+    background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+    color: #ffffff;
+}
+
+html[data-theme="dark"] .hr-folder-empty,
+.portal-app[data-theme="dark"] .hr-folder-empty {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .hr-folder-empty strong,
+.portal-app[data-theme="dark"] .hr-folder-empty strong {
+    color: #f0f9ff;
+}
