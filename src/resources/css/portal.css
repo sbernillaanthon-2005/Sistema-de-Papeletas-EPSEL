@@ -14444,3 +14444,45 @@ html[data-theme="dark"] .portal-mobile-sidebar {
 .portal-mobile-sidebar .portal-logout {
     color: #cde8f6 !important;
 }
+
+/* Popover de cuenta de usuario en modo oscuro (HeadlessUI Portal se monta en <body>) */
+html[data-theme="dark"] .portal-account-popover {
+    background: #102a38;
+    border-color: #254655;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    color: #e2f1f5;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-summary strong {
+    color: #f1f8fa;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-summary span {
+    color: #9cb8c2;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-summary-avatar {
+    background: rgba(14, 165, 233, 0.16) !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    color: #7dd3fc !important;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-item {
+    color: #d4e8ee;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-item:hover,
+html[data-theme="dark"] .portal-account-popover .portal-account-item[data-focus] {
+    background: #153c4b;
+    color: #ecf9fb;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-logout {
+    color: #fca5a5;
+}
+
+html[data-theme="dark"] .portal-account-popover .portal-account-logout:hover,
+html[data-theme="dark"] .portal-account-popover .portal-account-logout[data-focus] {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fecaca;
+}
