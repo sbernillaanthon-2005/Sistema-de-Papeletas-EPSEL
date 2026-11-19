@@ -45,6 +45,47 @@ export default function VoiceAssistant() {
     const [message, setMessage] = useState("Pulsa el micrófono y habla con naturalidad.");
     const recognition = useRef<Recognition | null>(null);
     const keepListening = useRef(false);
+    const container = useRef<HTMLDivElement>(null);
+
+    const closePanel = () => {
+        setOpen(false);
+        if (listening || keepListening.current) {
+            keepListening.current = false;
+            recognition.current?.stop();
+            setListening(false);
+        }
+    };
+
+    useEffect(() => {
+        const onPopoverOpen = (event: Event) => {
+            if ((event as CustomEvent<string>).detail !== "voice") {
+                closePanel();
+            }
+        };
+        window.addEventListener("portal:popover-open", onPopoverOpen);
+        return () => window.removeEventListener("portal:popover-open", onPopoverOpen);
+    }, [listening]);
+
+    useEffect(() => {
+        if (!open && !listening) return;
+        const outside = (event: MouseEvent) => {
+            if (!container.current?.contains(event.target as Node)) {
+                closePanel();
+            }
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                closePanel();
+                container.current?.querySelector("button")?.focus();
+            }
+        };
+        document.addEventListener("mousedown", outside);
+        document.addEventListener("keydown", escape);
+        return () => {
+            document.removeEventListener("mousedown", outside);
+            document.removeEventListener("keydown", escape);
+        };
+    }, [open, listening]);
 
     const respond = (text: string) => {
         setMessage(text);
@@ -181,8 +222,10 @@ export default function VoiceAssistant() {
     }, []);
 
     const toggle = () => {
+        window.dispatchEvent(new CustomEvent("portal:popover-open", { detail: "voice" }));
+
         if (!recognition.current) {
-            setOpen(true);
+            setOpen((prev) => !prev);
             return;
         }
 
@@ -202,7 +245,7 @@ export default function VoiceAssistant() {
         recognition.current.start();
     };
 
-    return <div className="voice-assistant">
+    return <div className="voice-assistant" ref={container}>
         <button type="button" className={"portal-icon-button voice-assistant-button " + (listening ? "is-listening" : "")} onClick={toggle} aria-label={listening ? "Pausar asistente de voz" : "Activar asistente de voz"} aria-pressed={listening} title="Asistente de voz"><PortalIcon name="mic" /></button>
         {(open || listening) && <section className="voice-assistant-panel" aria-live="polite">
             <div className="voice-assistant-head"><div><span className={listening ? "voice-status is-live" : "voice-status"} /> <strong>{listening ? "Escuchando" : "Asistente de voz"}</strong></div><button type="button" onClick={() => setOpen(false)} aria-label="Cerrar asistente"><PortalIcon name="close" /></button></div>

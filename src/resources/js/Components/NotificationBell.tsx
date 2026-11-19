@@ -84,6 +84,17 @@ export default function NotificationBell() {
     const isFirstLoad = useRef(true);
     const container = useRef<HTMLDivElement>(null);
 
+    // Cerrar cuando se abre otro popover de la barra superior
+    useEffect(() => {
+        const onPopoverOpen = (event: Event) => {
+            if ((event as CustomEvent<string>).detail !== "notifications") {
+                setOpen(false);
+            }
+        };
+        window.addEventListener("portal:popover-open", onPopoverOpen);
+        return () => window.removeEventListener("portal:popover-open", onPopoverOpen);
+    }, []);
+
     // Cerrar al hacer clic fuera o presionar Escape
     useEffect(() => {
         if (!open) return;
@@ -182,7 +193,11 @@ export default function NotificationBell() {
                 aria-expanded={open}
                 aria-haspopup="true"
                 onClick={() => {
-                    setOpen(!open);
+                    const next = !open;
+                    if (next) {
+                        window.dispatchEvent(new CustomEvent("portal:popover-open", { detail: "notifications" }));
+                    }
+                    setOpen(next);
                     void refresh();
                 }}
             >

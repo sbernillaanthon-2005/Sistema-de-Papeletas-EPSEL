@@ -315,7 +315,11 @@ export default function Authenticated({
                         <VoiceAssistant />
                         <NotificationBell />
                         <Menu as="div" className="portal-account-menu">
-                            <MenuButton className="portal-profile-link" aria-label="Abrir menú de perfil">
+                            <MenuButton
+                                className="portal-profile-link"
+                                aria-label="Abrir menú de perfil"
+                                onClick={() => window.dispatchEvent(new CustomEvent("portal:popover-open", { detail: "account" }))}
+                            >
                                 <Avatar name={user.nombres} photo={user.profile_photo_url} small />
                             </MenuButton>
                             <MenuItems anchor="bottom end" className="portal-account-popover">
