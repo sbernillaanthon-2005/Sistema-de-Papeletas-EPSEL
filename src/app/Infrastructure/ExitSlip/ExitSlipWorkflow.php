@@ -90,8 +90,9 @@ class ExitSlipWorkflow
 
     private function signature(User $user): string
     {
-        $path = $user->signature?->ruta_archivo;
-        if (! $path || ! Storage::disk('private')->exists($path)) {
+        $signature = $user->signature;
+        $path = $signature?->ruta_archivo;
+        if (! $path || ! $signature?->ensureFileExists()) {
             throw new \DomainException('Carga tu firma en el perfil antes de continuar.');
         }
 

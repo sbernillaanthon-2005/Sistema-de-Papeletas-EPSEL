@@ -44,7 +44,7 @@ class SignatureController extends Controller
         }
 
         $path = $signature->ruta_archivo;
-        if (! Storage::disk('private')->exists($path)) {
+        if (! $signature->ensureFileExists()) {
             abort(404);
         }
 

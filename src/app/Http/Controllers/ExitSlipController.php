@@ -467,6 +467,7 @@ class ExitSlipController extends Controller
         $user = User::with('signature')->find($slip->practitionerId);
         $practitionerSignaturePath = $slip->practitionerSignaturePath;
         if (! $practitionerSignaturePath && in_array($slip->status->value, ['draft', 'submitted'])) {
+            $user?->signature?->ensureFileExists();
             $practitionerSignaturePath = $user?->signature?->ruta_archivo;
         }
 

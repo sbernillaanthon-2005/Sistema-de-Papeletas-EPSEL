@@ -33,6 +33,9 @@ final class UploadSignature
         DB::transaction(function () use ($user, $file) {
             // Guardar en disco (sanitizado)
             $path = $this->storage->storeSignature($file);
+            $content = (string) Storage::disk('private')->get($path);
+            $hash = hash('sha256', $content);
+            $base64 = base64_encode($content);
 
             // Eliminar firma anterior del disco si existe
             $oldSignature = Signature::where('user_id', $user->id)->first();
@@ -42,7 +45,8 @@ final class UploadSignature
                 $oldSignature->update([
                     'ruta_archivo' => $path,
                     'mime' => 'image/png',
-                    'hash_sha256' => hash_file('sha256', Storage::disk('private')->path($path)),
+                    'hash_sha256' => $hash,
+                    'imagen_base64' => $base64,
                 ]);
             } else {
                 // Registrar en base de datos
@@ -50,7 +54,8 @@ final class UploadSignature
                     'user_id' => $user->id,
                     'ruta_archivo' => $path,
                     'mime' => 'image/png',
-                    'hash_sha256' => hash_file('sha256', Storage::disk('private')->path($path)),
+                    'hash_sha256' => $hash,
+                    'imagen_base64' => $base64,
                 ]);
             }
         });
