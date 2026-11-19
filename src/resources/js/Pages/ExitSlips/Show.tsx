@@ -383,17 +383,17 @@ export default function Show({
                                                         onChange={e => form.setData("hora_retorno", e.target.value)}
                                                     />
                                                     <label 
-                                                        className={`flex items-center justify-between gap-3 mt-3 p-3 rounded-lg border cursor-pointer transition-colors ${noReturn ? 'bg-teal-50 border-teal-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                                                        className={`slip-no-return-toggle flex items-center justify-between gap-3 mt-3 p-3 rounded-lg border cursor-pointer transition-colors ${noReturn ? 'is-active bg-teal-50 border-teal-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
                                                     >
                                                         <div className="flex flex-col">
-                                                            <span className={`text-sm font-semibold ${noReturn ? 'text-teal-800' : 'text-slate-700'}`}>
+                                                            <span className={`slip-no-return-title text-sm font-semibold ${noReturn ? 'text-teal-800' : 'text-slate-700'}`}>
                                                                 Sin retorno
                                                             </span>
-                                                            <span className="text-xs text-slate-500">
+                                                            <span className="slip-no-return-desc text-xs text-slate-500">
                                                                 Marcar si no regresará hoy a la entidad
                                                             </span>
                                                         </div>
-                                                        <div className={`relative w-10 h-5 rounded-full transition-colors ${noReturn ? 'bg-teal-600' : 'bg-slate-300'}`}>
+                                                        <div className={`slip-no-return-track relative shrink-0 w-10 h-5 rounded-full transition-colors ${noReturn ? 'bg-teal-600' : 'bg-slate-300'}`}>
                                                             <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${noReturn ? 'left-5' : 'left-0.5'}`} />
                                                         </div>
                                                         <input 

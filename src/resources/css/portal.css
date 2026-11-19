@@ -14748,3 +14748,53 @@ html[data-theme="dark"] .hr-folder-empty strong,
 .portal-app[data-theme="dark"] .hr-folder-empty strong {
     color: #f0f9ff;
 }
+
+/* Toggle "Sin retorno" en vigilancia (.slip-no-return-toggle) */
+.portal-field label.slip-no-return-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+html[data-theme="dark"] .portal-field label.slip-no-return-toggle,
+.portal-app[data-theme="dark"] .portal-field label.slip-no-return-toggle {
+    background: #0d2330;
+    border-color: #254655;
+}
+
+html[data-theme="dark"] .portal-field label.slip-no-return-toggle:hover,
+.portal-app[data-theme="dark"] .portal-field label.slip-no-return-toggle:hover {
+    background: #133142;
+    border-color: #356378;
+}
+
+html[data-theme="dark"] .portal-field label.slip-no-return-toggle.is-active,
+.portal-app[data-theme="dark"] .portal-field label.slip-no-return-toggle.is-active {
+    background: rgba(13, 148, 136, 0.16);
+    border-color: rgba(45, 212, 191, 0.45);
+}
+
+html[data-theme="dark"] .slip-no-return-title,
+.portal-app[data-theme="dark"] .slip-no-return-title {
+    color: #e2f1f5;
+}
+
+html[data-theme="dark"] .slip-no-return-toggle.is-active .slip-no-return-title,
+.portal-app[data-theme="dark"] .slip-no-return-toggle.is-active .slip-no-return-title {
+    color: #5eead4;
+}
+
+html[data-theme="dark"] .slip-no-return-desc,
+.portal-app[data-theme="dark"] .slip-no-return-desc {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .slip-no-return-track,
+.portal-app[data-theme="dark"] .slip-no-return-track {
+    background: #254655;
+}
+
+html[data-theme="dark"] .slip-no-return-toggle.is-active .slip-no-return-track,
+.portal-app[data-theme="dark"] .slip-no-return-toggle.is-active .slip-no-return-track {
+    background: #0d9488;
+}
