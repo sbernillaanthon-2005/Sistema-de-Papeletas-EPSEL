@@ -158,7 +158,7 @@ export default function ExitSlipPdfModal({
                         </a>
 
                         <a
-                            href={`${pdfUrl}?download=1`}
+                            href={`${pdfUrl}&download=1`}
                             className="portal-btn portal-btn-primary slip-pdf-btn-download"
                             title="Descargar documento PDF oficial"
                         >

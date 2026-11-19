@@ -88,7 +88,7 @@ export default function Show({
         );
     const stage = stages.indexOf(slip.estado);
     const stageDates = stages.map((state) => history.find((item) => item.estado_destino === state)?.created_at);
-    const pdfUrl = route("papeletas.pdf", slip.codigo);
+    const pdfUrl = `${route("papeletas.pdf", slip.codigo)}?v=${encodeURIComponent(`${slip.estado}-${Date.now()}`)}`;
     useGSAP(() => {
         if (!progressRef.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -145,7 +145,7 @@ export default function Show({
                                     <PortalIcon name="eye" />
                                     Vista previa PDF
                                 </button>
-                                <a className="portal-btn portal-btn-primary" href={`${pdfUrl}?download=1`}><PortalIcon name="download" />Descargar PDF</a>
+                                <a className="portal-btn portal-btn-primary" href={`${pdfUrl}&download=1`}><PortalIcon name="download" />Descargar PDF</a>
                             </div>
                         </div>
                     </div>
