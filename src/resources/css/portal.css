@@ -7923,7 +7923,8 @@ html[data-theme="dark"] .edit-user-shortcut-hint kbd {
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
 }
 
-.pf-v2-hero-title {
+.pf-v2-hero-title,
+.portal-app .pf-v2-hero .pf-v2-hero-title {
     font-size: 24px;
     font-weight: 800;
     color: #ffffff;
