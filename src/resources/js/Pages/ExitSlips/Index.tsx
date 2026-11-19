@@ -159,7 +159,7 @@ export default function Index({
         <AuthenticatedLayout header={<h1>{config.title}</h1>}>
             <Head title={config.title} />
             <div className="portal-stack slips-page" data-exit-slips-page="true">
-                <section className="portal-hero slips-hero" style={{ backgroundImage: `url("${mascotReview}")` }}>
+                <section className="portal-hero slips-hero" style={{ backgroundImage: `url("${mascotReview}")`, backgroundPosition: "center center", backgroundSize: "100% 100%" }}>
                     <PortalHeroCopy className="slips-hero-copy" eyebrow="TU PORTAL EPSEL" lead={titleLead} accent={titleAccent} description={config.intro} />
                     <div className="slips-hero-note" aria-hidden="true"><span>AGUA QUE CONECTA PERSONAS</span><strong>SERVICIO<br />TRANSPARENCIA<br />CONFIANZA</strong><i /></div>
                     {canCreate && <Link className="slips-hero-action" href={route("exit-slips.create")}><PortalIcon name="plus" /> Nueva papeleta</Link>}
