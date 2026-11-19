@@ -487,9 +487,13 @@ class ExitSlipController extends Controller
         $pdf->setPaper('A4', 'landscape');
         $pdf->setOption('isRemoteEnabled', false);
 
-        return request()->boolean('download')
+        $response = request()->boolean('download')
             ? $pdf->download($slip->codigo.'.pdf')
             : $pdf->stream($slip->codigo.'.pdf');
+
+        return $response
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     private function resolveSlipId(string $reference): string
@@ -503,7 +507,15 @@ class ExitSlipController extends Controller
 
     private function getSignatureBase64(?string $path): ?string
     {
-        if (! $path || ! Storage::disk('private')->exists($path)) {
+        if (! $path) {
+            return null;
+        }
+
+        if (! Storage::disk('private')->exists($path)) {
+            \App\Models\Signature::where('ruta_archivo', $path)->first()?->ensureFileExists();
+        }
+
+        if (! Storage::disk('private')->exists($path)) {
             return null;
         }
         $mime = Storage::disk('private')->mimeType($path);
