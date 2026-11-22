@@ -13,6 +13,7 @@ export interface User {
     signature_id: string | null;
     profile_photo_path: string | null;
     profile_photo_url: string;
+    theme?: "light" | "dark";
 }
 
 export type PageProps<

@@ -1,4 +1,5 @@
 import { Link, usePage } from "@inertiajs/react";
+import axios from "axios";
 import { PropsWithChildren, ReactNode, useEffect, useState } from "react";
 import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import NotificationBell from "@/Components/NotificationBell";
@@ -22,14 +23,11 @@ export default function Authenticated({
         typeof window !== "undefined" && window.localStorage.getItem("epsel-sidebar") === "collapsed",
     );
     const [theme, setTheme] = useState<"light" | "dark">(() => {
+        if (user.theme === "dark" || user.theme === "light") return user.theme;
         if (typeof window === "undefined") return "light";
 
-        const savedTheme = window.localStorage.getItem("epsel-theme");
-        if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
-
-        return window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
+        const savedTheme = window.localStorage.getItem(`epsel-theme-${user.id}`);
+        return savedTheme === "dark" ? "dark" : "light";
     });
     const role = user.rol_label || roleLabels[user.rol];
     const isAdminDashboard = user.rol === "admin" && /^\/admin\/dashboard(?:\?|$)/.test(url);
@@ -39,9 +37,19 @@ export default function Authenticated({
     const home = user.rol === "admin" ? "admin.dashboard" : "dashboard";
 
     useEffect(() => {
-        window.localStorage.setItem("epsel-theme", theme);
+        if (user.theme === "dark" || user.theme === "light") {
+            setTheme(user.theme);
+        }
+    }, [user.id, user.theme]);
+
+    useEffect(() => {
+        window.localStorage.removeItem("epsel-theme");
+        window.localStorage.setItem(`epsel-theme-${user.id}`, theme);
         document.documentElement.dataset.theme = theme;
-    }, [theme]);
+        return () => {
+            delete document.documentElement.dataset.theme;
+        };
+    }, [theme, user.id]);
 
     useEffect(() => {
         if (!flash?.success) {
@@ -68,9 +76,9 @@ export default function Authenticated({
     }, [sidebarCollapsed]);
 
     const toggleTheme = () => {
-        setTheme((currentTheme) =>
-            currentTheme === "dark" ? "light" : "dark",
-        );
+        const nextTheme = theme === "dark" ? "light" : "dark";
+        setTheme(nextTheme);
+        void axios.patch(route("profile.theme.update"), { theme: nextTheme });
     };
     const nav: {
         label: string;

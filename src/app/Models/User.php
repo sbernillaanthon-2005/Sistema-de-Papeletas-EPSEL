@@ -29,6 +29,7 @@ class User extends Authenticatable
         'jefe_id',
         'jefe_responsable_nombre',
         'activo',
+        'theme',
         'profile_photo_path',
     ];
 

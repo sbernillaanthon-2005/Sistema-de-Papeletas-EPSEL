@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'signature_id' => $signatureId,
                     'profile_photo_path' => $user->profile_photo_path,
                     'profile_photo_url' => $user->profile_photo_url,
+                    'theme' => $user->theme === 'dark' ? 'dark' : 'light',
                 ] : null];
             },
         ];

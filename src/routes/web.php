@@ -73,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile & Signatures
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme.update');
     
     Route::post('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'update'])->name('profile-photo.update');
     Route::delete('/profile-photo', [\App\Http\Controllers\Profile\ProfilePhotoController::class, 'destroy'])->name('profile-photo.destroy');
