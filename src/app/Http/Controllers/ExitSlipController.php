@@ -73,7 +73,10 @@ class ExitSlipController extends Controller
         }
         if ($request->filled('q')) {
             $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $request->q).'%';
-            $query->where(fn ($q) => $q->where('codigo', 'ilike', $term)->orWhere('apellidos_nombres', 'ilike', $term));
+            $query->where(fn ($q) => $q
+                ->where('codigo', 'ilike', $term)
+                ->orWhere('apellidos_nombres', 'ilike', $term)
+                ->orWhereHas('user', fn ($u) => $u->where('nombres', 'ilike', $term)->orWhere('apellidos', 'ilike', $term)));
         }
         $page = $query->with('user:id,nombres,apellidos')->latest()->orderBy('id')->paginate(15)->withQueryString();
         $items = $page->getCollection()->map(function ($slip) {
@@ -85,7 +88,7 @@ class ExitSlipController extends Controller
                 'hora_salida' => $slip->hora_salida, 'hora_retorno' => $slip->hora_retorno,
                 'motivo_salida' => $slip->motivo_salida->value, 'motivo_label' => $slip->motivo_salida->label(),
                 'estado' => $slip->estado->value, 'estado_label' => $slip->estado->label(),
-                'apellidos_nombres' => in_array($slip->estado->value, ['draft', 'submitted']) && $slip->user ? trim($slip->user->nombres.' '.$slip->user->apellidos) : $slip->apellidos_nombres,
+                'apellidos_nombres' => $slip->user ? trim($slip->user->nombres.' '.$slip->user->apellidos) : $slip->apellidos_nombres,
                 'can_edit' => Gate::allows('update', $slip),
                 'can_delete' => Gate::allows('delete', $slip),
             ];
@@ -138,7 +141,10 @@ class ExitSlipController extends Controller
         }
         if ($request->filled('q')) {
             $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $request->q).'%';
-            $query->where(fn ($q) => $q->where('codigo', 'ilike', $term)->orWhere('apellidos_nombres', 'ilike', $term));
+            $query->where(fn ($q) => $q
+                ->where('codigo', 'ilike', $term)
+                ->orWhere('apellidos_nombres', 'ilike', $term)
+                ->orWhereHas('user', fn ($u) => $u->where('nombres', 'ilike', $term)->orWhere('apellidos', 'ilike', $term)));
         }
 
         $slips = $query->with('user:id,nombres,apellidos,dni')->latest()->orderBy('id')->get();
@@ -159,7 +165,7 @@ class ExitSlipController extends Controller
             echo '</Row>';
 
             foreach ($slips as $slip) {
-                $name = in_array($slip->estado->value, ['draft', 'submitted']) && $slip->user
+                $name = $slip->user
                     ? trim($slip->user->nombres.' '.$slip->user->apellidos)
                     : $slip->apellidos_nombres;
                 $values = [
@@ -265,10 +271,10 @@ class ExitSlipController extends Controller
         // We use Eloquent model for policy authorization
 
         $slipUser = User::find($slip->practitionerId);
-        $displayFullName = $slip->fullNameSnapshot;
-        if ($slipUser && in_array($slip->status->value, ['draft', 'submitted'])) {
-            $displayFullName = trim($slipUser->nombres.' '.$slipUser->apellidos);
-        }
+        $displayFullName = $slipUser
+            ? trim($slipUser->nombres.' '.$slipUser->apellidos)
+            : $slip->fullNameSnapshot;
+        $displayDesignation = $slipUser?->cargo_designado ?: $slip->designationSnapshot;
 
         $model = \App\Models\ExitSlip::findOrFail($id);
         $can = [];
@@ -292,7 +298,7 @@ class ExitSlipController extends Controller
                 'estado' => $slip->status->value,
                 'estado_label' => $slip->status->label(),
                 'apellidos_nombres' => $displayFullName,
-                'designado' => $slip->designationSnapshot,
+                'designado' => $displayDesignation,
                 'hora_salida' => $slip->exitTime, 'hora_retorno' => $slip->returnTime,
                 'observaciones' => $slip->securityObservations,
                 'aprobado_jefe_at' => $slip->approvedByHeadAt?->format(DATE_ATOM),

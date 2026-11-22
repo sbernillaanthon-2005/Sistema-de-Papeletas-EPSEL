@@ -172,11 +172,11 @@
             <table>
                 <tr>
                     <th>Apellidos y nombres</th>
-                    <td>{{ $slip->fullNameSnapshot }}</td>
+                    <td>{{ isset($user) && $user ? trim($user->nombres.' '.$user->apellidos) : $slip->fullNameSnapshot }}</td>
                 </tr>
                 <tr>
                     <th>Cargo / designación</th>
-                    <td>{{ $slip->designationSnapshot }}</td>
+                    <td>{{ $user?->cargo_designado ?: $slip->designationSnapshot }}</td>
                 </tr>
                 <tr>
                     <th>Fecha de emisión</th>

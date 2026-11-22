@@ -48,6 +48,25 @@ class User extends Authenticatable
         'rol_label',
     ];
 
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            $updates = [];
+
+            if ($user->wasChanged(['nombres', 'apellidos'])) {
+                $updates['apellidos_nombres'] = trim($user->nombres.' '.$user->apellidos);
+            }
+
+            if ($user->wasChanged('cargo_designado') && filled($user->cargo_designado)) {
+                $updates['designado'] = $user->cargo_designado;
+            }
+
+            if ($updates !== []) {
+                ExitSlip::query()->where('user_id', $user->id)->update($updates);
+            }
+        });
+    }
+
     public function getProfilePhotoUrlAttribute(): string
     {
         if ($this->profile_photo_path) {

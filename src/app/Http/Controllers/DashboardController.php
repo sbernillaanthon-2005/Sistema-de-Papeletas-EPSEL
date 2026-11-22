@@ -85,13 +85,14 @@ class DashboardController extends Controller
 
         // ── Últimas papeletas (para lista rápida) ────────────────────────
         $recentSlips = (clone $base)
+            ->with('user:id,nombres,apellidos')
             ->latest()
             ->limit(5)
-            ->get(['id', 'codigo', 'estado', 'fecha_autorizada', 'motivo_salida', 'apellidos_nombres'])
+            ->get(['id', 'user_id', 'codigo', 'estado', 'fecha_autorizada', 'motivo_salida', 'apellidos_nombres'])
             ->map(fn ($s) => [
                 'id'               => $s->id,
                 'codigo'           => $s->codigo,
-                'solicitante'      => $s->apellidos_nombres,
+                'solicitante'      => $s->user ? trim($s->user->nombres.' '.$s->user->apellidos) : $s->apellidos_nombres,
                 'estado'           => $s->estado->value,
                 'estado_label'     => $s->estado->label(),
                 'fecha_autorizada' => $s->fecha_autorizada->toDateString(),
