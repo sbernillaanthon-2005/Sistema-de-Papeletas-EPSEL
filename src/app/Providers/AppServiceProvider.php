@@ -62,5 +62,21 @@ class AppServiceProvider extends ServiceProvider
             // Browser tests use the production bundle, independent of the dev server.
             \Illuminate\Support\Facades\Vite::useHotFile(storage_path('framework/testing.hot'));
         }
+
+        if (! $this->app->runningInConsole() && ! $this->app->environment('testing')) {
+            $this->app->terminating(function () {
+                try {
+                    if (! \Illuminate\Support\Facades\Cache::add('backups:due_check', true, 600)) {
+                        return;
+                    }
+                    $latest = \App\Models\ScheduledDatabaseBackup::query()->latest('created_at')->first();
+                    if (! $latest || $latest->created_at?->lte(now()->subHours(12))) {
+                        \Illuminate\Support\Facades\Artisan::call('backups:run-automatic');
+                    }
+                } catch (\Throwable) {
+                    // Silenciar si la tabla aún no existe o durante migraciones
+                }
+            });
+        }
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use App\Support\DatabaseBackup;
 use App\Models\ScheduledDatabaseBackup;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,14 @@ class BackupController extends Controller
 {
     public function index()
     {
+        // Si no existe respaldo automático o el último tiene >= 12 horas, generarlo automáticamente
+        $latest = ScheduledDatabaseBackup::query()->latest('created_at')->first();
+        if (! $latest || $latest->created_at?->lte(now()->subHours(12))) {
+            Artisan::call('backups:run-automatic');
+        }
+
         return inertia('Admin/Backups/Index', [
-            'automaticBackups' => ScheduledDatabaseBackup::query()->latest()->limit(12)->get()->map(fn (ScheduledDatabaseBackup $backup) => [
+            'automaticBackups' => ScheduledDatabaseBackup::query()->latest()->limit(20)->get()->map(fn (ScheduledDatabaseBackup $backup) => [
                 'id' => $backup->id,
                 'filename' => $backup->filename,
                 'size_bytes' => $backup->size_bytes,
@@ -43,7 +50,7 @@ class BackupController extends Controller
             'Descargó un respaldo completo de la base de datos.',
             'database',
             config('database.connections.'.config('database.default').'.database'),
-            ['format' => 'postgresql-custom', 'filename' => $export['filename']],
+            ['format' => $export['format'] ?? 'postgresql-custom', 'filename' => $export['filename']],
         );
 
         return response()->download($export['path'], $export['filename'], [
