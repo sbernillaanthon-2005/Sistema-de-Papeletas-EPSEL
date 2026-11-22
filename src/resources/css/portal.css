@@ -6925,6 +6925,34 @@ html[data-theme="dark"] .admin-role-add-button:hover { background: #175166; }
 .portal-slip-icon-action--delete:hover { background: rgba(213, 39, 54, .1); }
 .portal-slip-icon-action:disabled { opacity: .5; cursor: wait; }
 
+html[data-theme="dark"] .portal-slip-icon-action,
+.portal-app[data-theme="dark"] .portal-slip-icon-action {
+    background: #0d2330;
+    border-color: #254655;
+}
+
+html[data-theme="dark"] .portal-slip-icon-action--edit,
+.portal-app[data-theme="dark"] .portal-slip-icon-action--edit {
+    color: #38bdf8;
+}
+
+html[data-theme="dark"] .portal-slip-icon-action--delete,
+.portal-app[data-theme="dark"] .portal-slip-icon-action--delete {
+    color: #f87171;
+}
+
+html[data-theme="dark"] .portal-slip-icon-action--edit:hover,
+.portal-app[data-theme="dark"] .portal-slip-icon-action--edit:hover {
+    background: rgba(56, 189, 248, .16);
+    border-color: rgba(56, 189, 248, .45);
+}
+
+html[data-theme="dark"] .portal-slip-icon-action--delete:hover,
+.portal-app[data-theme="dark"] .portal-slip-icon-action--delete:hover {
+    background: rgba(248, 113, 113, .16);
+    border-color: rgba(248, 113, 113, .45);
+}
+
 
 /* ==========================================================================
    EDIT USER MODAL - MODERN UI/UX PRO MAX REDESIGN (GSAP + ACCESSIBILITY)
